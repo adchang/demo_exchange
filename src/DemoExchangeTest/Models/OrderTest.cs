@@ -1,4 +1,5 @@
 using System;
+using Microsoft.VisualBasic;
 using Xunit;
 
 namespace DemoExchange.Models {
@@ -6,6 +7,8 @@ namespace DemoExchange.Models {
     [Fact]
     public void MarketOrderTest() {
       Order order = new BuyMarketOrder("accountId", "ERX", 100);
+      Assert.False(String.IsNullOrWhiteSpace(order.Id));
+      Assert.Equal(new DateTime(order.CreatedTimestamp), order.CreatedDateTime);
       Assert.True(order.IsOpen);
       Assert.False(order.IsCompleted);
       Assert.False(order.IsUpdated);
@@ -25,6 +28,7 @@ namespace DemoExchange.Models {
       Assert.Equal(order.Quantity, order.OpenQuantity);
       Assert.True(order.IsDayOrder);
       Assert.False(order.IsGoodTillCanceledOrder);
+      Assert.Equal(new DateTime(order.ToBeCanceledTimestamp), order.ToBeCanceledDateTime);
       Assert.Equal("{Id: " + order.Id + ", CreatedTimestamp: " + order.CreatedTimestamp + ", " +
         "AccountId: accountId, Status: OPEN, Action: BUY, Ticker: ERX, Type: MARKET, " +
         "StrikePrice: 0, Quantity: 100, OpenQuantity: 100, " +
