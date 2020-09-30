@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace DemoExchange {
+namespace Utils {
   public class UtilsTest {
     [Fact]
     public void GetValTest() {

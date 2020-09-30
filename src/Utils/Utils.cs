@@ -1,6 +1,6 @@
 using System;
 
-namespace DemoExchange {
+namespace Utils {
   public class Utils {
     public static String GetVal(String data) {
       return GetVal(data, "");
