@@ -4,7 +4,7 @@ using Xunit;
 namespace DemoExchange {
   public class ProgramTest {
     [Fact]
-    public void Test1() {
+    public void DoSomethingTest() {
       Assert.False(Program.DoSomething());
     }
   }
