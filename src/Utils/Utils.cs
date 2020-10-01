@@ -2,12 +2,12 @@ using System;
 
 namespace Utils {
   public class Utils {
-    public static String GetVal(String data) {
-      return GetVal(data, "");
+    public static String GetValue(String value) {
+      return GetValue(value, "");
     }
 
-    public static String GetVal(String data, String nullEmptyValue) {
-      return String.IsNullOrWhiteSpace(data) ? nullEmptyValue : data;
+    public static String GetValue(String value, String nullEmptyValue) {
+      return String.IsNullOrWhiteSpace(value) ? nullEmptyValue : value;
     }
 
     private Utils() {
