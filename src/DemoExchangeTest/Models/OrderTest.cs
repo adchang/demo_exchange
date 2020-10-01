@@ -6,12 +6,6 @@ namespace DemoExchange.Models {
     [Fact]
     [Trait("Category", "Unit")]
     public void OrderTest_constructor() {
-      OrderEntity test = new OrderEntity();
-      test.Id = "123";
-      Order test2 = (Order)test;
-      Assert.Equal("123", test.Id);
-      Assert.Equal("123", test2.Id);
-
       Exception e = Assert.Throws<ArgumentException>(() =>
         new TestOrder(null, null, OrderType.MARKET, 0, 0));
       Assert.Equal("AccountId is null, empty, or contains only white-space characters",
@@ -104,6 +98,7 @@ namespace DemoExchange.Models {
       Order order = new BuyMarketOrder("accountId", "ERX", 100);
       Assert.False(String.IsNullOrWhiteSpace(order.Id));
       Assert.Equal(new DateTime(order.CreatedTimestamp), order.CreatedDateTime);
+      Assert.Equal("accountId", order.AccountId);
       Assert.True(order.IsOpen);
       Assert.False(order.IsCompleted);
       Assert.False(order.IsUpdated);
@@ -111,6 +106,7 @@ namespace DemoExchange.Models {
       Assert.False(order.IsDeleted);
       Assert.True(order.IsBuyOrder);
       Assert.False(order.IsSellOrder);
+      Assert.Equal("ERX", order.Ticker);
       Assert.True(order.IsMarketOrder);
       Assert.False(order.IsLimitOrder);
       Assert.False(order.IsStopMarketOrder);
@@ -135,6 +131,7 @@ namespace DemoExchange.Models {
       Assert.True(order.IsFilled);
 
       order = new SellMarketOrder("accountId", "ERX", 100);
+      Assert.False(String.IsNullOrWhiteSpace(order.Id));
       Assert.Equal("accountId", order.AccountId);
       Assert.True(order.IsOpen);
       Assert.True(order.IsSellOrder);
@@ -143,6 +140,62 @@ namespace DemoExchange.Models {
       Assert.Equal(100, order.Quantity);
       Assert.Equal(0, order.StrikePrice);
       Assert.True(order.IsDayOrder);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public void LimitOrderTest() {
+      Order order = new BuyLimitDayOrder("accountId", "ERX", 100, (decimal)18.81018);
+      Assert.False(String.IsNullOrWhiteSpace(order.Id));
+      Assert.Equal("accountId", order.AccountId);
+      Assert.True(order.IsOpen);
+      Assert.True(order.IsBuyOrder);
+      Assert.Equal("ERX", order.Ticker);
+      Assert.True(order.IsLimitOrder);
+      Assert.Equal(100, order.Quantity);
+      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.True(order.IsDayOrder);
+      Assert.Equal(0, order.ToBeCanceledTimestamp);
+
+      order = new BuyLimitGoodTilCanceledOrder("accountId", "ERX", 100, (decimal)18.81018);
+      Assert.False(String.IsNullOrWhiteSpace(order.Id));
+      Assert.Equal("accountId", order.AccountId);
+      Assert.True(order.IsOpen);
+      Assert.True(order.IsBuyOrder);
+      Assert.True(order.IsLimitOrder);
+      Assert.Equal("ERX", order.Ticker);
+      Assert.Equal(100, order.Quantity);
+      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.True(order.IsGoodTillCanceledOrder);
+      Assert.Equal(order.CreatedTimestamp +
+        (TimeSpan.TicksPerDay * Order.TIME_IN_FORCE_TO_BE_CANCELLED_DAYS),
+        order.ToBeCanceledTimestamp);
+
+      order = new SellLimitDayOrder("accountId", "ERX", 100, (decimal)18.81018);
+      Assert.False(String.IsNullOrWhiteSpace(order.Id));
+      Assert.Equal("accountId", order.AccountId);
+      Assert.True(order.IsOpen);
+      Assert.True(order.IsSellOrder);
+      Assert.Equal("ERX", order.Ticker);
+      Assert.True(order.IsLimitOrder);
+      Assert.Equal(100, order.Quantity);
+      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.True(order.IsDayOrder);
+      Assert.Equal(0, order.ToBeCanceledTimestamp);
+
+      order = new SellLimitGoodTilCanceledOrder("accountId", "ERX", 100, (decimal)18.81018);
+      Assert.False(String.IsNullOrWhiteSpace(order.Id));
+      Assert.Equal("accountId", order.AccountId);
+      Assert.True(order.IsOpen);
+      Assert.True(order.IsSellOrder);
+      Assert.Equal("ERX", order.Ticker);
+      Assert.True(order.IsLimitOrder);
+      Assert.Equal(100, order.Quantity);
+      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.True(order.IsGoodTillCanceledOrder);
+      Assert.Equal(order.CreatedTimestamp +
+        (TimeSpan.TicksPerDay * Order.TIME_IN_FORCE_TO_BE_CANCELLED_DAYS),
+        order.ToBeCanceledTimestamp);
     }
 
     class TestOrder : Order {

@@ -7,7 +7,7 @@ namespace DemoExchange.Models {
   /// </summary>
   ///
   public abstract class Order {
-    const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
+    public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
     public String Id { get; protected set; }
     public long CreatedTimestamp { get; protected set; }
@@ -110,8 +110,14 @@ namespace DemoExchange.Models {
       OpenQuantity = quantity;
       StrikePrice = strikePrice;
       TimeInForce = timeInForce;
-      ToBeCanceledTimestamp = timeInForce.Equals(OrderTimeInForce.DAY) ?
-        0 : CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_CANCELLED_DAYS);
+      if (OrderType.MARKET.Equals(type)) {
+        ToBeCanceledTimestamp = 0;
+      } else {
+        // TODO: Calculate timestamp for DAY
+        ToBeCanceledTimestamp = timeInForce.Equals(OrderTimeInForce.DAY) ?
+          0 :
+          CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_CANCELLED_DAYS);
+      }
     }
 
     public override String ToString() {
@@ -210,12 +216,54 @@ namespace DemoExchange.Models {
   }
 
   /// <summary>
+  /// Convenience class to instantiate a Buy Limit Day Order.
+  /// </summary>
+  ///
+  public class BuyLimitDayOrder : Order {
+    public BuyLimitDayOrder(String accountId, String ticker, int quantity, decimal strikePrice):
+      base(accountId, OrderAction.BUY, ticker, OrderType.LIMIT, quantity, strikePrice,
+        OrderTimeInForce.DAY) { }
+  }
+
+  /// <summary>
+  /// Convenience class to instantiate a Buy Limit GTC Order.
+  /// </summary>
+  ///
+  public class BuyLimitGoodTilCanceledOrder : Order {
+    public BuyLimitGoodTilCanceledOrder(String accountId, String ticker, int quantity,
+        decimal strikePrice):
+      base(accountId, OrderAction.BUY, ticker, OrderType.LIMIT, quantity, strikePrice,
+        OrderTimeInForce.GOOD_TIL_CANCELED) { }
+  }
+
+  /// <summary>
   /// Convenience class to instantiate a Sell Market Order.
   /// </summary>
   ///
   public class SellMarketOrder : Order {
     public SellMarketOrder(String accountId, String ticker, int quantity) : base(accountId,
       OrderAction.SELL, ticker, OrderType.MARKET, quantity, 0, OrderTimeInForce.DAY) { }
+  }
+
+  /// <summary>
+  /// Convenience class to instantiate a Sell Limit Day Order.
+  /// </summary>
+  ///
+  public class SellLimitDayOrder : Order {
+    public SellLimitDayOrder(String accountId, String ticker, int quantity, decimal strikePrice):
+      base(accountId, OrderAction.SELL, ticker, OrderType.LIMIT, quantity, strikePrice,
+        OrderTimeInForce.DAY) { }
+  }
+
+  /// <summary>
+  /// Convenience class to instantiate a Sell Limit GTC Order.
+  /// </summary>
+  ///
+  public class SellLimitGoodTilCanceledOrder : Order {
+    public SellLimitGoodTilCanceledOrder(String accountId, String ticker, int quantity,
+        decimal strikePrice):
+      base(accountId, OrderAction.SELL, ticker, OrderType.LIMIT, quantity, strikePrice,
+        OrderTimeInForce.GOOD_TIL_CANCELED) { }
   }
 
   public enum OrderStatus {
