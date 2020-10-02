@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
     <ProjectReference Include="../Utils/Utils.csproj" />
   </ItemGroup>
 
