@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using DemoExchange.Interface;
 using static Utils.Preconditions;
 
 namespace DemoExchange.Models {
   /// <summary>
   /// Base Class representing an Order.
   /// </summary>
-  public abstract class Order {
+  public abstract class Order : IModelOrder {
     public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
     public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN Order Id: {0}";
@@ -133,6 +134,10 @@ namespace DemoExchange.Models {
           0 :
           CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_CANCELLED_DAYS);
       }
+    }
+
+    public bool IsValid() {
+      return true; // TODO: throw new NotImplementedException();
     }
 
     public void Cancel() {
@@ -374,6 +379,15 @@ namespace DemoExchange.Models {
 
         return 0;
       }
+    }
+  }
+
+  /// <summary>
+  /// Market <c>Order</c> validator.
+  /// </summary>
+  public class MarketOrderValidator : IValidator<Order> {
+    public bool IsValid() {
+      throw new NotImplementedException();
     }
   }
 }

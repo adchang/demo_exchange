@@ -26,6 +26,10 @@ namespace DemoExchange.Models {
     protected readonly List<Order> orders = new List<Order>(); // VisibleForTesting
     protected readonly Comparer<Order> comparer; // VisibleForTesting
 
+    public Order First {
+      get { return orders[0]; }
+    }
+
     public OrderBook(String ticker, OrderAction type) {
       Ticker = ticker;
       Type = type;
