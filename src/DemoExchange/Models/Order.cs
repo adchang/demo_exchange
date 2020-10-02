@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Generic;
 using static Utils.Preconditions;
 
 namespace DemoExchange.Models {
   /// <summary>
   /// Base Class representing an Order.
   /// </summary>
-  ///
   public abstract class Order {
     public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
@@ -69,6 +69,7 @@ namespace DemoExchange.Models {
     public bool IsFilled {
       get { return OpenQuantity == 0; }
     }
+    // QUESTION: Should set be protected? What are the needs of Trailing?
     public decimal StrikePrice { get; set; }
     public OrderTimeInForce TimeInForce { get; protected set; }
     public bool IsDayOrder {
@@ -84,7 +85,15 @@ namespace DemoExchange.Models {
 
     protected Order() { }
 
-    public Order(String accountId, OrderAction action, String ticker, OrderType type,
+    /// <summary>
+    /// <c>Order</c> constructor.
+    /// <br><c>Id</c>: Auto-gen GUID</br>
+    /// <br><c>CreatedTimestamp</c>: Auto-gen UTC high fidelity timestamp</br>
+    /// <br><c>Status</c>: Defaults to OPEN</br>
+    /// <br><c>OpenQuantity</c>: Defaults to Quantity</br>
+    /// <br><c>ToBeCanceledTimestamp</c>: Defaults to 0 for Market orders, end of day for Day orders, and <c>TIME_IN_FORCE_TO_BE_CANCELLED_DAYS</c> for Good Til Canceled orders.</br>
+    /// </summary>
+    protected Order(String accountId, OrderAction action, String ticker, OrderType type,
       int quantity, decimal strikePrice, OrderTimeInForce timeInForce) {
       CheckNotNullOrWhitespace(accountId, paramName: "AccountId");
       CheckNotNullOrWhitespace(ticker, paramName: "Ticker");
@@ -120,6 +129,10 @@ namespace DemoExchange.Models {
       }
     }
 
+    public Order ShallowCopy() {
+      return (Order)this.MemberwiseClone();
+    }
+
     public override String ToString() {
       return "{Id: " + Id + ", " +
         "CreatedTimestamp: " + CreatedTimestamp + ", " +
@@ -130,7 +143,7 @@ namespace DemoExchange.Models {
         "Type: " + Type + ", " +
         "Quantity: " + Quantity + ", " +
         "OpenQuantity: " + OpenQuantity + ", " +
-        "StrikePrice: " + StrikePrice + ", " +
+        "StrikePrice: " + StrikePrice.ToString("0.0000000000") + ", " +
         "TimeInForce: " + TimeInForce + ", " +
         "ToBeCanceledTimestamp: " + ToBeCanceledTimestamp + ", " +
         "}";
@@ -150,9 +163,10 @@ namespace DemoExchange.Models {
   }
 
   /// <summary>
-  /// For persistence of an Order.
+  /// For persistence of an <c>Order</c>.
+  /// <br><c>readonly</c> parameters are exposed.</br>
   /// </summary>
-  ///
+  // TODO: Add EntityFramework and hook up to db
   public class OrderEntity : Order {
     new public String Id {
       get { return base.Id; }
@@ -209,7 +223,6 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Buy Market Order.
   /// </summary>
-  ///
   public class BuyMarketOrder : Order {
     public BuyMarketOrder(String accountId, String ticker, int quantity) : base(accountId,
       OrderAction.BUY, ticker, OrderType.MARKET, quantity, 0, OrderTimeInForce.DAY) { }
@@ -218,7 +231,6 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Buy Limit Day Order.
   /// </summary>
-  ///
   public class BuyLimitDayOrder : Order {
     public BuyLimitDayOrder(String accountId, String ticker, int quantity, decimal strikePrice):
       base(accountId, OrderAction.BUY, ticker, OrderType.LIMIT, quantity, strikePrice,
@@ -228,7 +240,6 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Buy Limit GTC Order.
   /// </summary>
-  ///
   public class BuyLimitGoodTilCanceledOrder : Order {
     public BuyLimitGoodTilCanceledOrder(String accountId, String ticker, int quantity,
         decimal strikePrice):
@@ -239,7 +250,6 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Sell Market Order.
   /// </summary>
-  ///
   public class SellMarketOrder : Order {
     public SellMarketOrder(String accountId, String ticker, int quantity) : base(accountId,
       OrderAction.SELL, ticker, OrderType.MARKET, quantity, 0, OrderTimeInForce.DAY) { }
@@ -248,7 +258,6 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Sell Limit Day Order.
   /// </summary>
-  ///
   public class SellLimitDayOrder : Order {
     public SellLimitDayOrder(String accountId, String ticker, int quantity, decimal strikePrice):
       base(accountId, OrderAction.SELL, ticker, OrderType.LIMIT, quantity, strikePrice,
@@ -258,7 +267,6 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Sell Limit GTC Order.
   /// </summary>
-  ///
   public class SellLimitGoodTilCanceledOrder : Order {
     public SellLimitGoodTilCanceledOrder(String accountId, String ticker, int quantity,
         decimal strikePrice):
@@ -267,7 +275,7 @@ namespace DemoExchange.Models {
   }
 
   public enum OrderStatus {
-    OPEN,
+    OPEN, // Default
     COMPLETED,
     UPDATED,
     CANCELLED,
@@ -275,12 +283,12 @@ namespace DemoExchange.Models {
   }
 
   public enum OrderAction {
-    BUY,
+    BUY, // Default
     SELL
   }
 
   public enum OrderType {
-    MARKET,
+    MARKET, // Default
     LIMIT,
     STOP_MARKET,
     STOP_LIMIT,
@@ -291,7 +299,58 @@ namespace DemoExchange.Models {
   }
 
   public enum OrderTimeInForce {
-    DAY,
+    DAY, // Default
     GOOD_TIL_CANCELED
+  }
+
+  public class OrderComparers {
+    /// <summary>
+    /// Use for SELL order books.
+    /// </summary>
+    public static readonly Comparer<Order> STRIKE_PRICE_ASCENDING = new StrikePriceAscending();
+    /// <summary>
+    /// Use for BUY order books.
+    /// </summary>
+    public static readonly Comparer<Order> STRIKE_PRICE_DESCENDING = new StrikePriceDescending();
+
+    private OrderComparers() {
+      // Prevent instantiation;
+    }
+
+    /// <summary>
+    /// Price-Time ascending <c>Comparer</c>.
+    /// </summary>
+    private class StrikePriceAscending : Comparer<Order> {
+      public override int Compare(Order o1, Order o2) {
+        if (o1.StrikePrice > o2.StrikePrice)
+          return 1;
+        if (o1.StrikePrice < o2.StrikePrice)
+          return -1;
+        if (o1.CreatedTimestamp > o2.CreatedTimestamp)
+          return 1;
+        if (o1.CreatedTimestamp < o2.CreatedTimestamp)
+          return -1;
+
+        return 0;
+      }
+    }
+
+    /// <summary>
+    /// Price-Time descending <c>Comparer</c>.
+    /// </summary>
+    private class StrikePriceDescending : Comparer<Order> {
+      public override int Compare(Order o1, Order o2) {
+        if (o1.StrikePrice < o2.StrikePrice)
+          return 1;
+        if (o1.StrikePrice > o2.StrikePrice)
+          return -1;
+        if (o1.CreatedTimestamp > o2.CreatedTimestamp)
+          return 1;
+        if (o1.CreatedTimestamp < o2.CreatedTimestamp)
+          return -1;
+
+        return 0;
+      }
+    }
   }
 }

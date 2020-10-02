@@ -35,19 +35,20 @@ namespace DemoExchange.Models {
     [Fact]
     [Trait("Category", "Unit")]
     public void OrderEntityTest() {
-      OrderEntity order = new OrderEntity();
-      order.Id = "Id";
-      order.CreatedTimestamp = 1;
-      order.AccountId = "accountId";
-      order.Status = OrderStatus.OPEN;
-      order.Action = OrderAction.BUY;
-      order.Ticker = "ERX";
-      order.Type = OrderType.MARKET;
-      order.Quantity = 100;
-      order.OpenQuantity = 200;
-      order.StrikePrice = 0;
-      order.TimeInForce = OrderTimeInForce.DAY;
-      order.ToBeCanceledTimestamp = 8;
+      OrderEntity order = new OrderEntity {
+        Id = "Id",
+        CreatedTimestamp = 1,
+        AccountId = "accountId",
+        Status = OrderStatus.OPEN,
+        Action = OrderAction.BUY,
+        Ticker = "ERX",
+        Type = OrderType.MARKET,
+        Quantity = 100,
+        OpenQuantity = 200,
+        StrikePrice = 0,
+        TimeInForce = OrderTimeInForce.DAY,
+        ToBeCanceledTimestamp = 8
+      };
       Assert.Equal("Id", order.Id);
       Assert.Equal(1, order.CreatedTimestamp);
       Assert.Equal("accountId", order.AccountId);
@@ -73,19 +74,20 @@ namespace DemoExchange.Models {
       Assert.Equal(0, baseOrder.StrikePrice);
       Assert.Equal(OrderTimeInForce.DAY, baseOrder.TimeInForce);
       Assert.Equal(8, baseOrder.ToBeCanceledTimestamp);
-      OrderEntity order2 = new OrderEntity();
-      order2.Id = "Id";
-      order2.CreatedTimestamp = 1;
-      order2.AccountId = "accountId";
-      order2.Status = OrderStatus.OPEN;
-      order2.Action = OrderAction.BUY;
-      order2.Ticker = "ERX";
-      order2.Type = OrderType.MARKET;
-      order2.Quantity = 100;
-      order2.OpenQuantity = 200;
-      order2.StrikePrice = 0;
-      order2.TimeInForce = OrderTimeInForce.DAY;
-      order2.ToBeCanceledTimestamp = 8;
+      OrderEntity order2 = new OrderEntity {
+        Id = "Id",
+        CreatedTimestamp = 1,
+        AccountId = "accountId",
+        Status = OrderStatus.OPEN,
+        Action = OrderAction.BUY,
+        Ticker = "ERX",
+        Type = OrderType.MARKET,
+        Quantity = 100,
+        OpenQuantity = 200,
+        StrikePrice = 0,
+        TimeInForce = OrderTimeInForce.DAY,
+        ToBeCanceledTimestamp = 8
+      };
       Assert.False(order == order2);
       Assert.False(order.Equals(null));
       Assert.True(order.Equals(order2));
@@ -122,7 +124,7 @@ namespace DemoExchange.Models {
       Assert.Equal(new DateTime(order.ToBeCanceledTimestamp), order.ToBeCanceledDateTime);
       Assert.Equal("{Id: " + order.Id + ", CreatedTimestamp: " + order.CreatedTimestamp + ", " +
         "AccountId: accountId, Status: OPEN, Action: BUY, Ticker: ERX, Type: MARKET, " +
-        "Quantity: 100, OpenQuantity: 100, StrikePrice: 0, " +
+        "Quantity: 100, OpenQuantity: 100, StrikePrice: 0.0000000000, " +
         "TimeInForce: DAY, ToBeCanceledTimestamp: 0, }",
         order.ToString());
 
@@ -145,7 +147,7 @@ namespace DemoExchange.Models {
     [Fact]
     [Trait("Category", "Unit")]
     public void LimitOrderTest() {
-      Order order = new BuyLimitDayOrder("accountId", "ERX", 100, (decimal)18.81018);
+      Order order = new BuyLimitDayOrder("accountId", "ERX", 100, 18.81018M);
       Assert.False(String.IsNullOrWhiteSpace(order.Id));
       Assert.Equal("accountId", order.AccountId);
       Assert.True(order.IsOpen);
@@ -153,11 +155,11 @@ namespace DemoExchange.Models {
       Assert.Equal("ERX", order.Ticker);
       Assert.True(order.IsLimitOrder);
       Assert.Equal(100, order.Quantity);
-      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.Equal(18.81018M, order.StrikePrice);
       Assert.True(order.IsDayOrder);
       Assert.Equal(0, order.ToBeCanceledTimestamp);
 
-      order = new BuyLimitGoodTilCanceledOrder("accountId", "ERX", 100, (decimal)18.81018);
+      order = new BuyLimitGoodTilCanceledOrder("accountId", "ERX", 100, 18.81018M);
       Assert.False(String.IsNullOrWhiteSpace(order.Id));
       Assert.Equal("accountId", order.AccountId);
       Assert.True(order.IsOpen);
@@ -165,13 +167,13 @@ namespace DemoExchange.Models {
       Assert.True(order.IsLimitOrder);
       Assert.Equal("ERX", order.Ticker);
       Assert.Equal(100, order.Quantity);
-      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.Equal(18.81018M, order.StrikePrice);
       Assert.True(order.IsGoodTillCanceledOrder);
       Assert.Equal(order.CreatedTimestamp +
         (TimeSpan.TicksPerDay * Order.TIME_IN_FORCE_TO_BE_CANCELLED_DAYS),
         order.ToBeCanceledTimestamp);
 
-      order = new SellLimitDayOrder("accountId", "ERX", 100, (decimal)18.81018);
+      order = new SellLimitDayOrder("accountId", "ERX", 100, 18.81018M);
       Assert.False(String.IsNullOrWhiteSpace(order.Id));
       Assert.Equal("accountId", order.AccountId);
       Assert.True(order.IsOpen);
@@ -179,11 +181,11 @@ namespace DemoExchange.Models {
       Assert.Equal("ERX", order.Ticker);
       Assert.True(order.IsLimitOrder);
       Assert.Equal(100, order.Quantity);
-      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.Equal(18.81018M, order.StrikePrice);
       Assert.True(order.IsDayOrder);
       Assert.Equal(0, order.ToBeCanceledTimestamp);
 
-      order = new SellLimitGoodTilCanceledOrder("accountId", "ERX", 100, (decimal)18.81018);
+      order = new SellLimitGoodTilCanceledOrder("accountId", "ERX", 100, 18.81018M);
       Assert.False(String.IsNullOrWhiteSpace(order.Id));
       Assert.Equal("accountId", order.AccountId);
       Assert.True(order.IsOpen);
@@ -191,7 +193,7 @@ namespace DemoExchange.Models {
       Assert.Equal("ERX", order.Ticker);
       Assert.True(order.IsLimitOrder);
       Assert.Equal(100, order.Quantity);
-      Assert.Equal((decimal)18.81018, order.StrikePrice);
+      Assert.Equal(18.81018M, order.StrikePrice);
       Assert.True(order.IsGoodTillCanceledOrder);
       Assert.Equal(order.CreatedTimestamp +
         (TimeSpan.TicksPerDay * Order.TIME_IN_FORCE_TO_BE_CANCELLED_DAYS),
