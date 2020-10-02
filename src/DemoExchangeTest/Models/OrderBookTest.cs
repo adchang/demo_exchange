@@ -214,7 +214,6 @@ namespace DemoExchange.Models {
       Assert.Equal(10, book.Count);
       Assert.False(orderIds.ContainsKey(order.Id));
       Assert.Null(orders.Find(Orders.ById(order.Id)));
-
     }
 
     [Fact]

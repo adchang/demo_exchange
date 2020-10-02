@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using static Utils.Preconditions;
 
 // QUESTION: Use timer callbacks to manage GTC order?
@@ -21,10 +20,22 @@ namespace DemoExchange.Models {
     public int Count {
       get { return orders.Count; }
     }
+    public bool IsEmpty {
+      get { return orders.Count == 0; }
+    }
 
-    protected readonly IDictionary<String, Order> orderIds = new Dictionary<String, Order>(); // VisibleForTesting
-    protected readonly List<Order> orders = new List<Order>(); // VisibleForTesting
-    protected readonly Comparer<Order> comparer; // VisibleForTesting
+    /// <summary>
+    /// VisibleForTesting
+    /// </summary>
+    protected readonly IDictionary<String, Order> orderIds = new Dictionary<String, Order>();
+    /// <summary>
+    /// VisibleForTesting
+    /// </summary>
+    protected readonly List<Order> orders = new List<Order>();
+    /// <summary>
+    /// VisibleForTesting
+    /// </summary>
+    protected readonly Comparer<Order> comparer;
 
     public Order First {
       get { return orders[0]; }
@@ -52,7 +63,6 @@ namespace DemoExchange.Models {
       CheckArgument(!orderIds.ContainsKey(order.Id),
         String.Format(ERROR_ORDER_EXISTS, order.Id));
 
-      // TODO: Persist order insert
       orderIds.Add(order.Id, order);
       orders.Add(order);
       orders.Sort(comparer);
@@ -65,11 +75,20 @@ namespace DemoExchange.Models {
         String.Format(ERROR_ORDER_NOT_EXISTS, id));
 
       Order order = orderIds[id];
-      orderIds.Remove(id);
-      orders.Remove(order);
+      RemoveOrder(order);
       order.Cancel();
 
       return order;
+    }
+
+    public void RemoveOrder(Order order) {
+      CheckNotNull(order);
+
+      CheckArgument(orderIds.ContainsKey(order.Id),
+        String.Format(ERROR_ORDER_NOT_EXISTS, order.Id));
+
+      orderIds.Remove(order.Id);
+      orders.Remove(order);
     }
   }
 }
