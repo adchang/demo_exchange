@@ -9,6 +9,8 @@ namespace DemoExchange.Models {
   public abstract class Order {
     public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
+    public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN Order Id: {0}";
+
     public String Id { get; protected set; }
     public long CreatedTimestamp { get; protected set; }
     public DateTime CreatedDateTime {
@@ -82,6 +84,10 @@ namespace DemoExchange.Models {
     public DateTime ToBeCanceledDateTime {
       get { return new DateTime(ToBeCanceledTimestamp); }
     }
+    public long CanceledTimestamp { get; private set; }
+    public DateTime CanceledDateTime {
+      get { return new DateTime(CanceledTimestamp); }
+    }
 
     protected Order() { }
 
@@ -127,6 +133,14 @@ namespace DemoExchange.Models {
           0 :
           CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_CANCELLED_DAYS);
       }
+    }
+
+    public void Cancel() {
+      CheckArgument(OrderStatus.OPEN.Equals(Status),
+        String.Format(ERROR_STATUS_NOT_OPEN, Id));
+
+      Status = OrderStatus.CANCELLED;
+      CanceledTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
     }
 
     public Order ShallowCopy() {
@@ -303,24 +317,33 @@ namespace DemoExchange.Models {
     GOOD_TIL_CANCELED
   }
 
-  public class OrderComparers {
+  /// <summary>
+  /// Convenience methods for <c>Order</c>.
+  /// </summary>
+  public class Orders {
     /// <summary>
     /// Use for SELL order books.
     /// </summary>
-    public static readonly Comparer<Order> STRIKE_PRICE_ASCENDING = new StrikePriceAscending();
+    public static readonly Comparer<Order> STRIKE_PRICE_ASCENDING_COMPARER =
+      new StrikePriceAscendingComparer();
     /// <summary>
     /// Use for BUY order books.
     /// </summary>
-    public static readonly Comparer<Order> STRIKE_PRICE_DESCENDING = new StrikePriceDescending();
+    public static readonly Comparer<Order> STRIKE_PRICE_DESCENDING_COMPARER =
+      new StrikePriceDescendingComparer();
 
-    private OrderComparers() {
+    public static Predicate<Order> ById(String id) {
+      return order => order.Id.Equals(id);
+    }
+
+    private Orders() {
       // Prevent instantiation;
     }
 
     /// <summary>
     /// Price-Time ascending <c>Comparer</c>.
     /// </summary>
-    private class StrikePriceAscending : Comparer<Order> {
+    private class StrikePriceAscendingComparer : Comparer<Order> {
       public override int Compare(Order o1, Order o2) {
         if (o1.StrikePrice > o2.StrikePrice)
           return 1;
@@ -338,7 +361,7 @@ namespace DemoExchange.Models {
     /// <summary>
     /// Price-Time descending <c>Comparer</c>.
     /// </summary>
-    private class StrikePriceDescending : Comparer<Order> {
+    private class StrikePriceDescendingComparer : Comparer<Order> {
       public override int Compare(Order o1, Order o2) {
         if (o1.StrikePrice < o2.StrikePrice)
           return 1;

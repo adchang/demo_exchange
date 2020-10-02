@@ -8,8 +8,12 @@ namespace DemoExchange.Models {
     [Trait("Category", "Unit")]
     public void AddOrderTest() {
       OrderBook book = new OrderBook("ERX", OrderAction.BUY);
+      Exception e = Assert.Throws<ArgumentNullException>(() =>
+        book.AddOrder(null));
+      Assert.Equal("Value cannot be null. (Parameter 'order')",
+        e.Message);
       BuyMarketOrder buyMarket = new BuyMarketOrder("acct", "E", 100);
-      Exception e = Assert.Throws<ArgumentException>(() =>
+      e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyMarket));
       Assert.Equal(String.Format(OrderBook.ERROR_MARKET_ORDER, buyMarket.Id),
         e.Message);
@@ -172,10 +176,64 @@ namespace DemoExchange.Models {
       Assert.Equal("3", orders[1].Id);
       Assert.Equal("1", orders[2].Id);
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    [InlineData("\n")]
+    [Trait("Category", "Unit")]
+    public void CancelOrderTest_parameter(String input) {
+      String eMsg = "Id is null, empty, or contains only white-space characters";
+      OrderBook book = new OrderBook("ERX", OrderAction.BUY);
+      Exception e = Assert.Throws<ArgumentException>(() =>
+        book.CancelOrder(input));
+      Assert.Equal(eMsg, e.Message);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public void CancelOrderTest() {
+      TestOrderBook book = new TestOrderBook("ERX", OrderAction.BUY);
+      Exception e = Assert.Throws<ArgumentException>(() =>
+        book.CancelOrder("someId"));
+      Assert.Equal("Error Order Not Exists : Order Id: someId", e.Message);
+
+      IDictionary<String, Order> orderIds = book.OrderIds();
+      List<Order> orders = book.Orders();
+
+      for (int i = 0; i < 10; i++) {
+        book.AddOrder(TestUtils.NewBuyLimitDayOrder(100M + i));
+      }
+      Order order = TestUtils.NewBuyLimitDayOrder(101.101M);
+      book.AddOrder(order);
+      Assert.Equal(11, book.Count);
+      Assert.True(orderIds.ContainsKey(order.Id));
+      book.CancelOrder(order.Id);
+      Assert.Equal(OrderStatus.CANCELLED, order.Status);
+      Assert.NotEqual(0, order.CanceledTimestamp);
+      Assert.Equal(10, book.Count);
+      Assert.False(orderIds.ContainsKey(order.Id));
+      Assert.Null(orders.Find(Orders.ById(order.Id)));
+
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public void OrderBookPropertiesTest() {
+      OrderBook book = new OrderBook("ERX", OrderAction.BUY);
+      Assert.Equal("ERX BUY", book.Name);
+      Assert.Equal(0, book.Count);
+      book.AddOrder(new BuyLimitDayOrder("acct", "ERX", 100, 18.81M));
+      Assert.Equal(1, book.Count);
+    }
   }
 
   class TestOrderBook : OrderBook {
     public TestOrderBook(String ticker, OrderAction type) : base(ticker, type) { }
+
+    public IDictionary<String, Order> OrderIds() {
+      return orderIds;
+    }
 
     public List<Order> Orders() {
       return orders;

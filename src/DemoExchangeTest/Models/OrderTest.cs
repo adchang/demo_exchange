@@ -200,6 +200,24 @@ namespace DemoExchange.Models {
         order.ToBeCanceledTimestamp);
     }
 
+    [Fact]
+    [Trait("Category", "Unit")]
+    public void CancelTest() {
+      OrderEntity order = new OrderEntity {
+        Id = "abc",
+        Status = OrderStatus.COMPLETED
+      };;
+      Exception e = Assert.Throws<ArgumentException>(() =>
+        order.Cancel());
+      Assert.Equal("Error Cancel: Status is not OPEN Order Id: abc",
+        e.Message);
+      Order open = TestUtils.NewBuyLimitDayOrder();
+      Assert.Equal(0, open.CanceledTimestamp);
+      open.Cancel();
+      Assert.Equal(OrderStatus.CANCELLED, open.Status);
+      Assert.NotEqual(0, open.CanceledTimestamp);
+    }
+
     class TestOrder : Order {
       public TestOrder(String accountId, String ticker, OrderType type,
         int quantity, decimal strikePrice) : base(accountId,
