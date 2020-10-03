@@ -86,6 +86,9 @@ namespace DemoExchange.Services {
 #pragma warning disable IDE0059
         OrderTransaction filled = FillMarketOrder(order, book);
 #pragma warning restore IDE0059
+#if DIAGNOSTICS
+        WriteDetails(filled);
+#endif
         // TODO: Persist filled as 1 db transaction
         return;
       }
@@ -99,6 +102,9 @@ namespace DemoExchange.Services {
 #pragma warning disable IDE0059
           OrderTransaction filled = FillLimitOrder();
 #pragma warning restore IDE0059
+#if DIAGNOSTICS
+          WriteDetails(filled);
+#endif
         } else {
           done = true;
         }
@@ -109,6 +115,9 @@ namespace DemoExchange.Services {
     /// VisibleForTesting
     /// </summary>
     virtual protected OrderTransaction FillMarketOrder(Order order, OrderBook book) {
+#if PERF
+      long start = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
       CheckArgument(!order.Action.Equals(book.Type), "Error: Wrong book");
 
       bool isBuy = OrderAction.BUY.Equals(order.Action);
@@ -143,6 +152,11 @@ namespace DemoExchange.Services {
           done = true;
         }
       }
+#if PERF
+      long stop = System.Diagnostics.Stopwatch.GetTimestamp();
+      String msg = String.Format("Market order executed in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond));
+      Console.WriteLine(msg);
+#endif
 
       return new OrderTransaction(filledOrders, transactions);
     }
@@ -151,6 +165,9 @@ namespace DemoExchange.Services {
     /// VisibleForTesting
     /// </summary>
     virtual protected OrderTransaction FillLimitOrder() {
+#if PERF
+      long start = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
       Order buyOrder = BuyBook.First;
       Order sellOrder = SellBook.First;
       List<Order> filledOrders = new List<Order>();
@@ -180,6 +197,11 @@ namespace DemoExchange.Services {
         BuyBook.RemoveOrder(filledOrder);
         filledOrder.Status = OrderStatus.COMPLETED;
       }
+#if PERF
+      long stop = System.Diagnostics.Stopwatch.GetTimestamp();
+      String msg = String.Format("Limit order executed in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond));
+      Console.WriteLine(msg);
+#endif
 
       return new OrderTransaction(filledOrders, transactions);
     }
@@ -199,6 +221,21 @@ namespace DemoExchange.Services {
       return true; // TODO
     }
 #pragma warning restore IDE0060, CA1822
+
+#if DIAGNOSTICS
+    private void WriteDetails(OrderTransaction tran) {
+      Console.WriteLine("Order details:");
+      foreach (Order filledOrder in tran.Orders) {
+        Console.WriteLine("     " + filledOrder.ToString());
+      }
+      Console.WriteLine("Transaction details:");
+      foreach (Transaction aTran in tran.Transactions) {
+        Console.WriteLine("     " + aTran.ToString());
+      }
+      Console.WriteLine("  SPREAD: " + Quote);
+      Console.WriteLine("  LEVEL 2:\n" + Level2);
+    }
+#endif
   }
 
   public class OrderTransaction {
