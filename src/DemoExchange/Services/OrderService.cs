@@ -7,14 +7,17 @@ using static Utils.Preconditions;
 namespace DemoExchange.Services {
 
   public class OrderService : IOrderService {
-    private readonly IDictionary<String, OrderManager> managers =
+    /// <summary>
+    /// VisibleForTesting
+    /// </summary>
+    protected readonly IDictionary<String, OrderManager> managers =
       new Dictionary<String, OrderManager>();
 
     public OrderService() {
       // TODO: OrderService DI
     }
 
-    public void AddTicker(string ticker) {
+    public void AddTicker(String ticker) {
       // TODO: AddTicker preconditions & tests
       managers.Add(ticker, new OrderManager(ticker));
     }
@@ -30,19 +33,39 @@ namespace DemoExchange.Services {
     public void CancelOrder(String id) {
       throw new NotImplementedException();
     }
+
+    public Quote GetQuote(String ticker) {
+      // TODO: GetQuote preconditions & tests
+      return managers[ticker].Quote;
+    }
+
+    public Level2 GetLevel2(String ticker) {
+      // TODO: GetLevel2 preconditions & tests
+      return managers[ticker].Level2;
+    }
   }
 
   // QUESTION: Assumes order book always has at least 1 order, ie market maker
   public class OrderManager {
-    public String Ticker { get; }
+    public String Ticker { get; protected set; }
     /// <summary>
     /// VisibleForTesting
     /// </summary>
-    protected readonly OrderBook BuyBook;
+    protected internal OrderBook BuyBook { protected get; set; }
     /// <summary>
     /// VisibleForTesting
     /// </summary>
-    protected readonly OrderBook SellBook;
+    protected internal OrderBook SellBook { protected get; set; }
+
+    public Quote Quote {
+      get { return new Quote(BuyBook.First.StrikePrice, SellBook.First.StrikePrice); }
+    }
+
+    public Level2 Level2 {
+      get {
+        return new Level2(BuyBook.Level2, SellBook.Level2);
+      }
+    }
 
     public OrderManager(String ticker) {
       Ticker = ticker;
@@ -71,11 +94,11 @@ namespace DemoExchange.Services {
       book.AddOrder(order);
       bool done = false;
       while (!done) {
-        Order buyOrder = BuyBook.First;
-        Order sellOrder = SellBook.First;
-        if (buyOrder.StrikePrice >= sellOrder.StrikePrice) {
-          // TODO: Execute the limit order at sell price
-
+        if (BuyBook.IsEmpty || SellBook.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
+        if (BuyBook.First.StrikePrice >= SellBook.First.StrikePrice) {
+#pragma warning disable IDE0059
+          OrderTransaction filled = FillLimitOrder();
+#pragma warning restore IDE0059
         } else {
           done = true;
         }
@@ -85,7 +108,7 @@ namespace DemoExchange.Services {
     /// <summary>
     /// VisibleForTesting
     /// </summary>
-    protected OrderTransaction FillMarketOrder(Order order, OrderBook book) {
+    virtual protected OrderTransaction FillMarketOrder(Order order, OrderBook book) {
       CheckArgument(!order.Action.Equals(book.Type), "Error: Wrong book");
 
       bool isBuy = OrderAction.BUY.Equals(order.Action);
@@ -106,7 +129,7 @@ namespace DemoExchange.Services {
         }
         buyOrder.OpenQuantity -= fillQuantity;
         sellOrder.OpenQuantity -= fillQuantity;
-        transactions.Add(new Transaction(buyOrder.Id, sellOrder.Id, order.Ticker,
+        transactions.Add(new Transaction(buyOrder.Id, sellOrder.Id, Ticker,
           fillQuantity, executionPrice));
         filledOrders.Add(book.First);
         if (book.First.IsFilled) {
@@ -119,6 +142,43 @@ namespace DemoExchange.Services {
           filledOrders.Add(order);
           done = true;
         }
+      }
+
+      return new OrderTransaction(filledOrders, transactions);
+    }
+
+    /// <summary>
+    /// VisibleForTesting
+    /// </summary>
+    virtual protected OrderTransaction FillLimitOrder() {
+      Order buyOrder = BuyBook.First;
+      Order sellOrder = SellBook.First;
+      List<Order> filledOrders = new List<Order>();
+      List<Transaction> transactions = new List<Transaction>();
+      // TODO: Execute the limit order at sell price
+      decimal executionPrice = sellOrder.StrikePrice;
+      int fillQuantity = Math.Min(buyOrder.OpenQuantity, sellOrder.OpenQuantity);
+      if (!BuyerCanFillOrder(buyOrder.AccountId, fillQuantity, executionPrice)) {
+        throw new NotImplementedException(); // TODO
+      }
+      if (!SellerCanFillOrder(buyOrder.AccountId, fillQuantity, executionPrice)) {
+        throw new NotImplementedException(); // TODO
+      }
+      buyOrder.OpenQuantity -= fillQuantity;
+      sellOrder.OpenQuantity -= fillQuantity;
+      transactions.Add(new Transaction(buyOrder.Id, sellOrder.Id, Ticker,
+        fillQuantity, executionPrice));
+      filledOrders.Add(SellBook.First);
+      if (SellBook.First.IsFilled) {
+        Order filledOrder = SellBook.First;
+        SellBook.RemoveOrder(filledOrder);
+        filledOrder.Status = OrderStatus.COMPLETED;
+      }
+      filledOrders.Add(BuyBook.First);
+      if (BuyBook.First.IsFilled) {
+        Order filledOrder = BuyBook.First;
+        BuyBook.RemoveOrder(filledOrder);
+        filledOrder.Status = OrderStatus.COMPLETED;
       }
 
       return new OrderTransaction(filledOrders, transactions);

@@ -162,7 +162,7 @@ namespace DemoExchange.Models {
         "Type: " + Type + ", " +
         "Quantity: " + Quantity + ", " +
         "OpenQuantity: " + OpenQuantity + ", " +
-        "StrikePrice: " + StrikePrice.ToString("0.0000000000") + ", " +
+        "StrikePrice: " + AppConstants.FormatPrice(StrikePrice) + ", " +
         "TimeInForce: " + TimeInForce + ", " +
         "ToBeCanceledTimestamp: " + ToBeCanceledTimestamp + ", " +
         "}";

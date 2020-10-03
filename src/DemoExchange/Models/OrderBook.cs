@@ -37,6 +37,19 @@ namespace DemoExchange.Models {
     /// </summary>
     protected readonly Comparer<Order> comparer;
 
+    public List<Level2Quote> Level2 {
+      get {
+        List<Level2Quote> quotes = new List<Level2Quote>();
+        int numQuotes = Math.Min(AppConstants.LEVEL_2_QUOTE_SIZE, orders.Count);
+        for (int i = 0; i < numQuotes; i++) {
+          quotes.Add(new Level2Quote(orders[i].StrikePrice,
+            orders[i].OpenQuantity));
+        }
+
+        return quotes;
+      }
+    }
+
     public Order First {
       get { return orders[0]; }
     }
