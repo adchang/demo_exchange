@@ -5,65 +5,28 @@ using DemoExchange.Services;
 
 namespace DemoExchangeSimulator {
   public class Simulator {
-    readonly TestOrderService service = new TestOrderService();
+    readonly SimOrderService service = new SimOrderService();
+    readonly Random rnd = new Random();
 
 #pragma warning disable IDE0059
-    public void Start() {
-      int minOrders = 3000;
-      int trades = 1068;
-      Random rnd = new Random();
+    public void Start(int buyMinOrders, int sellMinOrders, int numTrades) {
       List<String> tickers = new List<String> { "ERX", "SPY", "DIA" };
       foreach (String ticker in tickers) {
         service.AddTicker(ticker);
-        TestOrderManager mgr = service.GetManager(ticker);
-        TestOrderBook book = mgr.TestBuyBook;
-        int numOrders = rnd.Next(minOrders, 2 * minOrders);
-        long start = System.Diagnostics.Stopwatch.GetTimestamp();
-        int basePrice = rnd.Next(8, 10);
-        for (int i = 0; i < numOrders; i++) {
-          int quantity = (rnd.Next(1, 3) == 1) ?
-            rnd.Next(1, 6) * 100 :
-            rnd.Next(50, 849);
-          decimal price = basePrice + rnd.Next(1, 10000) / 100000M;
-          book.AddOrderNoSort(new BuyLimitDayOrder("buy" + i,
-            ticker, quantity, price));
-        }
-        long stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Added {1} {2} BUY orders in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond), numOrders, ticker));
-        start = System.Diagnostics.Stopwatch.GetTimestamp();
-        book.AddOrder(new BuyLimitDayOrder("buy - ME",
-          ticker, 200, 8.8888M));
-        stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Added a BUY order in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond)));
-
-        book = mgr.TestSellBook;
-        numOrders = rnd.Next(minOrders, 2 * minOrders);
-        start = System.Diagnostics.Stopwatch.GetTimestamp();
-        for (int i = 0; i < numOrders; i++) {
-          int quantity = (rnd.Next(1, 3) == 1) ?
-            rnd.Next(1, 6) * 100 :
-            rnd.Next(50, 849);
-          decimal price = basePrice + rnd.Next(1, 10000) / 100000M;
-          book.AddOrderNoSort(new SellLimitDayOrder("sell" + i,
-            ticker, quantity, price));
-        }
-        stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Added {1} {2} SELL orders in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond), numOrders, ticker));
-        start = System.Diagnostics.Stopwatch.GetTimestamp();
-        book.AddOrder(new SellLimitDayOrder("sell - ME",
-          ticker, 200, 8.8888M));
-        stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Added a SELL order in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond)));
+        SimOrderManager mgr = service.GetManager(ticker);
+        int basePrice = rnd.Next(8, 19);
+        SeedOrders(buyMinOrders, mgr.TestBuyBook, ticker, basePrice, true);
+        SeedOrders(sellMinOrders, mgr.TestSellBook, ticker, basePrice, false);
       }
 
       Console.WriteLine("\n\n********** CLEAR MATCHES **********\n");
       foreach (String ticker in tickers) {
-        service.SubmitOrder(new BuyLimitDayOrder("buy - ME",
+        service.SubmitOrder(new BuyLimitDayOrder("buy - START",
           ticker, 200, 1M));
       }
 
       Console.WriteLine("\n\n********** BEGIN TRADING **********\n");
-      for (int i = 0; i < trades; i++) {
+      for (int i = 0; i < numTrades; i++) {
         int quantity = (rnd.Next(1, 3) == 1) ?
           rnd.Next(1, 4) * 100 :
           rnd.Next(50, 288);
@@ -87,69 +50,74 @@ namespace DemoExchangeSimulator {
         }
 
         long stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Executed order in {0} ms\n", ((stop - start) / TimeSpan.TicksPerMillisecond)));
+        Console.WriteLine(String.Format("Sim trading executed order in {0} ms\n", ((stop - start) / TimeSpan.TicksPerMillisecond)));
       }
     }
 #pragma warning restore IDE0059
 
-    class TestOrderService : OrderService {
+    private int RandomQuantity {
+      get {
+        return (rnd.Next(1, 3) == 1) ?
+          rnd.Next(1, 6) * 100 :
+          rnd.Next(50, 849);
+      }
+    }
+
+    // Seed some orders in the order book; go through AddOrderNoSort to avoid sorting
+    // for initial set; then add 1 more using AddOrder to trigger the sort
+    private void SeedOrders(int minOrders, SimOrderBook book, String ticker,
+      int basePrice, bool isBuy) {
+      int numOrders = rnd.Next(minOrders, 2 * minOrders);
+      String prefix = isBuy ? "BUY" : "SELL";
+      int sign = isBuy ? -1 : +1;
+      long start = System.Diagnostics.Stopwatch.GetTimestamp();
+      for (int i = 0; i < numOrders; i++) {
+        decimal price = basePrice + (sign * (rnd.Next(1, 10000) / 100000M));
+        book.AddOrderNoSort(isBuy ?
+          new BuyLimitDayOrder(prefix + i,
+            ticker, RandomQuantity, price) :
+          new SellLimitDayOrder(prefix + i,
+            ticker, RandomQuantity, price));
+      }
+      long stop = System.Diagnostics.Stopwatch.GetTimestamp();
+      Console.WriteLine(String.Format("Added {1} {2} {3} orders in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond), numOrders, ticker, prefix));
+      start = System.Diagnostics.Stopwatch.GetTimestamp();
+      book.AddOrder(isBuy ?
+        new BuyLimitDayOrder(prefix + " - sort",
+          ticker, 200, 8.8888M) :
+        new SellLimitDayOrder(prefix + " - sort",
+          ticker, 200, 8.8888M));
+      stop = System.Diagnostics.Stopwatch.GetTimestamp();
+      Console.WriteLine(String.Format("Added a {1} order in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond), prefix));
+    }
+
+    class SimOrderService : OrderService {
       public new void AddTicker(string ticker) {
-        base.managers.Add(ticker, new TestOrderManager(ticker));
+        base.managers.Add(ticker, new SimOrderManager(ticker));
       }
 
-      public TestOrderManager GetManager(String ticker) {
-        return (TestOrderManager)base.managers[ticker];
-      }
-    }
-
-    class TestOrderManager : OrderManager {
-      public TestOrderManager(string ticker) : base(ticker) {
-        base.BuyBook = new TestOrderBook(ticker, OrderAction.BUY);
-        base.SellBook = new TestOrderBook(ticker, OrderAction.SELL);
-      }
-
-      protected override OrderTransaction FillMarketOrder(Order order, OrderBook book) {
-        long start = System.Diagnostics.Stopwatch.GetTimestamp();
-        OrderTransaction tran = base.FillMarketOrder(order, book);
-        long stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Market order executed in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond)));
-        WriteDetails(tran);
-        return tran;
-      }
-
-      protected override OrderTransaction FillLimitOrder() {
-        long start = System.Diagnostics.Stopwatch.GetTimestamp();
-        OrderTransaction tran = base.FillLimitOrder();
-        long stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Limit order executed in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond)));
-        WriteDetails(tran);
-        return tran;
-      }
-
-      private void WriteDetails(OrderTransaction tran) {
-        Console.WriteLine("Order details:");
-        foreach (Order filledOrder in tran.Orders) {
-          Console.WriteLine("     " + filledOrder.ToString());
-        }
-        Console.WriteLine("Transaction details:");
-        foreach (Transaction aTran in tran.Transactions) {
-          Console.WriteLine("     " + aTran.ToString());
-        }
-        Console.WriteLine("  SPREAD: " + base.Quote);
-        Console.WriteLine("  LEVEL 2:\n" + base.Level2);
-      }
-
-      public TestOrderBook TestBuyBook {
-        get { return (TestOrderBook)base.BuyBook; }
-      }
-
-      public TestOrderBook TestSellBook {
-        get { return (TestOrderBook)base.SellBook; }
+      public SimOrderManager GetManager(String ticker) {
+        return (SimOrderManager)base.managers[ticker];
       }
     }
 
-    class TestOrderBook : OrderBook {
-      public TestOrderBook(String ticker, OrderAction type) : base(ticker, type) { }
+    class SimOrderManager : OrderManager {
+      public SimOrderManager(string ticker) : base(ticker) {
+        base.BuyBook = new SimOrderBook(ticker, OrderAction.BUY);
+        base.SellBook = new SimOrderBook(ticker, OrderAction.SELL);
+      }
+
+      public SimOrderBook TestBuyBook {
+        get { return (SimOrderBook)base.BuyBook; }
+      }
+
+      public SimOrderBook TestSellBook {
+        get { return (SimOrderBook)base.SellBook; }
+      }
+    }
+
+    class SimOrderBook : OrderBook {
+      public SimOrderBook(String ticker, OrderAction type) : base(ticker, type) { }
 
       public void AddOrderNoSort(Order order) {
         base.orderIds.Add(order.Id, order);

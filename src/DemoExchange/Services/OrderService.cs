@@ -83,9 +83,7 @@ namespace DemoExchange.Services {
         OrderAction.BUY.Equals(order.Action) ? BuyBook : SellBook;
 
       if (OrderType.MARKET.Equals(order.Type)) {
-#pragma warning disable IDE0059
         OrderTransaction filled = FillMarketOrder(order, book);
-#pragma warning restore IDE0059
 #if DIAGNOSTICS
         WriteDetails(filled);
 #endif
@@ -99,9 +97,7 @@ namespace DemoExchange.Services {
       while (!done) {
         if (BuyBook.IsEmpty || SellBook.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
         if (BuyBook.First.StrikePrice >= SellBook.First.StrikePrice) {
-#pragma warning disable IDE0059
           OrderTransaction filled = FillLimitOrder();
-#pragma warning restore IDE0059
 #if DIAGNOSTICS
           WriteDetails(filled);
 #endif
