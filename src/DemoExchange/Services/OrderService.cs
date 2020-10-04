@@ -30,7 +30,7 @@ namespace DemoExchange.Services {
       managers[order.Ticker].SubmitOrder(order);
     }
 
-    public void CancelOrder(String id) {
+    public void CancelOrder(String orderId) {
       throw new NotImplementedException();
     }
 
@@ -134,7 +134,7 @@ namespace DemoExchange.Services {
         }
         buyOrder.OpenQuantity -= fillQuantity;
         sellOrder.OpenQuantity -= fillQuantity;
-        transactions.Add(new Transaction(buyOrder.Id, sellOrder.Id, Ticker,
+        transactions.Add(new Transaction(buyOrder.OrderId, sellOrder.OrderId, Ticker,
           fillQuantity, executionPrice));
         filledOrders.Add(book.First);
         if (book.First.IsFilled) {
@@ -179,7 +179,7 @@ namespace DemoExchange.Services {
       }
       buyOrder.OpenQuantity -= fillQuantity;
       sellOrder.OpenQuantity -= fillQuantity;
-      transactions.Add(new Transaction(buyOrder.Id, sellOrder.Id, Ticker,
+      transactions.Add(new Transaction(buyOrder.OrderId, sellOrder.OrderId, Ticker,
         fillQuantity, executionPrice));
       filledOrders.Add(SellBook.First);
       if (SellBook.First.IsFilled) {

@@ -51,8 +51,8 @@ namespace DemoExchange.Services {
       Assert.Equal(50, order1.OpenQuantity);
       Assert.Single(filled.Transactions);
       Transaction tran = filled.Transactions[0];
-      Assert.Equal(order.Id, tran.BuyOrderId);
-      Assert.Equal(order1.Id, tran.SellOrderId);
+      Assert.Equal(order.OrderId, tran.BuyOrderId);
+      Assert.Equal(order1.OrderId, tran.SellOrderId);
       Assert.Equal("ERX", tran.Ticker);
       Assert.Equal(order.Quantity, tran.Quantity);
       Assert.Equal(order1.StrikePrice, tran.Price);
@@ -70,14 +70,14 @@ namespace DemoExchange.Services {
       Assert.Equal(75, order2.OpenQuantity);
       Assert.Equal(2, filled.Transactions.Count);
       tran = filled.Transactions[0];
-      Assert.Equal(order.Id, tran.BuyOrderId);
-      Assert.Equal(order1.Id, tran.SellOrderId);
+      Assert.Equal(order.OrderId, tran.BuyOrderId);
+      Assert.Equal(order1.OrderId, tran.SellOrderId);
       Assert.Equal("ERX", tran.Ticker);
       Assert.Equal(50, tran.Quantity);
       Assert.Equal(order1.StrikePrice, tran.Price);
       tran = filled.Transactions[1];
-      Assert.Equal(order.Id, tran.BuyOrderId);
-      Assert.Equal(order2.Id, tran.SellOrderId);
+      Assert.Equal(order.OrderId, tran.BuyOrderId);
+      Assert.Equal(order2.OrderId, tran.SellOrderId);
       Assert.Equal("ERX", tran.Ticker);
       Assert.Equal(25, tran.Quantity);
       Assert.Equal(order2.StrikePrice, tran.Price);
@@ -104,8 +104,8 @@ namespace DemoExchange.Services {
       Assert.True(order3.IsFilled);
       Assert.Single(filled.Transactions);
       Transaction tran = filled.Transactions[0];
-      Assert.Equal(order3.Id, tran.BuyOrderId);
-      Assert.Equal(order.Id, tran.SellOrderId);
+      Assert.Equal(order3.OrderId, tran.BuyOrderId);
+      Assert.Equal(order.OrderId, tran.SellOrderId);
       Assert.Equal("ERX", tran.Ticker);
       Assert.Equal(order.Quantity, tran.Quantity);
       Assert.Equal(order3.StrikePrice, tran.Price);
@@ -122,14 +122,14 @@ namespace DemoExchange.Services {
       Assert.True(order1.IsFilled);
       Assert.Equal(2, filled.Transactions.Count);
       tran = filled.Transactions[0];
-      Assert.Equal(order2.Id, tran.BuyOrderId);
-      Assert.Equal(order.Id, tran.SellOrderId);
+      Assert.Equal(order2.OrderId, tran.BuyOrderId);
+      Assert.Equal(order.OrderId, tran.SellOrderId);
       Assert.Equal("ERX", tran.Ticker);
       Assert.Equal(100, tran.Quantity);
       Assert.Equal(order2.StrikePrice, tran.Price);
       tran = filled.Transactions[1];
-      Assert.Equal(order1.Id, tran.BuyOrderId);
-      Assert.Equal(order.Id, tran.SellOrderId);
+      Assert.Equal(order1.OrderId, tran.BuyOrderId);
+      Assert.Equal(order.OrderId, tran.SellOrderId);
       Assert.Equal("ERX", tran.Ticker);
       Assert.Equal(100, tran.Quantity);
       Assert.Equal(order1.StrikePrice, tran.Price);
@@ -144,13 +144,8 @@ namespace DemoExchange.Services {
     class TestOrderManager : OrderManager {
       public TestOrderManager(string ticker) : base(ticker) { }
 
-      new public OrderTransaction FillMarketOrder(Order order, OrderBook book) {
-        long start = System.Diagnostics.Stopwatch.GetTimestamp();
-        OrderTransaction tran = base.FillMarketOrder(order, book);
-        long stop = System.Diagnostics.Stopwatch.GetTimestamp();
-        Console.WriteLine(String.Format("Market order executed in {0} ms", ((stop - start) / TimeSpan.TicksPerMillisecond)));
-
-        return tran;
+      public new OrderTransaction FillMarketOrder(Order order, OrderBook book) {
+        return base.FillMarketOrder(order, book);
       }
 
       new public OrderBook BuyBook {

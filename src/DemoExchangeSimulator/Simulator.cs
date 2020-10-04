@@ -120,7 +120,7 @@ namespace DemoExchangeSimulator {
       public SimOrderBook(String ticker, OrderAction type) : base(ticker, type) { }
 
       public void AddOrderNoSort(Order order) {
-        base.orderIds.Add(order.Id, order);
+        base.orderIds.Add(order.OrderId, order);
         base.orders.Add(order);
       }
     }

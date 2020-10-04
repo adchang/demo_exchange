@@ -10,9 +10,9 @@ namespace DemoExchange.Models {
   public abstract class Order : IModelOrder {
     public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
-    public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN Order Id: {0}";
+    public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN OrderId: {0}";
 
-    public String Id { get; protected set; }
+    public String OrderId { get; protected set; }
     public long CreatedTimestamp { get; protected set; }
     public DateTime CreatedDateTime {
       get { return new DateTime(CreatedTimestamp); }
@@ -115,7 +115,7 @@ namespace DemoExchange.Models {
         }
       }
 
-      Id = Guid.NewGuid().ToString();
+      OrderId = Guid.NewGuid().ToString();
       CreatedTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
       AccountId = accountId;
       Status = OrderStatus.OPEN;
@@ -142,7 +142,7 @@ namespace DemoExchange.Models {
 
     public void Cancel() {
       CheckArgument(OrderStatus.OPEN.Equals(Status),
-        String.Format(ERROR_STATUS_NOT_OPEN, Id));
+        String.Format(ERROR_STATUS_NOT_OPEN, OrderId));
 
       Status = OrderStatus.CANCELLED;
       CanceledTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -153,7 +153,7 @@ namespace DemoExchange.Models {
     }
 
     public override String ToString() {
-      return "{Id: " + Id + ", " +
+      return "{OrderId: " + OrderId + ", " +
         "CreatedTimestamp: " + CreatedTimestamp + ", " +
         "AccountId: " + AccountId + ", " +
         "Status: " + Status + ", " +
@@ -187,9 +187,9 @@ namespace DemoExchange.Models {
   /// </summary>
   // TODO: Add EntityFramework and hook up to db
   public class OrderEntity : Order {
-    new public String Id {
-      get { return base.Id; }
-      set { base.Id = value; }
+    new public String OrderId {
+      get { return base.OrderId; }
+      set { base.OrderId = value; }
     }
     new public long CreatedTimestamp {
       get { return base.CreatedTimestamp; }
@@ -337,8 +337,8 @@ namespace DemoExchange.Models {
     public static readonly Comparer<Order> STRIKE_PRICE_DESCENDING_COMPARER =
       new StrikePriceDescendingComparer();
 
-    public static Predicate<Order> ById(String id) {
-      return order => order.Id.Equals(id);
+    public static Predicate<Order> ById(String orderId) {
+      return order => order.OrderId.Equals(orderId);
     }
 
     private Orders() {

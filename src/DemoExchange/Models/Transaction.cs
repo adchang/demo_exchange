@@ -3,7 +3,7 @@ using System;
 namespace DemoExchange.Models {
   public class Transaction {
 
-    public String Id { get; }
+    public String TransactionId { get; }
     public long CreatedTimestamp { get; protected set; }
     public DateTime CreatedDateTime {
       get { return new DateTime(CreatedTimestamp); }
@@ -15,7 +15,7 @@ namespace DemoExchange.Models {
     public decimal Price { get; }
 
     public Transaction(string buyOrderId, string sellOrderId, string ticker, int quantity, decimal price) {
-      Id = Guid.NewGuid().ToString();
+      TransactionId = Guid.NewGuid().ToString();
       CreatedTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
       BuyOrderId = buyOrderId;
       SellOrderId = sellOrderId;
@@ -25,7 +25,7 @@ namespace DemoExchange.Models {
     }
 
     public override String ToString() {
-      return "{Id: " + Id + ", " +
+      return "{TransactionId: " + TransactionId + ", " +
         "CreatedTimestamp: " + CreatedTimestamp + ", " +
         "BuyOrderId: " + BuyOrderId + ", " +
         "SellOrderId: " + SellOrderId + ", " +

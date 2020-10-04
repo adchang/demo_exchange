@@ -6,12 +6,12 @@ using static Utils.Preconditions;
 // QUESTION: Use timer callbacks to manage GTC order?
 namespace DemoExchange.Models {
   public class OrderBook {
-    public const String ERROR_MARKET_ORDER = "Error Type: Market Order Id: {0}";
-    public const String ERROR_NOT_OPEN_ORDER = "Error Status: Not Open Order Id: {0}";
-    public const String ERROR_TICKER = "Error Ticker: OrderBook {0} received Order Id: {1}";
-    public const String ERROR_ACTION = "Error Action: OrderBook {0} received Order Id: {1}";
-    public const String ERROR_ORDER_EXISTS = "Error Order Exists : Order Id: {0}";
-    public const String ERROR_ORDER_NOT_EXISTS = "Error Order Not Exists : Order Id: {0}";
+    public const String ERROR_MARKET_ORDER = "Error Type: Market OrderId: {0}";
+    public const String ERROR_NOT_OPEN_ORDER = "Error Status: Not Open OrderId: {0}";
+    public const String ERROR_TICKER = "Error Ticker: OrderBook {0} received OrderId: {1}";
+    public const String ERROR_ACTION = "Error Action: OrderBook {0} received OrderId: {1}";
+    public const String ERROR_ORDER_EXISTS = "Error Order Exists : OrderId: {0}";
+    public const String ERROR_ORDER_NOT_EXISTS = "Error Order Not Exists : OrderId: {0}";
 
     public String Ticker { get; }
     public OrderAction Type { get; }
@@ -66,29 +66,29 @@ namespace DemoExchange.Models {
     public void AddOrder(Order order) {
       CheckNotNull(order, paramName : nameof(order));
       CheckArgument(!OrderType.MARKET.Equals(order.Type),
-        String.Format(ERROR_MARKET_ORDER, order.Id));
+        String.Format(ERROR_MARKET_ORDER, order.OrderId));
       CheckArgument(OrderStatus.OPEN.Equals(order.Status),
-        String.Format(ERROR_NOT_OPEN_ORDER, order.Id));
+        String.Format(ERROR_NOT_OPEN_ORDER, order.OrderId));
       CheckArgument(Ticker.Equals(order.Ticker),
-        String.Format(ERROR_TICKER, Ticker, order.Id));
+        String.Format(ERROR_TICKER, Ticker, order.OrderId));
       CheckArgument(Type.Equals(order.Action),
         String.Format(ERROR_ACTION, Type, order.Action));
 
-      CheckArgument(!orderIds.ContainsKey(order.Id),
-        String.Format(ERROR_ORDER_EXISTS, order.Id));
+      CheckArgument(!orderIds.ContainsKey(order.OrderId),
+        String.Format(ERROR_ORDER_EXISTS, order.OrderId));
 
-      orderIds.Add(order.Id, order);
+      orderIds.Add(order.OrderId, order);
       orders.Add(order);
       orders.Sort(comparer);
     }
 
-    public Order CancelOrder(String id) {
-      CheckNotNullOrWhitespace(id, paramName: "Id");
+    public Order CancelOrder(String orderId) {
+      CheckNotNullOrWhitespace(orderId, paramName : nameof(orderId));
 
-      CheckArgument(orderIds.ContainsKey(id),
-        String.Format(ERROR_ORDER_NOT_EXISTS, id));
+      CheckArgument(orderIds.ContainsKey(orderId),
+        String.Format(ERROR_ORDER_NOT_EXISTS, orderId));
 
-      Order order = orderIds[id];
+      Order order = orderIds[orderId];
       RemoveOrder(order);
       order.Cancel();
 
@@ -98,10 +98,10 @@ namespace DemoExchange.Models {
     public void RemoveOrder(Order order) {
       CheckNotNull(order);
 
-      CheckArgument(orderIds.ContainsKey(order.Id),
-        String.Format(ERROR_ORDER_NOT_EXISTS, order.Id));
+      CheckArgument(orderIds.ContainsKey(order.OrderId),
+        String.Format(ERROR_ORDER_NOT_EXISTS, order.OrderId));
 
-      orderIds.Remove(order.Id);
+      orderIds.Remove(order.OrderId);
       orders.Remove(order);
     }
   }
