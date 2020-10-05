@@ -1,6 +1,7 @@
 ﻿using System;
 
 namespace DemoExchange.Interface {
+
   /// <summary>
   /// A service to manage orders.
   /// </summary>
@@ -19,5 +20,15 @@ namespace DemoExchange.Interface {
     /// Cancel the specified order.
     /// </summary>
     public void CancelOrder(String Id);
+
+    /// <summary>
+    /// Get quote for specified ticker.
+    /// </summary>
+    public IQuote GetQuote(String ticker);
+
+    /// <summary>
+    /// Get Level 2 for specified ticker.
+    /// </summary>
+    public ILevel2 GetLevel2(String ticker);
   }
 }

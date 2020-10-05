@@ -19,6 +19,7 @@
     </PackageReference>
 
     <ProjectReference Include="../DemoExchange/DemoExchange.csproj" />
+    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
   </ItemGroup>
 
 </Project>

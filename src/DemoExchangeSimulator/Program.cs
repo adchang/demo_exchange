@@ -9,7 +9,7 @@ namespace DemoExchangeSimulator {
       Console.WriteLine("");
 
       Simulator sim = new Simulator();
-      sim.Start(3000, 3000, 188);
+      sim.Start(300, 300, 180, 10);
     }
   }
 }

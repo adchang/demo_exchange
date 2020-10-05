@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../DemoExchange/DemoExchange.csproj">
-      <Properties>DefineConstants=PERF;DIAGNOSTICS</Properties>
+      <Properties>DefineConstants=PERF;PERF_FINE;PERF_FINEST;DIAGNOSTICS</Properties>
     </ProjectReference>
   </ItemGroup>
 

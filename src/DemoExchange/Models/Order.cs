@@ -1,155 +1,37 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using DemoExchange.Interface;
 using static Utils.Preconditions;
+using static Utils.Time;
 
 namespace DemoExchange.Models {
   /// <summary>
-  /// Base Class representing an Order.
+  /// For persistence of an <c>Order</c>.
   /// </summary>
-  public abstract class Order : IModelOrder {
-    public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
+  [Table("ExchangeOrder")]
+  public class ExchangeOrderEntity : IModelOrder {
+    public virtual String OrderId { get; set; }
+    public virtual long CreatedTimestamp { get; set; }
+    public virtual String AccountId { get; set; }
+    public virtual OrderStatus Status { get; set; }
+    public virtual OrderAction Action { get; set; }
+    public virtual String Ticker { get; set; }
+    public virtual OrderType Type { get; set; }
+    public virtual int Quantity { get; set; }
+    public virtual int OpenQuantity { get; set; }
+    public virtual decimal OrderPrice { get; set; }
+    public virtual decimal StrikePrice { get; set; }
+    public virtual OrderTimeInForce TimeInForce { get; set; }
+    public virtual long ToBeCanceledTimestamp { get; set; }
+    public virtual long CanceledTimestamp { get; set; }
 
-    public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN OrderId: {0}";
-
-    public String OrderId { get; protected set; }
-    public long CreatedTimestamp { get; protected set; }
-    public DateTime CreatedDateTime {
-      get { return new DateTime(CreatedTimestamp); }
-    }
-    public String AccountId { get; protected set; }
-    public OrderStatus Status { get; set; }
-    public bool IsOpen {
-      get { return Status.Equals(OrderStatus.OPEN); }
-    }
-    public bool IsCompleted {
-      get { return Status.Equals(OrderStatus.COMPLETED); }
-    }
-    public bool IsUpdated {
-      get { return Status.Equals(OrderStatus.UPDATED); }
-    }
-    public bool IsCancelled {
-      get { return Status.Equals(OrderStatus.CANCELLED); }
-    }
-    public bool IsDeleted {
-      get { return Status.Equals(OrderStatus.DELETED); }
-    }
-    public OrderAction Action { get; protected set; }
-    public bool IsBuyOrder {
-      get { return Action.Equals(OrderAction.BUY); }
-    }
-    public bool IsSellOrder {
-      get { return Action.Equals(OrderAction.SELL); }
-    }
-    public String Ticker { get; protected set; }
-    public OrderType Type { get; protected set; }
-    public bool IsMarketOrder {
-      get { return Type.Equals(OrderType.MARKET); }
-    }
-    public bool IsLimitOrder {
-      get { return Type.Equals(OrderType.LIMIT); }
-    }
-    public bool IsStopMarketOrder {
-      get { return Type.Equals(OrderType.STOP_MARKET); }
-    }
-    public bool IsStopLimitOrder {
-      get { return Type.Equals(OrderType.STOP_LIMIT); }
-    }
-    public bool IsTrailingStopMarketOrder {
-      get { return Type.Equals(OrderType.TRAILING_STOP_MARKET); }
-    }
-    public bool IsTrailingStopLimitOrder {
-      get { return Type.Equals(OrderType.TRAILING_STOP_LIMIT); }
-    }
-    public bool IsFillOrKillOrder {
-      get { return Type.Equals(OrderType.FILL_OR_KILL); }
-    }
-    public bool IsImmediateOrCancelOrder {
-      get { return Type.Equals(OrderType.IMMEDIATE_OR_CANCEL); }
-    }
-    public int Quantity { get; protected set; }
-    public int OpenQuantity { get; set; }
-    public bool IsFilled {
-      get { return OpenQuantity == 0; }
-    }
-    // QUESTION: Should set be protected? What are the needs of Trailing?
-    public decimal StrikePrice { get; set; }
-    public OrderTimeInForce TimeInForce { get; protected set; }
-    public bool IsDayOrder {
-      get { return TimeInForce.Equals(OrderTimeInForce.DAY); }
-    }
-    public bool IsGoodTillCanceledOrder {
-      get { return TimeInForce.Equals(OrderTimeInForce.GOOD_TIL_CANCELED); }
-    }
-    public long ToBeCanceledTimestamp { get; protected set; }
-    public DateTime ToBeCanceledDateTime {
-      get { return new DateTime(ToBeCanceledTimestamp); }
-    }
-    public long CanceledTimestamp { get; private set; }
-    public DateTime CanceledDateTime {
-      get { return new DateTime(CanceledTimestamp); }
+    public virtual bool IsValid {
+      get { throw new NotImplementedException(); }
     }
 
-    protected Order() { }
-
-    /// <summary>
-    /// <c>Order</c> constructor.
-    /// <br><c>Id</c>: Auto-gen GUID</br>
-    /// <br><c>CreatedTimestamp</c>: Auto-gen UTC high fidelity timestamp</br>
-    /// <br><c>Status</c>: Defaults to OPEN</br>
-    /// <br><c>OpenQuantity</c>: Defaults to Quantity</br>
-    /// <br><c>ToBeCanceledTimestamp</c>: Defaults to 0 for Market orders, end of day for Day orders, and <c>TIME_IN_FORCE_TO_BE_CANCELLED_DAYS</c> for Good Til Canceled orders.</br>
-    /// </summary>
-    protected Order(String accountId, OrderAction action, String ticker, OrderType type,
-      int quantity, decimal strikePrice, OrderTimeInForce timeInForce) {
-      CheckNotNullOrWhitespace(accountId, paramName: "AccountId");
-      CheckNotNullOrWhitespace(ticker, paramName: "Ticker");
-      CheckArgument(quantity > 0, message: "Quantity must be greater than 0");
-      if (OrderType.MARKET.Equals(type)) {
-        if (strikePrice != 0) {
-          throw new ArgumentException("StrikePrice should be 0 for Market orders");
-        }
-      } else {
-        if (strikePrice <= 0) {
-          throw new ArgumentException("StrikePrice must be greater than 0");
-        }
-      }
-
-      OrderId = Guid.NewGuid().ToString();
-      CreatedTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
-      AccountId = accountId;
-      Status = OrderStatus.OPEN;
-      Action = action;
-      Ticker = ticker;
-      Type = type;
-      Quantity = quantity;
-      OpenQuantity = quantity;
-      StrikePrice = strikePrice;
-      TimeInForce = timeInForce;
-      if (OrderType.MARKET.Equals(type)) {
-        ToBeCanceledTimestamp = 0;
-      } else {
-        // TODO: Calculate timestamp for DAY
-        ToBeCanceledTimestamp = timeInForce.Equals(OrderTimeInForce.DAY) ?
-          0 :
-          CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_CANCELLED_DAYS);
-      }
-    }
-
-    public bool IsValid() {
-      return true; // TODO: throw new NotImplementedException();
-    }
-
-    public void Cancel() {
-      CheckArgument(OrderStatus.OPEN.Equals(Status),
-        String.Format(ERROR_STATUS_NOT_OPEN, OrderId));
-
-      Status = OrderStatus.CANCELLED;
-      CanceledTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
-    }
-
-    public Order ShallowCopy() {
-      return (Order)this.MemberwiseClone();
+    public virtual ExchangeOrderEntity ShallowCopy() {
+      return (ExchangeOrderEntity)this.MemberwiseClone();
     }
 
     public override String ToString() {
@@ -162,14 +44,16 @@ namespace DemoExchange.Models {
         "Type: " + Type + ", " +
         "Quantity: " + Quantity + ", " +
         "OpenQuantity: " + OpenQuantity + ", " +
+        "OrderPrice: " + AppConstants.FormatPrice(OrderPrice) + ", " +
         "StrikePrice: " + AppConstants.FormatPrice(StrikePrice) + ", " +
         "TimeInForce: " + TimeInForce + ", " +
         "ToBeCanceledTimestamp: " + ToBeCanceledTimestamp + ", " +
+        "CanceledTimestamp: " + CanceledTimestamp + ", " +
         "}";
     }
 
     public override bool Equals(object obj) {
-      if (obj == null || GetType() != obj.GetType()) {
+      if (obj == null) { // Don't check for GetType
         return false;
       }
 
@@ -182,77 +66,297 @@ namespace DemoExchange.Models {
   }
 
   /// <summary>
-  /// For persistence of an <c>Order</c>.
-  /// <br><c>readonly</c> parameters are exposed.</br>
+  /// Base Class representing an Order.
   /// </summary>
-  // TODO: Add EntityFramework and hook up to db
-  public class OrderEntity : Order {
-    new public String OrderId {
+  public abstract class Order : ExchangeOrderEntity, IModelOrder {
+    public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
+
+    public const String ERROR_QUANTITY_IS_0 = "quantity must be greater than 0";
+    public const String ERROR_ORDER_PRICE_MARKET_NOT_0 = "orderPrice should be 0 for Market orders";
+    public const String ERROR_ORDER_PRICE_IS_0 = "orderPrice must be greater than 0";
+    public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN OrderId: {0}";
+
+    public new String OrderId {
       get { return base.OrderId; }
-      set { base.OrderId = value; }
+#if DEBUG
+      set { throw new InvalidOperationException(); }
+#endif
     }
-    new public long CreatedTimestamp {
+    public new long CreatedTimestamp {
       get { return base.CreatedTimestamp; }
-      set { base.CreatedTimestamp = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public String AccountId {
+    public DateTime CreatedDateTime {
+      get { return FromTicks(base.CreatedTimestamp); }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
+    }
+    public new String AccountId {
       get { return base.AccountId; }
-      set { base.AccountId = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public OrderStatus Status {
+    public new OrderStatus Status {
       get { return base.Status; }
-      set { base.Status = value; }
+#if DEBUG
+      protected set { base.Status = value; }
+#else
+      private set { base.Status = value; }
+#endif
     }
-    new public OrderAction Action {
+    public bool IsOpen {
+      get { return OrderStatus.OPEN.Equals(Status); }
+    }
+    public bool IsCompleted {
+      get { return OrderStatus.COMPLETED.Equals(Status); }
+    }
+    public bool IsUpdated {
+      get { return OrderStatus.UPDATED.Equals(Status); }
+    }
+    public bool IsCancelled {
+      get { return OrderStatus.CANCELLED.Equals(Status); }
+    }
+    public bool IsDeleted {
+      get { return OrderStatus.DELETED.Equals(Status); }
+    }
+    public new OrderAction Action {
       get { return base.Action; }
-      set { base.Action = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public String Ticker {
+    public bool IsBuyOrder {
+      get { return OrderAction.BUY.Equals(Action); }
+    }
+    public bool IsSellOrder {
+      get { return OrderAction.SELL.Equals(Action); }
+    }
+    public new String Ticker {
       get { return base.Ticker; }
-      set { base.Ticker = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public OrderType Type {
-      get { return base.Type; }
-      set { base.Type = value; }
+    public new OrderType Type {
+      get {
+        return base.Type;
+      }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public int Quantity {
+    public bool IsMarketOrder {
+      get { return OrderType.MARKET.Equals(Type); }
+    }
+    public bool IsLimitOrder {
+      get { return OrderType.LIMIT.Equals(Type); }
+    }
+    public bool IsStopMarketOrder {
+      get { return OrderType.STOP_MARKET.Equals(Type); }
+    }
+    public bool IsStopLimitOrder {
+      get { return OrderType.STOP_LIMIT.Equals(Type); }
+    }
+    public bool IsTrailingStopMarketOrder {
+      get { return OrderType.TRAILING_STOP_MARKET.Equals(Type); }
+    }
+    public bool IsTrailingStopLimitOrder {
+      get { return OrderType.TRAILING_STOP_LIMIT.Equals(Type); }
+    }
+    public bool IsFillOrKillOrder {
+      get { return OrderType.FILL_OR_KILL.Equals(Type); }
+    }
+    public bool IsImmediateOrCancelOrder {
+      get { return OrderType.IMMEDIATE_OR_CANCEL.Equals(Type); }
+    }
+    public new int Quantity {
       get { return base.Quantity; }
-      set { base.Quantity = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public int OpenQuantity {
+    public new int OpenQuantity {
       get { return base.OpenQuantity; }
       set { base.OpenQuantity = value; }
     }
-    new public decimal StrikePrice {
+    public bool IsFilled {
+      get { return OpenQuantity == 0; }
+    }
+    public virtual new decimal OrderPrice {
+      get { return base.OrderPrice; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
+    }
+    public virtual new decimal StrikePrice {
       get { return base.StrikePrice; }
       set { base.StrikePrice = value; }
     }
-    new public OrderTimeInForce TimeInForce {
+    public new OrderTimeInForce TimeInForce {
       get { return base.TimeInForce; }
-      set { base.TimeInForce = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
     }
-    new public long ToBeCanceledTimestamp {
+    public bool IsDayOrder {
+      get {
+        return OrderTimeInForce.DAY.Equals(TimeInForce);
+      }
+    }
+    public bool IsGoodTillCanceledOrder {
+      get { return OrderTimeInForce.GOOD_TIL_CANCELED.Equals(TimeInForce); }
+    }
+    public bool IsMarketClose {
+      get { return OrderTimeInForce.MARKET_CLOSE.Equals(TimeInForce); }
+    }
+    public new long ToBeCanceledTimestamp {
       get { return base.ToBeCanceledTimestamp; }
-      set { base.ToBeCanceledTimestamp = value; }
+#if DEBUG
+      protected set { throw new InvalidOperationException(); }
+#endif
+    }
+    public DateTime ToBeCanceledDateTime {
+      get { return FromTicks(ToBeCanceledTimestamp); }
+    }
+    public new long CanceledTimestamp {
+      get { return base.CanceledTimestamp; }
+#if DEBUG
+      protected set { base.CanceledTimestamp = value; }
+#else
+      private set { base.CanceledTimestamp = value; }
+#endif
+    }
+    public DateTime CanceledDateTime {
+      get { return FromTicks(CanceledTimestamp); }
     }
 
-    public OrderEntity() { }
+    /// <summary>
+    /// <c>Order</c> constructor.
+    /// <br><c>Id</c>: Auto-gen GUID</br>
+    /// <br><c>CreatedTimestamp</c>: Auto-gen UTC high fidelity timestamp</br>
+    /// <br><c>Status</c>: Defaults to OPEN</br>
+    /// <br><c>OpenQuantity</c>: Defaults to Quantity</br>
+    /// <br><c>StrikePrice</c>: Defaults to OrderPrice</br>
+    /// <br><c>ToBeCanceledTimestamp</c>: Defaults to 0 for Market orders, end of day for Day orders, and <c>TIME_IN_FORCE_TO_BE_CANCELLED_DAYS</c> for Good Til Canceled orders.</br>
+    /// </summary>
+    protected Order(String accountId, OrderAction action, String ticker, OrderType type,
+      int quantity, decimal orderPrice, OrderTimeInForce timeInForce) {
+      CheckNotNullOrWhitespace(accountId, paramName : nameof(accountId));
+      CheckNotNullOrWhitespace(ticker, paramName : nameof(ticker));
+      CheckArgument(quantity > 0, message : ERROR_QUANTITY_IS_0);
+      if (OrderType.MARKET.Equals(type)) {
+        if (orderPrice != 0) {
+          throw new ArgumentException(ERROR_ORDER_PRICE_MARKET_NOT_0,
+            paramName : nameof(orderPrice));
+        }
+      } else {
+        if (orderPrice <= 0) {
+          throw new ArgumentException(ERROR_ORDER_PRICE_IS_0,
+            paramName : nameof(orderPrice));
+        }
+      }
+
+      base.OrderId = Guid.NewGuid().ToString();
+      base.CreatedTimestamp = Now;
+      base.AccountId = accountId;
+      base.Status = OrderStatus.OPEN;
+      base.Action = action;
+      base.Ticker = ticker;
+      base.Type = type;
+      base.Quantity = quantity;
+      base.OpenQuantity = quantity;
+      base.OrderPrice = orderPrice;
+      base.StrikePrice = orderPrice;
+      base.TimeInForce = timeInForce;
+      if (OrderType.MARKET.Equals(type)) {
+        base.ToBeCanceledTimestamp = 0;
+      } else {
+        long toBeCancel = 0;
+        switch (TimeInForce) {
+          case OrderTimeInForce.DAY:
+            toBeCancel = MidnightIct;
+            break;
+          case OrderTimeInForce.GOOD_TIL_CANCELED:
+            toBeCancel = base.CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_CANCELLED_DAYS);
+            break;
+          case OrderTimeInForce.MARKET_CLOSE:
+            toBeCancel = MidnightSaturdayIct;
+            break;
+        }
+
+        base.ToBeCanceledTimestamp = toBeCancel;
+      }
+    }
+
+    public Order(ExchangeOrderEntity entity) {
+      base.OrderId = entity.OrderId;
+      base.CreatedTimestamp = entity.CreatedTimestamp;
+      base.AccountId = entity.AccountId;
+      base.Status = entity.Status;
+      base.Action = entity.Action;
+      base.Ticker = entity.Ticker;
+      base.Type = entity.Type;
+      base.Quantity = entity.Quantity;
+      base.OpenQuantity = entity.OpenQuantity;
+      base.OrderPrice = entity.OrderPrice;
+      base.StrikePrice = entity.StrikePrice;
+      base.TimeInForce = entity.TimeInForce;
+      base.ToBeCanceledTimestamp = entity.ToBeCanceledTimestamp;
+      base.CanceledTimestamp = entity.CanceledTimestamp;
+    }
+
+    public override bool IsValid {
+      get { return true; } // TODO: throw new NotImplementedException();
+    }
+
+    public void Cancel() {
+      CheckArgument(IsOpen, String.Format(ERROR_STATUS_NOT_OPEN, OrderId));
+
+      Status = OrderStatus.CANCELLED;
+      CanceledTimestamp = Now;
+    }
+
+    public void Complete() {
+      CheckArgument(IsOpen, String.Format(ERROR_STATUS_NOT_OPEN, OrderId));
+
+      Status = OrderStatus.COMPLETED;
+    }
+
+#if DEBUG
+    public Order() { }
+#endif
+  }
+
+  public abstract class MarketOrder : Order {
+    public new decimal OrderPrice {
+      get { return ((ExchangeOrderEntity)this).OrderPrice; }
+    }
+    public new decimal StrikePrice {
+      get { return ((ExchangeOrderEntity)this).StrikePrice; }
+    }
+
+    public MarketOrder(String accountId, OrderAction action, String ticker, int quantity):
+      base(accountId, action, ticker, OrderType.MARKET, quantity, 0, OrderTimeInForce.DAY) { }
   }
 
   /// <summary>
   /// Convenience class to instantiate a Buy Market Order.
   /// </summary>
-  public class BuyMarketOrder : Order {
-    public BuyMarketOrder(String accountId, String ticker, int quantity) : base(accountId,
-      OrderAction.BUY, ticker, OrderType.MARKET, quantity, 0, OrderTimeInForce.DAY) { }
+  public class BuyMarketOrder : MarketOrder {
+    public BuyMarketOrder(String accountId, String ticker, int quantity):
+      base(accountId, OrderAction.BUY, ticker, quantity) { }
   }
 
   /// <summary>
   /// Convenience class to instantiate a Buy Limit Day Order.
   /// </summary>
   public class BuyLimitDayOrder : Order {
-    public BuyLimitDayOrder(String accountId, String ticker, int quantity, decimal strikePrice):
-      base(accountId, OrderAction.BUY, ticker, OrderType.LIMIT, quantity, strikePrice,
+    public BuyLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice):
+      base(accountId, OrderAction.BUY, ticker, OrderType.LIMIT, quantity, orderPrice,
         OrderTimeInForce.DAY) { }
   }
 
@@ -269,9 +373,9 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Convenience class to instantiate a Sell Market Order.
   /// </summary>
-  public class SellMarketOrder : Order {
-    public SellMarketOrder(String accountId, String ticker, int quantity) : base(accountId,
-      OrderAction.SELL, ticker, OrderType.MARKET, quantity, 0, OrderTimeInForce.DAY) { }
+  public class SellMarketOrder : MarketOrder {
+    public SellMarketOrder(String accountId, String ticker, int quantity):
+      base(accountId, OrderAction.SELL, ticker, quantity) { }
   }
 
   /// <summary>
@@ -293,35 +397,6 @@ namespace DemoExchange.Models {
         OrderTimeInForce.GOOD_TIL_CANCELED) { }
   }
 
-  public enum OrderStatus {
-    OPEN, // Default
-    COMPLETED,
-    UPDATED,
-    CANCELLED,
-    DELETED
-  }
-
-  public enum OrderAction {
-    BUY, // Default
-    SELL
-  }
-
-  public enum OrderType {
-    MARKET, // Default
-    LIMIT,
-    STOP_MARKET,
-    STOP_LIMIT,
-    TRAILING_STOP_MARKET,
-    TRAILING_STOP_LIMIT,
-    FILL_OR_KILL,
-    IMMEDIATE_OR_CANCEL
-  }
-
-  public enum OrderTimeInForce {
-    DAY, // Default
-    GOOD_TIL_CANCELED
-  }
-
   /// <summary>
   /// Convenience methods for <c>Order</c>.
   /// </summary>
@@ -331,6 +406,7 @@ namespace DemoExchange.Models {
     /// </summary>
     public static readonly Comparer<Order> STRIKE_PRICE_ASCENDING_COMPARER =
       new StrikePriceAscendingComparer();
+
     /// <summary>
     /// Use for BUY order books.
     /// </summary>
@@ -385,9 +461,9 @@ namespace DemoExchange.Models {
   /// <summary>
   /// Market <c>Order</c> validator.
   /// </summary>
-  public class MarketOrderValidator : IValidator<Order> {
-    public bool IsValid() {
-      throw new NotImplementedException();
+  public class MarketOrderValidator : IValidator<IModelOrder> {
+    public bool IsValid {
+      get { throw new NotImplementedException(); }
     }
   }
 }
