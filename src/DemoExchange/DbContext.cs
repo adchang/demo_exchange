@@ -13,6 +13,6 @@ namespace DemoExchange {
     public DbSet<ExchangeTransactionEntity> Transactions { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options) =>
-      options.UseSqlServer("Server=loki,1143;Database=demo_exchange;User Id=demo_exchange;Password=Hello8!8;");
+      options.UseSqlServer("Server=loki,1433;Database=demo_exchange;User Id=demo_exchange_user;Password=PASSWORD;"); // HACK: Move connection string to config file
   }
 }
