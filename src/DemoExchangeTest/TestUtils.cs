@@ -4,12 +4,21 @@ using DemoExchange.Models;
 
 namespace DemoExchange {
   public class TestUtils {
+    public static Order NewBuyMarketOrder(String accountId, String ticker, int quantity) {
+      return new Order(new BuyMarketOrder(accountId, ticker, quantity));
+    }
+
     public static Order NewBuyLimitDayOrder() {
       return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.BUY);
     }
 
     public static Order NewBuyLimitDayOrder(decimal strikePrice) {
       return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.BUY);
+    }
+
+    public static Order NewBuyLimitDayOrder(String accountId, String ticker, int quantity,
+      decimal strikePrice) {
+      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.BUY);
     }
 
     public static Order NewSellLimitDayOrder() {
@@ -20,12 +29,16 @@ namespace DemoExchange {
       return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.SELL);
     }
 
+    public static Order NewSellLimitDayOrder(String accountId, String ticker, int quantity,
+      decimal strikePrice) {
+      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.SELL);
+    }
+
     public static Order NewLimitDayOrder(String accountId, String ticker, int quantity,
       decimal strikePrice, OrderAction action) {
-
-      return OrderAction.BUY.Equals(action) ?
+      return new Order(OrderAction.BUY.Equals(action) ?
         new BuyLimitDayOrder(accountId, ticker, quantity, strikePrice) :
-        new SellLimitDayOrder(accountId, ticker, quantity, strikePrice);
+        new SellLimitDayOrder(accountId, ticker, quantity, strikePrice));
     }
 
     private TestUtils() {
@@ -35,93 +48,93 @@ namespace DemoExchange {
 
   public class TestOrder : Order {
     public new String OrderId {
-      get { return ((ExchangeOrderEntity)this).OrderId; }
+      get { return ((OrderEntity)this).OrderId.ToString(); }
       set {
-        ((ExchangeOrderEntity)this).OrderId = value;
+        ((OrderEntity)this).OrderId = Guid.Parse(value);
       }
     }
     public new long CreatedTimestamp {
-      get { return ((ExchangeOrderEntity)this).CreatedTimestamp; }
+      get { return ((OrderEntity)this).CreatedTimestamp; }
       set {
-        ((ExchangeOrderEntity)this).CreatedTimestamp = value;
+        ((OrderEntity)this).CreatedTimestamp = value;
       }
     }
     public new String AccountId {
-      get { return ((ExchangeOrderEntity)this).AccountId; }
+      get { return ((OrderEntity)this).AccountId; }
       set {
-        ((ExchangeOrderEntity)this).AccountId = value;
+        ((OrderEntity)this).AccountId = value;
       }
     }
     public new OrderStatus Status {
-      get { return ((ExchangeOrderEntity)this).Status; }
+      get { return ((OrderEntity)this).Status; }
       set {
-        ((ExchangeOrderEntity)this).Status = value;
+        ((OrderEntity)this).Status = value;
       }
     }
     public new OrderAction Action {
-      get { return ((ExchangeOrderEntity)this).Action; }
+      get { return ((OrderEntity)this).Action; }
       set {
-        ((ExchangeOrderEntity)this).Action = value;
+        ((OrderEntity)this).Action = value;
       }
     }
     public new String Ticker {
-      get { return ((ExchangeOrderEntity)this).Ticker; }
+      get { return ((OrderEntity)this).Ticker; }
       set {
-        ((ExchangeOrderEntity)this).Ticker = value;
+        ((OrderEntity)this).Ticker = value;
       }
     }
     public new OrderType Type {
-      get { return ((ExchangeOrderEntity)this).Type; }
+      get { return ((OrderEntity)this).Type; }
       set {
-        ((ExchangeOrderEntity)this).Type = value;
+        ((OrderEntity)this).Type = value;
       }
     }
     public new int Quantity {
-      get { return ((ExchangeOrderEntity)this).Quantity; }
+      get { return ((OrderEntity)this).Quantity; }
       set {
-        ((ExchangeOrderEntity)this).Quantity = value;
+        ((OrderEntity)this).Quantity = value;
       }
     }
     public new int OpenQuantity {
-      get { return ((ExchangeOrderEntity)this).OpenQuantity; }
+      get { return ((OrderEntity)this).OpenQuantity; }
       set {
-        ((ExchangeOrderEntity)this).OpenQuantity = value;
+        ((OrderEntity)this).OpenQuantity = value;
       }
     }
     public new decimal OrderPrice {
-      get { return ((ExchangeOrderEntity)this).OrderPrice; }
+      get { return ((OrderEntity)this).OrderPrice; }
       set {
-        ((ExchangeOrderEntity)this).OrderPrice = value;
+        ((OrderEntity)this).OrderPrice = value;
       }
     }
     public new decimal StrikePrice {
-      get { return ((ExchangeOrderEntity)this).StrikePrice; }
+      get { return ((OrderEntity)this).StrikePrice; }
       set {
-        ((ExchangeOrderEntity)this).StrikePrice = value;
+        ((OrderEntity)this).StrikePrice = value;
       }
     }
     public new OrderTimeInForce TimeInForce {
-      get { return ((ExchangeOrderEntity)this).TimeInForce; }
+      get { return ((OrderEntity)this).TimeInForce; }
       set {
-        ((ExchangeOrderEntity)this).TimeInForce = value;
+        ((OrderEntity)this).TimeInForce = value;
       }
     }
     public new long ToBeCanceledTimestamp {
-      get { return ((ExchangeOrderEntity)this).ToBeCanceledTimestamp; }
+      get { return ((OrderEntity)this).ToBeCanceledTimestamp; }
       set {
-        ((ExchangeOrderEntity)this).ToBeCanceledTimestamp = value;
+        ((OrderEntity)this).ToBeCanceledTimestamp = value;
       }
     }
     public new long CanceledTimestamp {
-      get { return ((ExchangeOrderEntity)this).CanceledTimestamp; }
+      get { return ((OrderEntity)this).CanceledTimestamp; }
       set {
-        ((ExchangeOrderEntity)this).CanceledTimestamp = value;
+        ((OrderEntity)this).CanceledTimestamp = value;
       }
     }
 
     public TestOrder() { }
 
-    public TestOrder(ExchangeOrderEntity entity) : base(entity) { }
+    public TestOrder(OrderEntity entity) : base(entity) { }
 
     public TestOrder(String accountId, String ticker, OrderType type,
       int quantity, decimal strikePrice) : this(accountId,

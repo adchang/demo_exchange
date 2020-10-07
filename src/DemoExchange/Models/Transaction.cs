@@ -1,34 +1,34 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using DemoExchange.Interface;
 using static Utils.Time;
 
 namespace DemoExchange.Models {
   /// <summary>
-  /// Model for a transaction.
-  /// </summary>
-  public interface IModelTransaction : IModel {
-    string TransactionId { get; set; }
-    long CreatedTimestamp { get; set; }
-    IModelOrder BuyOrder { get; set; }
-    IModelOrder SellOrder { get; set; }
-    string Ticker { get; set; }
-    int Quantity { get; set; }
-    decimal Price { get; set; }
-  }
-
-  /// <summary>
   /// For persistence of a <c>Transaction</c>.
   /// </summary>
   [Table("ExchangeTransaction")]
-  public class ExchangeTransactionEntity : IModelTransaction {
-    public virtual String TransactionId { get; set; }
-    public virtual long CreatedTimestamp { get; set; }
-    public virtual IModelOrder BuyOrder { get; set; }
-    public virtual IModelOrder SellOrder { get; set; }
-    public virtual String Ticker { get; set; }
-    public virtual int Quantity { get; set; }
-    public virtual decimal Price { get; set; }
+  public class TransactionEntity {
+    [Key]
+    public Guid TransactionId { get; set; }
+
+    [Required]
+    public long CreatedTimestamp { get; set; }
+
+    [Required]
+    public OrderEntity BuyOrder { get; set; }
+
+    [Required]
+    public OrderEntity SellOrder { get; set; }
+
+    [Required]
+    public String Ticker { get; set; }
+
+    [Required]
+    public int Quantity { get; set; }
+
+    [Required]
+    public decimal Price { get; set; }
 
     public override String ToString() {
       return "{TransactionId: " + TransactionId + ", " +
@@ -41,12 +41,12 @@ namespace DemoExchange.Models {
         "}";
     }
 
-    public override bool Equals(object obj) {
-      if (obj == null) { // Don't check for GetType
+    public override bool Equals(object other) {
+      if (other == null) { // Don't check for GetType
         return false;
       }
 
-      return this.ToString().Equals(obj.ToString());
+      return this.ToString().Equals(other.ToString());
     }
 
     public override int GetHashCode() {
@@ -54,9 +54,9 @@ namespace DemoExchange.Models {
     }
   }
 
-  public class Transaction : ExchangeTransactionEntity {
+  public class Transaction : TransactionEntity {
     public new String TransactionId {
-      get { return base.TransactionId; }
+      get { return base.TransactionId.ToString(); }
     }
     public new long CreatedTimestamp {
       get { return base.CreatedTimestamp; }
@@ -83,7 +83,7 @@ namespace DemoExchange.Models {
     public Transaction(Order buyOrder, Order sellOrder, string ticker, int quantity,
       decimal price) {
       // TODO Precondtions
-      base.TransactionId = Guid.NewGuid().ToString();
+      base.TransactionId = Guid.NewGuid();
       base.CreatedTimestamp = Now;
       base.BuyOrder = buyOrder;
       base.SellOrder = sellOrder;

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using static Utils.Preconditions;
@@ -18,7 +20,7 @@ namespace DemoExchange.Services {
     private readonly IDictionary<String, Order> orderIds =
       new Dictionary<String, Order>();
     private readonly List<Order> orders = new List<Order>();
-    private readonly Comparer<Order> comparer;
+    private readonly Comparer<IModelOrder> comparer;
 
     public String Ticker { get; }
     public OrderAction Type { get; }
@@ -53,6 +55,25 @@ namespace DemoExchange.Services {
       comparer = OrderAction.BUY.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
+    }
+
+    public void LoadOrders(IOrderContext context) {
+      // TODO: Add tests
+      CheckNotNull(context, paramName : nameof(context));
+      // QUESTION: Confirm the WHERE is part of the query; ie it doesn't retrieve all orders, then filter on server
+      var query = context.Orders.Where(order =>
+        (order.Ticker.Equals(Ticker)) &&
+        (order.Action == Type) &&
+        (order.Status == OrderStatus.OPEN)
+      ).ToList();
+
+      query.ForEach(entity => {
+        Order order = new Order(entity);
+        orderIds.Add(order.OrderId, order);
+        orders.Add(order);
+      });
+
+      orders.Sort(comparer);
     }
 
     public void AddOrder(Order order) {
@@ -106,7 +127,7 @@ namespace DemoExchange.Services {
       get { return orders; }
     }
 
-    public Comparer<Order> TestComparer {
+    public Comparer<IModelOrder> TestComparer {
       get { return comparer; }
     }
 #endif
@@ -133,74 +154,11 @@ namespace DemoExchange.Services {
     }
   }
 
-  public class Quote : IQuote {
-    public decimal Bid { get; }
-    public decimal Ask { get; }
-    public decimal Last { get; }
-    public int Volume { get; }
-
-    public Quote(decimal bid, decimal ask) {
-      Bid = bid;
-      Ask = ask;
-    }
-
-    public Quote(decimal bid, decimal ask, decimal last, int volume) {
-      Bid = bid;
-      Ask = ask;
-      Last = last;
-      Volume = volume;
-    }
-
-    public new String ToString() {
-      return QuoteType.BID + ": " + AppConstants.FormatPrice(Bid) + " / " +
-        QuoteType.ASK + ": " + AppConstants.FormatPrice(Ask) +
-        ((Last > 0 && Volume > 0) ?
-          " Last: " + AppConstants.FormatPrice(Last) + " Volume: " + Volume :
-          "");
-    }
-  }
-
-  public class Level2Quote : ILevel2Quote {
-    public decimal Price { get; }
-    public int Quantity { get; }
-
-    public Level2Quote(decimal price, int quantity) {
-      Price = price;
-      Quantity = quantity;
-    }
-
-    public new String ToString() {
-      return Quantity + " @ " + AppConstants.FormatPrice(Price);
-    }
-  }
-
-  public class Level2 : ILevel2 {
-    public List<ILevel2Quote> Bid { get; }
-    public List<ILevel2Quote> Ask { get; }
-
-    public Level2(List<ILevel2Quote> bid, List<ILevel2Quote> ask) {
-      Bid = bid;
-      Ask = ask;
-    }
-
-    public new String ToString() {
-      StringBuilder sb = new StringBuilder();
-      sb.Append(QuoteType.BID + ":\n");
-      foreach (Level2Quote quote in Bid) {
-        sb.Append("  " + quote.ToString() + "\n");
-      }
-      sb.Append(QuoteType.ASK + ":\n");
-      foreach (Level2Quote quote in Ask) {
-        sb.Append("  " + quote.ToString() + "\n");
-      }
-      sb.Append('\n');
-
-      return sb.ToString();
-    }
-  }
-
-  public enum QuoteType {
-    BID,
-    ASK
+  public class OrderTransactionResponse : BaseResponse<OrderTransaction> {
+    public OrderTransactionResponse() { }
+    public OrderTransactionResponse(OrderTransaction data) : this(Constants.Response.OK, data) { }
+    public OrderTransactionResponse(int code, OrderTransaction data) : base(code, data) { }
+    public OrderTransactionResponse(int code, OrderTransaction data, Error error) : base(code, data, error) { }
+    public OrderTransactionResponse(int code, OrderTransaction data, List<IError> errors) : base(code, data, errors) { }
   }
 }

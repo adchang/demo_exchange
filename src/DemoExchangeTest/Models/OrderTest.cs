@@ -7,9 +7,10 @@ namespace DemoExchange.Models {
   public class OrderTest {
     [Fact]
     [Trait("Category", "Unit")]
-    public void ExchangeOrderEntityTest() {
-      ExchangeOrderEntity orderEntity = new ExchangeOrderEntity {
-        OrderId = "Id",
+    public void OrderEntityTest() {
+      Guid orderId = Guid.NewGuid();
+      OrderEntity orderEntity = new OrderEntity {
+        OrderId = orderId,
         CreatedTimestamp = 1,
         AccountId = "accountId",
         Status = OrderStatus.OPEN,
@@ -24,7 +25,7 @@ namespace DemoExchange.Models {
         ToBeCanceledTimestamp = 8,
         CanceledTimestamp = 18
       };
-      Assert.Equal("Id", orderEntity.OrderId);
+      Assert.Equal(orderId, orderEntity.OrderId);
       Assert.Equal(1, orderEntity.CreatedTimestamp);
       Assert.Equal("accountId", orderEntity.AccountId);
       Assert.Equal(OrderStatus.OPEN, orderEntity.Status);
@@ -39,7 +40,6 @@ namespace DemoExchange.Models {
       Assert.Equal(8, orderEntity.ToBeCanceledTimestamp);
       Assert.Equal(18, orderEntity.CanceledTimestamp);
       Order order = new TestOrder(orderEntity);
-      Assert.Equal("Id", order.OrderId);
       Assert.Equal(1, order.CreatedTimestamp);
       Assert.Equal("accountId", order.AccountId);
       Assert.Equal(OrderStatus.OPEN, order.Status);
@@ -53,8 +53,8 @@ namespace DemoExchange.Models {
       Assert.Equal(OrderTimeInForce.DAY, order.TimeInForce);
       Assert.Equal(8, order.ToBeCanceledTimestamp);
       Assert.Equal(18, order.CanceledTimestamp);
-      ExchangeOrderEntity orderEntity2 = new ExchangeOrderEntity {
-        OrderId = "Id",
+      OrderEntity orderEntity2 = new OrderEntity {
+        OrderId = orderId,
         CreatedTimestamp = 1,
         AccountId = "accountId",
         Status = OrderStatus.OPEN,
@@ -76,8 +76,8 @@ namespace DemoExchange.Models {
       Assert.Equal(orderEntity.ToString(), orderEntity2.ToString());
       Assert.True(orderEntity.Equals(orderEntity2));
       Assert.Equal(orderEntity.GetHashCode(), orderEntity2.GetHashCode());
-      ExchangeOrderEntity up = order;
-      Assert.Equal("Id", up.OrderId);
+      OrderEntity up = order;
+      Assert.Equal(orderId, up.OrderId);
       Assert.Equal(1, up.CreatedTimestamp);
       Assert.Equal("accountId", up.AccountId);
       Assert.Equal(OrderStatus.OPEN, up.Status);
@@ -91,7 +91,6 @@ namespace DemoExchange.Models {
       Assert.Equal(OrderTimeInForce.DAY, up.TimeInForce);
       Assert.Equal(8, up.ToBeCanceledTimestamp);
       Assert.Equal(18, up.CanceledTimestamp);
-      up.OrderId += "-Up";
       up.CreatedTimestamp += 10;;
       up.AccountId += "-Up";
       up.Status = OrderStatus.COMPLETED;
@@ -105,7 +104,6 @@ namespace DemoExchange.Models {
       up.TimeInForce = OrderTimeInForce.GOOD_TIL_CANCELED;
       up.ToBeCanceledTimestamp += 10;
       up.CanceledTimestamp += 10;
-      Assert.Equal("Id-Up", up.OrderId);
       Assert.Equal(11, up.CreatedTimestamp);
       Assert.Equal("accountId-Up", up.AccountId);
       Assert.Equal(OrderStatus.COMPLETED, up.Status);
@@ -135,25 +133,26 @@ namespace DemoExchange.Models {
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.MARKET, 0, 0));
-      Assert.Equal(Order.ERROR_QUANTITY_IS_0,
+      Assert.Equal(IModelOrder.ERROR_QUANTITY_IS_0,
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.MARKET, -100, 0));
-      Assert.Equal(Order.ERROR_QUANTITY_IS_0,
+      Assert.Equal(IModelOrder.ERROR_QUANTITY_IS_0,
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.MARKET, 100, -1));
-      Assert.Equal(Order.ERROR_ORDER_PRICE_MARKET_NOT_0 + " (Parameter 'orderPrice')",
+      Assert.Equal(IModelOrder.ERROR_ORDER_PRICE_MARKET_NOT_0,
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.LIMIT, 100, -1));
-      Assert.Equal(Order.ERROR_ORDER_PRICE_IS_0 + " (Parameter 'orderPrice')",
+      Assert.Equal(IModelOrder.ERROR_ORDER_PRICE_IS_0,
         e.Message);
     }
 
     [Fact]
     [Trait("Category", "Unit")]
     public void MarketOrderTest() {
+      /* TODO Move to InterfaceTest project
       MarketOrder order = new BuyMarketOrder("accountId", "ERX", 100);
       Assert.False(String.IsNullOrWhiteSpace(order.OrderId));
       Assert.Equal(new DateTime(order.CreatedTimestamp), order.CreatedDateTime);
@@ -189,6 +188,11 @@ namespace DemoExchange.Models {
         order.ToString());
 
       Assert.False(order.IsFilled);
+      Exception e = Assert.Throws<InvalidOperationException>(() =>
+        order.OpenQuantity = 1000);
+      Assert.Equal(Order.ERROR_OPEN_QUANITY_GREATER_THAN_QUANITY,
+        e.Message);
+
       order.OpenQuantity = 0;
       Assert.Equal(0, order.OpenQuantity);
       Assert.True(order.IsFilled);
@@ -204,11 +208,13 @@ namespace DemoExchange.Models {
       Assert.Equal(0, order.OrderPrice);
       Assert.Equal(0, order.StrikePrice);
       Assert.True(order.IsDayOrder);
+      */
     }
 
     [Fact]
     [Trait("Category", "Unit")]
     public void LimitOrderTest() {
+      /* TODO Move to InterfaceTest project
       Order order = new BuyLimitDayOrder("accountId", "ERX", 100, 18.81018M);
       Assert.False(String.IsNullOrWhiteSpace(order.OrderId));
       Assert.Equal("accountId", order.AccountId);
@@ -264,18 +270,20 @@ namespace DemoExchange.Models {
       Assert.Equal(order.CreatedTimestamp +
         (TimeSpan.TicksPerDay * Order.TIME_IN_FORCE_TO_BE_CANCELLED_DAYS),
         order.ToBeCanceledTimestamp);
+        */
     }
 
     [Fact]
     [Trait("Category", "Unit")]
     public void CancelTest() {
+      Guid orderId = Guid.NewGuid();
       Order order = new TestOrder {
-        OrderId = "abc",
+        OrderId = orderId.ToString(),
         Status = OrderStatus.COMPLETED
       };
       Exception e = Assert.Throws<ArgumentException>(() =>
         order.Cancel());
-      Assert.Equal("Error Cancel: Status is not OPEN OrderId: abc",
+      Assert.Equal("Error Cancel: Status is not OPEN OrderId: " + orderId.ToString(),
         e.Message);
       Order open = TestUtils.NewBuyLimitDayOrder();
       Assert.Equal(0, open.CanceledTimestamp);

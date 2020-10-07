@@ -5,7 +5,7 @@ CREATE TABLE dbo.ExchangeOrder
 (
   OrderId uniqueidentifier PRIMARY KEY,
   CreatedTimestamp bigint NOT NULL,
-  AccountId uniqueidentifier NOT NULL,
+  AccountId varchar(25) NOT NULL, -- TODO: Change this to Guid
   Status varchar(25) NOT NULL,
   Action varchar(4) NOT NULL,
   Ticker varchar(25) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE dbo.ExchangeOrder
 ) ;
 GO
 
-GRANT SELECT ON dbo.ExchangeOrder TO demo_exchange_app ;
+GRANT SELECT, INSERT, UPDATE ON dbo.ExchangeOrder TO demo_exchange_app ;
 GO
 
 DROP PROCEDURE IF EXISTS dbo.ExchangeOrder_Insert ;

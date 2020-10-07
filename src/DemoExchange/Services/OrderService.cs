@@ -1,38 +1,44 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using DemoExchange;
+using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
+using Microsoft.EntityFrameworkCore;
 using static Utils.Preconditions;
 using static Utils.Time;
 
 namespace DemoExchange.Services {
-  public class OrderService : IOrderService {
+  public interface IOrderInternalService : IOrderService {
+    public void AddTicker(String ticker);
+    public void OpenMarket();
+    public void CloseMarket();
+  }
+
+  public class OrderService : IOrderInternalService {
     public const String MARKET_CLOSED = "Market is closed.";
 
-    private readonly DemoExchangeContext db; // How to do DI? IDemoExchangeContext db;
     private readonly IDictionary<String, OrderManager> managers =
       new Dictionary<String, OrderManager>();
-    private bool marketOpen = false;
+    private readonly IAccountService accountService;
 
-    public OrderService() {
-      // TODO: OrderService DI
-      //db = new DemoExchangeContext();
-      // int numRetries = 0;
-      // while (!db.Database.CanConnect() && numRetries < 10) {
-      //   Thread.Sleep(5000);
-      //   numRetries++;
-      // }
-      // if (!db.Database.CanConnect())throw new InvalidOperationException("Cannot start db");
+    public bool IsMarketOpen { get; private set; }
+
+    public OrderService(IAccountService accountService) {
+      this.accountService = accountService;
     }
 
-    private void MarketIsOpen() {
-      if (!marketOpen)throw new InvalidOperationException(MARKET_CLOSED);
+    private void CheckMarketIsOpen() {
+      if (!IsMarketOpen) {
+        throw new InvalidOperationException(MARKET_CLOSED);
+      }
     }
 
     public void OpenMarket() {
 #if DEBUG
-      marketOpen = true;
+      IsMarketOpen = true;
 #else
       // TODO If Market hours, set marketOpen to true;
       throw new InvalidOperationException(MARKET_CLOSED);
@@ -41,7 +47,7 @@ namespace DemoExchange.Services {
 
     public void CloseMarket() {
 #if DEBUG
-      marketOpen = false;
+      IsMarketOpen = false;
 #else
       // TODO If !Market hours, set marketOpen to false;
       throw new InvalidOperationException(MARKET_CLOSED);
@@ -51,24 +57,26 @@ namespace DemoExchange.Services {
     public void AddTicker(String ticker) {
       // TODO: AddTicker preconditions & tests
       lock(managers) {
-        managers.Add(ticker, new OrderManager(db, ticker));
+        managers.Add(ticker, new OrderManager(ticker));
       }
     }
 
-    public void SubmitOrder(IModelOrder data) {
-      // TODO: MarketIsOpen(); This is not correct; should still be able to submit 
+    public IOrderResponse SubmitOrder(IModelOrder orderRequest) {
+      // TODO: CheckMarketIsOpen(); This is not correct; should still be able to submit 
       //       orders if market is not open; Just can't trade.
       // TODO: Add tests
-      CheckNotNull(data, paramName : nameof(data));
+      CheckNotNull(orderRequest, paramName : nameof(orderRequest));
+      OrderResponse response = NewOrder(orderRequest);
+      if (response.HasErrors)return response;
 
-      Order order = (Order)data;
-      OrderManager manager = managers[order.Ticker];
+      OrderManager manager = managers[response.Data.Ticker];
       lock(manager) {
-        manager.SubmitOrder(order);
+        using var context = new OrderContext();
+        return manager.SubmitOrder(context, accountService, (Order)response.Data);
       }
     }
 
-    public void CancelOrder(String orderId) {
+    public IOrderResponse CancelOrder(String orderId) {
       throw new NotImplementedException();
     }
 
@@ -82,21 +90,27 @@ namespace DemoExchange.Services {
       return managers[ticker].Level2;
     }
 
-#if PERF
-    public void TestPerfAddTicker(String ticker,
-      List<Order> buyOrders, List<Order> sellOrders) {
-      lock(managers) {
-        OrderManager manager = new OrderManager(db, ticker);
-        manager.TestPerfAddOrder(buyOrders, sellOrders);
-        managers.Add(ticker, manager);
+    private static OrderResponse NewOrder(IModelOrder request) {
+      try {
+        return new OrderResponse(new Order(request));
+      } catch (Exception e) {
+        return new OrderResponse(Constants.Response.BAD_REQUEST, request,
+          new Error("", "", e.Message));
       }
+    }
+
+#if PERF
+    public void TestPerfAddOrder(String ticker,
+      List<IModelOrder> buyOrders, List<IModelOrder> sellOrders) {
+      OrderManager manager = new OrderManager(ticker);
+      manager.TestPerfAddOrder(buyOrders, sellOrders);
+      managers.Add(ticker, manager);
     }
 #endif
   }
 
   // QUESTION: Assumes order book always has at least 1 order, ie market maker
   public class OrderManager {
-    private readonly DemoExchangeContext db;
     private readonly OrderBook BuyBook;
     private readonly OrderBook SellBook;
 
@@ -107,84 +121,106 @@ namespace DemoExchange.Services {
       get { return new Level2(BuyBook.Level2, SellBook.Level2); }
     }
 
-    public OrderManager(IDemoExchangeContext dbContext, String ticker) {
-      db = (DemoExchangeContext)dbContext;
+    public OrderManager(String ticker) {
       BuyBook = new OrderBook(ticker, OrderAction.BUY);
       SellBook = new OrderBook(ticker, OrderAction.SELL);
+      LoadOrderBook();
     }
 
-    public void SubmitOrder(Order order) {
+    public OrderResponse SubmitOrder(IOrderContext context,
+      IAccountService accountService, Order order) {
 #if PERF
       long start = Now;
 #endif
       if (!order.IsValid) {
         throw new NotImplementedException(); // TODO
       }
-
-      OrderBook book = OrderType.MARKET.Equals(order.Type) ?
-        OrderAction.BUY.Equals(order.Action) ? SellBook : BuyBook :
-        OrderAction.BUY.Equals(order.Action) ? BuyBook : SellBook;
-
-      if (OrderType.MARKET.Equals(order.Type)) {
-        OrderTransaction filled = FillMarketOrder(order, book);
-#if DIAGNOSTICS
-        DiagnosticsWriteDetails(filled);
-#endif
-        // foreach (Order o in filled.Orders) {
-        //   db.Orders.Add(o);
-        // }
-        // foreach (Transaction t in filled.Transactions) {
-        //   db.Transactions.Add(t);
-        // }
-        // HERE db.SaveChanges();
-        // TODO: Persist filled as 1 db transaction
-#if PERF
-        Console.WriteLine(String.Format("SubmitOrder: Market order executed in {0} ms", ((Now - start) / TimeSpan.TicksPerMillisecond)));
-#endif
-        return;
+      OrderResponse insertResponse = InsertOrder(context, order);
+      if (insertResponse.HasErrors) {
+        return insertResponse;
       }
 
-      // TODO: Persist order insert
-      book.AddOrder(order);
+      OrderBook book = order.IsMarketOrder ?
+        order.IsBuyOrder ? SellBook : BuyBook :
+        order.IsBuyOrder ? BuyBook : SellBook;
+      if (order.IsMarketOrder) {
+        // QUESTION: Could potentially optimize to not do an initial save of a Market order
+        //           but can we allow order entry during market close hours? What's MarketOnOpen?
+        OrderTransactionResponse fillResponse = FillMarketOrder(accountService, order, book);
+        if (fillResponse.HasErrors) {
+          return new OrderResponse(fillResponse.Code, order, fillResponse.Errors);
+        }
+        fillResponse = SaveOrderTransaction(context, fillResponse.Data);
+        if (fillResponse.HasErrors) {
+          return new OrderResponse(fillResponse.Code, order, fillResponse.Errors);
+        }
+#if DIAGNOSTICS
+        DiagnosticsWriteDetails(fillResponse.Data);
+#endif
+#if PERF
+        Console.WriteLine(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+#endif
+        return new OrderResponse(order);
+      }
+
+      book.AddOrder(order); // HACK: Technically, this should return back as Submitted, and the TryFillOrderBook is a separate process that runs continuously
       bool done = false;
       while (!done) {
         if (BuyBook.IsEmpty || SellBook.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
         if (BuyBook.First.StrikePrice >= SellBook.First.StrikePrice) {
-          OrderTransaction filled = TryFillOrderBook();
+          OrderTransactionResponse fillResponse = TryFillOrderBook(accountService);
+          if (fillResponse.HasErrors) {
+            return new OrderResponse(fillResponse.Code, order, fillResponse.Errors);
+          }
+          fillResponse = SaveOrderTransaction(context, fillResponse.Data);
+          if (fillResponse.HasErrors) {
+            return new OrderResponse(fillResponse.Code, order, fillResponse.Errors);
+          }
 #if DIAGNOSTICS
-          DiagnosticsWriteDetails(filled);
+          DiagnosticsWriteDetails(fillResponse.Data);
 #endif
         } else {
           done = true;
         }
       }
 #if PERF
-      Console.WriteLine(String.Format("SubmitOrder: Processed in {0} ms", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+      Console.WriteLine(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
+      return insertResponse;
     }
 
-    private OrderTransaction FillMarketOrder(Order order, OrderBook book) {
+    // QUESTION: Shouldn't this be just part of new OrderBook()?
+    private void LoadOrderBook() {
+      using var context = new OrderContext();
+      BuyBook.LoadOrders(context);
+      SellBook.LoadOrders(context);
+    }
+
+    private static OrderTransactionResponse FillMarketOrder(IAccountService accountService,
+      Order order, OrderBook book) {
 #if PERF_FINEST
       long start = Now;
 #endif
       CheckArgument(!order.Action.Equals(book.Type), "Error: Wrong book");
 
-      bool isBuy = OrderAction.BUY.Equals(order.Action);
       bool done = false;
       List<Order> filledOrders = new List<Order>();
       List<Transaction> transactions = new List<Transaction>();
+      OrderTransactionResponse response = new OrderTransactionResponse();
       while (!done) {
         if (book.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
-        Order buyOrder = isBuy ? order : book.First;
-        Order sellOrder = isBuy ? book.First : order;
-        decimal executionPrice = isBuy ? sellOrder.StrikePrice : buyOrder.StrikePrice;
+        Order buyOrder = order.IsBuyOrder ? order : book.First;
+        Order sellOrder = order.IsSellOrder ? order : book.First;
+        decimal executionPrice = order.IsBuyOrder ? sellOrder.StrikePrice : buyOrder.StrikePrice;
         int fillQuantity = Math.Min(buyOrder.OpenQuantity, sellOrder.OpenQuantity);
-        if (!BuyerCanFillOrder(buyOrder.AccountId, fillQuantity, executionPrice)) {
+        // QUESTION: Many issues here, partial fill, etc
+        if (!accountService.CanFillOrder(buyOrder)) {
           throw new NotImplementedException(); // TODO
         }
-        if (!SellerCanFillOrder(buyOrder.AccountId, fillQuantity, executionPrice)) {
+        if (!accountService.CanFillOrder(sellOrder)) {
           throw new NotImplementedException(); // TODO
         }
+
         buyOrder.OpenQuantity -= fillQuantity;
         sellOrder.OpenQuantity -= fillQuantity;
         transactions.Add(new Transaction(buyOrder, sellOrder, buyOrder.Ticker,
@@ -202,16 +238,19 @@ namespace DemoExchange.Services {
         }
       }
 #if PERF_FINEST
-      Console.WriteLine(String.Format("Market order executed in {0} ms", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+      Console.WriteLine(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
-
-      return new OrderTransaction(filledOrders, transactions);
+      response.Code = Constants.Response.CREATED;
+      response.Data = new OrderTransaction(filledOrders, transactions);
+      return response;
     }
 
-    private OrderTransaction TryFillOrderBook() {
+    private OrderTransactionResponse TryFillOrderBook(IAccountService accountService) {
 #if PERF_FINEST
       long start = Now;
 #endif
+      OrderTransactionResponse response = new OrderTransactionResponse();
+
       Order buyOrder = BuyBook.First;
       Order sellOrder = SellBook.First;
       List<Order> filledOrders = new List<Order>();
@@ -221,12 +260,13 @@ namespace DemoExchange.Services {
       //           the higher BID price?
       decimal executionPrice = sellOrder.StrikePrice;
       int fillQuantity = Math.Min(buyOrder.OpenQuantity, sellOrder.OpenQuantity);
-      if (!BuyerCanFillOrder(buyOrder.AccountId, fillQuantity, executionPrice)) {
+      if (!accountService.CanFillOrder(buyOrder)) {
         throw new NotImplementedException(); // TODO
       }
-      if (!SellerCanFillOrder(buyOrder.AccountId, fillQuantity, executionPrice)) {
+      if (!accountService.CanFillOrder(sellOrder)) {
         throw new NotImplementedException(); // TODO
       }
+
       buyOrder.OpenQuantity -= fillQuantity;
       sellOrder.OpenQuantity -= fillQuantity;
       transactions.Add(new Transaction(buyOrder, sellOrder, buyOrder.Ticker,
@@ -244,36 +284,56 @@ namespace DemoExchange.Services {
         filledOrder.Complete();
       }
 #if PERF_FINEST
-      Console.WriteLine(String.Format("TryFillOrderBook executed in {0} ms", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+      Console.WriteLine(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
-
-      return new OrderTransaction(filledOrders, transactions);
+      response.Code = Constants.Response.CREATED;
+      response.Data = new OrderTransaction(filledOrders, transactions);
+      return response;
     }
 
-#pragma warning disable IDE0060, CA1822
-    private bool BuyerCanFillOrder(String accountId, int quanity, decimal price) {
-      return true; // TODO
+    private static OrderResponse InsertOrder(IOrderContext context, Order order) {
+      context.Orders.Add((OrderEntity)order);
+      try {
+        context.SaveChanges();
+      } catch (Exception e) {
+        // TODO logger.Warning("Db exception management");
+        return new OrderResponse(Constants.Response.INTERNAL_SERVER_ERROR,
+          order, new Error("", "", e.Message));
+      }
+      return new OrderResponse(order);
     }
 
-    private bool SellerCanFillOrder(String accountId, int quanity, decimal price) {
-      return true; // TODO
+    private static OrderTransactionResponse SaveOrderTransaction(IOrderContext context,
+      OrderTransaction data) {
+      data.Orders.ForEach(order => {
+        context.Orders.Add((OrderEntity)order);
+        context.Entry(order).State = EntityState.Modified;
+      });
+      data.Transactions.ForEach(transaction => {
+        context.Transactions.Add((TransactionEntity)transaction);
+      });
+
+      try {
+        context.SaveChanges();
+      } catch (Exception e) {
+        // TODO logger.Warning("Db exception management");
+        return new OrderTransactionResponse(Constants.Response.INTERNAL_SERVER_ERROR,
+          data, new Error("", "", e.Message));
+      }
+      return new OrderTransactionResponse(data);
     }
-#pragma warning restore IDE0060, CA1822
 
 #if DEBUG
 
 #endif
 
 #if DIAGNOSTICS
-    private void DiagnosticsWriteDetails(OrderTransaction tran) {
+    private void DiagnosticsWriteDetails(OrderTransaction transaction) {
       Console.WriteLine("Order details:");
-      foreach (Order filledOrder in tran.Orders) {
-        Console.WriteLine("     " + filledOrder.ToString());
-      }
+      transaction.Orders.ForEach(order => Console.WriteLine("     " + order.ToString()));
       Console.WriteLine("Transaction details:");
-      foreach (Transaction aTran in tran.Transactions) {
-        Console.WriteLine("     " + aTran.ToString());
-      }
+      transaction.Transactions.ForEach(transaction => Console.WriteLine("     " + transaction.ToString()));
+
       Quote q = (Quote)Quote;
       Console.WriteLine("  SPREAD: " + q.ToString());
       Level2 l2 = (Level2)Level2;
@@ -282,18 +342,42 @@ namespace DemoExchange.Services {
 #endif
 
 #if PERF
-    public void TestPerfAddOrder(List<Order> buyOrders, List<Order> sellOrders) {
-      foreach (Order order in buyOrders) {
-        // TODO persist order
+    public void TestPerfAddOrder(List<IModelOrder> buyOrders, List<IModelOrder> sellOrders) {
+      int i = 0;
+      using var buy = new OrderContext();
+      foreach (IModelOrder request in buyOrders) {
+        Order order = new Order(request);
+        buy.Orders.Add((OrderEntity)order);
         BuyBook.TestPerfAddOrderNoSort(order);
-        BuyBook.TestPerfSort();
+        if ((i % 1000) == 0) {
+          buy.SaveChanges();
+        }
       }
-      foreach (Order order in sellOrders) {
-        // TODO persist order
+      buy.SaveChanges();
+      BuyBook.TestPerfSort();
+
+      i = 0;
+      using var sell = new OrderContext();
+      foreach (IModelOrder request in sellOrders) {
+        Order order = new Order(request);
+        sell.Orders.Add((OrderEntity)order);
         SellBook.TestPerfAddOrderNoSort(order);
-        SellBook.TestPerfSort();
+        if ((i % 1000) == 0) {
+          sell.SaveChanges();
+        }
       }
+      sell.SaveChanges();
+      SellBook.TestPerfSort();
     }
 #endif
+  }
+
+  public class OrderResponse : BaseResponse<IModelOrder>, IOrderResponse {
+    public OrderResponse() { }
+    public OrderResponse(IModelOrder data) : this(Constants.Response.OK, data) { }
+    public OrderResponse(int code, IModelOrder data) : base(code, data) { }
+    public OrderResponse(int code, IModelOrder data, Error error) : base(code, data, error) { }
+    public OrderResponse(int code, IModelOrder data, List<IError> errors) : base(code,
+      data, errors) { }
   }
 }

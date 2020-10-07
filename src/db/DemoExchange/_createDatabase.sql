@@ -26,6 +26,11 @@ LOG ON
 COLLATE Latin1_General_100_CI_AI_SC_UTF8 ;
 GO
 
+ALTER DATABASE demo_exchange SET RECOVERY SIMPLE ;
+GO
+
+-- DBCC SHRINKFILE (demo_exchange_log, 1)
+
 DROP LOGIN demo_exchange_admin ;
 GO
 

@@ -5,17 +5,17 @@ CREATE TABLE dbo.ExchangeTransaction
 (
   TransactionId uniqueidentifier PRIMARY KEY,
   CreatedTimestamp bigint NOT NULL,
-  BuyOrderId uniqueidentifier NOT NULL,
-  SellOrderId uniqueidentifier NOT NULL,
+  BuyOrderOrderId uniqueidentifier NOT NULL,
+  SellOrderOrderId uniqueidentifier NOT NULL,
   Ticker varchar(25) NOT NULL,
   Quantity int NOT NULL,
   Price decimal(28, 8) NOT NULL,
-  CONSTRAINT FK_ExchangeTransaction_BuyOrderId FOREIGN KEY (BuyOrderId) REFERENCES dbo.ExchangeOrder (OrderId),
-  CONSTRAINT FK_ExchangeTransaction_SellOrderId FOREIGN KEY (SellOrderId) REFERENCES dbo.ExchangeOrder (OrderId)
+  CONSTRAINT FK_ExchangeTransaction_BuyOrderOrderId FOREIGN KEY (BuyOrderOrderId) REFERENCES dbo.ExchangeOrder (OrderId),
+  CONSTRAINT FK_ExchangeTransaction_SellOrderOrderId FOREIGN KEY (SellOrderOrderId) REFERENCES dbo.ExchangeOrder (OrderId)
 ) ;
 GO
 
-GRANT SELECT ON dbo.ExchangeTransaction TO demo_exchange_app ;
+GRANT SELECT, INSERT, UPDATE ON dbo.ExchangeTransaction TO demo_exchange_app ;
 GO
 
 DROP PROCEDURE IF EXISTS dbo.ExchangeTransaction_Insert ;
@@ -24,8 +24,8 @@ GO
 CREATE PROCEDURE dbo.ExchangeTransaction_Insert
   @TransactionId uniqueidentifier,
   @CreatedTimestamp bigint,
-  @BuyOrderId uniqueidentifier,
-  @SellOrderId uniqueidentifier,
+  @BuyOrderOrderId uniqueidentifier,
+  @SellOrderOrderId uniqueidentifier,
   @Ticker varchar(25),
   @Quantity int,
   @Price decimal(28, 8)
@@ -35,8 +35,8 @@ BEGIN
     (
     TransactionId,
     CreatedTimestamp,
-    BuyOrderId,
-    SellOrderId,
+    BuyOrderOrderId,
+    SellOrderOrderId,
     Ticker,
     Quantity,
     Price
@@ -45,8 +45,8 @@ BEGIN
     (
       @TransactionId,
       @CreatedTimestamp,
-      @BuyOrderId,
-      @SellOrderId,
+      @BuyOrderOrderId,
+      @SellOrderOrderId,
       @Ticker,
       @Quantity,
       @Price

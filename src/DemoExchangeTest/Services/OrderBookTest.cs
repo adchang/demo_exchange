@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
+using Moq;
 using Xunit;
 
 namespace DemoExchange.Services {
@@ -14,33 +16,33 @@ namespace DemoExchange.Services {
         book.AddOrder(null));
       Assert.Equal("Value cannot be null. (Parameter 'order')",
         e.Message);
-      BuyMarketOrder buyMarket = new BuyMarketOrder("acct", "E", 100);
+      Order buyMarket = TestUtils.NewBuyMarketOrder("acct", "E", 100);
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyMarket));
       Assert.Equal(String.Format(OrderBook.ERROR_MARKET_ORDER, buyMarket.OrderId),
         e.Message);
-      BuyLimitDayOrder buyLimit = new BuyLimitDayOrder("acct", "E", 100, 0.50M);
+      Order buyLimit = TestUtils.NewBuyLimitDayOrder("acct", "E", 100, 0.50M);
       buyLimit.Cancel();
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyLimit));
       Assert.Equal(String.Format(OrderBook.ERROR_NOT_OPEN_ORDER, buyLimit.OrderId),
         e.Message);
-      buyLimit = new BuyLimitDayOrder("acct", "E", 100, 0.50M);
+      buyLimit = TestUtils.NewBuyLimitDayOrder("acct", "E", 100, 0.50M);
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyLimit));
       Assert.Equal(String.Format(OrderBook.ERROR_TICKER, "ERX", buyLimit.OrderId),
         e.Message);
-      SellLimitDayOrder sellLimit = new SellLimitDayOrder("acct", "ERX", 100, 18.81M);
+      Order sellLimit = TestUtils.NewSellLimitDayOrder("acct", "ERX", 100, 18.81M);
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(sellLimit));
       Assert.Equal(String.Format(OrderBook.ERROR_ACTION, OrderAction.BUY, sellLimit.Action),
         e.Message);
 
-      BuyLimitDayOrder order1 = new BuyLimitDayOrder("acct", "ERX", 100, 18.81M);
-      BuyLimitDayOrder order2 = new BuyLimitDayOrder("acct", "ERX", 100, 18.82M);
-      BuyLimitDayOrder order3 = new BuyLimitDayOrder("acct", "ERX", 100, 18.83M);
-      BuyLimitDayOrder order4 = new BuyLimitDayOrder("acct", "ERX", 100, 18.84M);
-      BuyLimitDayOrder order5 = new BuyLimitDayOrder("acct", "ERX", 100, 18.85M);
+      Order order1 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.81M);
+      Order order2 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.82M);
+      Order order3 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.83M);
+      Order order4 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.84M);
+      Order order5 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.85M);
       book.AddOrder(order3);
       book.AddOrder(order5);
       book.AddOrder(order1);
@@ -58,31 +60,31 @@ namespace DemoExchange.Services {
     public void OrderQueueTest_Buy() {
       OrderBook book = new OrderBook("ERX", OrderAction.BUY);
       List<Order> orders = book.TestOrders;
-      Comparer<Order> comparer = book.TestComparer;
+      Comparer<IModelOrder> comparer = book.TestComparer;
       TestOrder order1 = new TestOrder("accountId", "ERX", OrderType.LIMIT, 100, 1);
-      order1.OrderId = "1";
+      String order1Id = order1.OrderId;
       order1.StrikePrice = 1;
       order1.CreatedTimestamp = 1;
-      TestOrder order2 = order1.ShallowCopy();
-      order2.OrderId = "2";
+      TestOrder order2 = new TestOrder("accountId", "ERX", OrderType.LIMIT, 100, 1);
+      String order2Id = order2.OrderId;
       order2.StrikePrice = 2;
       order2.CreatedTimestamp = 2;
-      TestOrder order3 = order1.ShallowCopy();
-      order3.OrderId = "3";
+      TestOrder order3 = new TestOrder("accountId", "ERX", OrderType.LIMIT, 100, 1);
+      String order3Id = order3.OrderId;
       order3.StrikePrice = 3;
       order3.CreatedTimestamp = 3;
       orders.Add(order1);
       orders.Add(order2);
       orders.Add(order3);
       orders.Sort(comparer);
-      Assert.Equal("3", book.First.OrderId);
-      Assert.Equal("2", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order3Id, book.First.OrderId);
+      Assert.Equal(order2Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
       order1.StrikePrice = 8;
       orders.Sort(comparer);
-      Assert.Equal("1", book.First.OrderId);
-      Assert.Equal("3", orders[1].OrderId);
-      Assert.Equal("2", orders[2].OrderId);
+      Assert.Equal(order1Id, book.First.OrderId);
+      Assert.Equal(order3Id, orders[1].OrderId);
+      Assert.Equal(order2Id, orders[2].OrderId);
       order1.StrikePrice = 8;
       order1.CreatedTimestamp = 1000;
       order2.StrikePrice = 8;
@@ -90,25 +92,25 @@ namespace DemoExchange.Services {
       order3.StrikePrice = 8;
       order3.CreatedTimestamp = 10;
       orders.Sort(comparer);
-      Assert.Equal("3", book.First.OrderId);
-      Assert.Equal("2", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order3Id, book.First.OrderId);
+      Assert.Equal(order2Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
       order3.StrikePrice = 6;
       orders.Sort(comparer);
-      Assert.Equal("2", book.First.OrderId);
-      Assert.Equal("1", orders[1].OrderId);
-      Assert.Equal("3", orders[2].OrderId);
+      Assert.Equal(order2Id, book.First.OrderId);
+      Assert.Equal(order1Id, orders[1].OrderId);
+      Assert.Equal(order3Id, orders[2].OrderId);
       order1.StrikePrice = 6;
       order2.StrikePrice = 6;
       orders.Sort(comparer);
-      Assert.Equal("3", book.First.OrderId);
-      Assert.Equal("2", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order3Id, book.First.OrderId);
+      Assert.Equal(order2Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
       order3.CreatedTimestamp = 800;
       orders.Sort(comparer);
-      Assert.Equal("2", book.First.OrderId);
-      Assert.Equal("3", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order2Id, book.First.OrderId);
+      Assert.Equal(order3Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
     }
 
     [Fact]
@@ -116,32 +118,34 @@ namespace DemoExchange.Services {
     public void OrderQueueTest_Sell() {
       OrderBook book = new OrderBook("ERX", OrderAction.SELL);
       List<Order> orders = book.TestOrders;
-      Comparer<Order> comparer = book.TestComparer;
+      Comparer<IModelOrder> comparer = book.TestComparer;
       TestOrder order1 = new TestOrder("accountId", OrderAction.SELL, "ERX", OrderType.LIMIT,
         100, 1);
-      order1.OrderId = "1";
+      String order1Id = order1.OrderId;
       order1.StrikePrice = 1;
       order1.CreatedTimestamp = 1;
-      TestOrder order2 = order1.ShallowCopy();
-      order2.OrderId = "2";
+      TestOrder order2 = new TestOrder("accountId", OrderAction.SELL, "ERX", OrderType.LIMIT,
+        100, 1);
+      String order2Id = order2.OrderId;
       order2.StrikePrice = 2;
       order2.CreatedTimestamp = 2;
-      TestOrder order3 = order1.ShallowCopy();
-      order3.OrderId = "3";
+      TestOrder order3 = new TestOrder("accountId", OrderAction.SELL, "ERX", OrderType.LIMIT,
+        100, 1);
+      String order3Id = order3.OrderId;
       order3.StrikePrice = 3;
       order3.CreatedTimestamp = 3;
       orders.Add(order1);
       orders.Add(order2);
       orders.Add(order3);
       orders.Sort(comparer);
-      Assert.Equal("1", book.First.OrderId);
-      Assert.Equal("2", orders[1].OrderId);
-      Assert.Equal("3", orders[2].OrderId);
+      Assert.Equal(order1Id, book.First.OrderId);
+      Assert.Equal(order2Id, orders[1].OrderId);
+      Assert.Equal(order3Id, orders[2].OrderId);
       order1.StrikePrice = 8;
       orders.Sort(comparer);
-      Assert.Equal("2", book.First.OrderId);
-      Assert.Equal("3", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order2Id, book.First.OrderId);
+      Assert.Equal(order3Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
       order1.StrikePrice = 8;
       order1.CreatedTimestamp = 1000;
       order2.StrikePrice = 8;
@@ -149,25 +153,25 @@ namespace DemoExchange.Services {
       order3.StrikePrice = 8;
       order3.CreatedTimestamp = 10;
       orders.Sort(comparer);
-      Assert.Equal("3", book.First.OrderId);
-      Assert.Equal("2", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order3Id, book.First.OrderId);
+      Assert.Equal(order2Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
       order3.StrikePrice = 10;
       orders.Sort(comparer);
-      Assert.Equal("2", book.First.OrderId);
-      Assert.Equal("1", orders[1].OrderId);
-      Assert.Equal("3", orders[2].OrderId);
+      Assert.Equal(order2Id, book.First.OrderId);
+      Assert.Equal(order1Id, orders[1].OrderId);
+      Assert.Equal(order3Id, orders[2].OrderId);
       order1.StrikePrice = 10;
       order2.StrikePrice = 10;
       orders.Sort(comparer);
-      Assert.Equal("3", book.First.OrderId);
-      Assert.Equal("2", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order3Id, book.First.OrderId);
+      Assert.Equal(order2Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
       order3.CreatedTimestamp = 800;
       orders.Sort(comparer);
-      Assert.Equal("2", book.First.OrderId);
-      Assert.Equal("3", orders[1].OrderId);
-      Assert.Equal("1", orders[2].OrderId);
+      Assert.Equal(order2Id, book.First.OrderId);
+      Assert.Equal(order3Id, orders[1].OrderId);
+      Assert.Equal(order1Id, orders[2].OrderId);
     }
 
     [Theory]
@@ -215,8 +219,21 @@ namespace DemoExchange.Services {
       OrderBook book = new OrderBook("ERX", OrderAction.BUY);
       Assert.Equal("ERX BUY", book.Name);
       Assert.Equal(0, book.Count);
-      book.AddOrder(new BuyLimitDayOrder("acct", "ERX", 100, 18.81M));
+      book.AddOrder(TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.81M));
       Assert.Equal(1, book.Count);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public void LoadOrdersTest() {
+      OrderBook book = new OrderBook("ERX", OrderAction.BUY);
+      var context = new Mock<IOrderContext>();
+      // TODO: Test book.LoadOrders(context.Object);
+      // Verify the Where is correct, and return 3 orders
+
+      /*Assert.Equal(3, book.TestOrders[0].StrikePrice);
+      Assert.Equal(2, book.TestOrders[1].StrikePrice);
+      Assert.Equal(1, book.TestOrders[2].StrikePrice);*/
     }
   }
 }
