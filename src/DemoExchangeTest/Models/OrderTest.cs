@@ -133,19 +133,19 @@ namespace DemoExchange.Models {
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.MARKET, 0, 0));
-      Assert.Equal(IModelOrder.ERROR_QUANTITY_IS_0,
+      Assert.Equal(IOrderModel.ERROR_QUANTITY_IS_0,
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.MARKET, -100, 0));
-      Assert.Equal(IModelOrder.ERROR_QUANTITY_IS_0,
+      Assert.Equal(IOrderModel.ERROR_QUANTITY_IS_0,
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.MARKET, 100, -1));
-      Assert.Equal(IModelOrder.ERROR_ORDER_PRICE_MARKET_NOT_0,
+      Assert.Equal(IOrderModel.ERROR_ORDER_PRICE_MARKET_NOT_0,
         e.Message);
       e = Assert.Throws<ArgumentException>(() =>
         new TestOrder("accountId", "ERX", OrderType.LIMIT, 100, -1));
-      Assert.Equal(IModelOrder.ERROR_ORDER_PRICE_IS_0,
+      Assert.Equal(IOrderModel.ERROR_ORDER_PRICE_IS_0,
         e.Message);
     }
 

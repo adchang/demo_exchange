@@ -26,9 +26,9 @@ namespace DemoExchangeSimulator {
           String ticker = tickers[i];
           long seedStart = Now;
           int basePrice = rnd.Next(8, 19);
-          List<IModelOrder> buyOrders = GenerateInitialOrders(minOrders, ticker,
+          List<IOrderModel> buyOrders = GenerateInitialOrders(minOrders, ticker,
             basePrice, true);
-          List<IModelOrder> sellOrders = GenerateInitialOrders(minOrders, ticker,
+          List<IOrderModel> sellOrders = GenerateInitialOrders(minOrders, ticker,
             basePrice, false);
           service.TestPerfAddOrder(ticker, buyOrders, sellOrders);
           Console.WriteLine(String.Format("{3}: Added {1} buy orders and {2} sell orders in {0} milliseconds", Stop(seedStart), buyOrders.Count, sellOrders.Count, ticker));
@@ -83,9 +83,9 @@ namespace DemoExchangeSimulator {
       return ((Now - start) / TimeSpan.TicksPerMillisecond);
     }
 
-    private List<IModelOrder> GenerateInitialOrders(int minOrders, String ticker, int basePrice,
+    private List<IOrderModel> GenerateInitialOrders(int minOrders, String ticker, int basePrice,
       bool isBuy) {
-      List<IModelOrder> orders = new List<IModelOrder>();
+      List<IOrderModel> orders = new List<IOrderModel>();
       int numOrders = rnd.Next(minOrders, 2 * minOrders);
       String prefix = isBuy ? "BUY" : "SELL";
       int sign = isBuy ? -1 : +1;

@@ -96,7 +96,7 @@ namespace DemoExchange.Models {
     /// <summary>
     /// Base Class representing an Order.
     /// </summary>
-    public class Order : OrderEntity, IModelOrder {
+    public class Order : OrderEntity, IOrderModel {
       public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
       public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN OrderId: {0}";
@@ -230,14 +230,14 @@ namespace DemoExchange.Models {
 #endif
           CheckNotNullOrWhitespace(accountId, paramName : nameof(accountId));
           CheckNotNullOrWhitespace(ticker, paramName : nameof(ticker));
-          CheckArgument(quantity > 0, message : IModelOrder.ERROR_QUANTITY_IS_0);
+          CheckArgument(quantity > 0, message : IOrderModel.ERROR_QUANTITY_IS_0);
           if (OrderType.MARKET.Equals(type)) {
             if (orderPrice != 0) {
-              throw new ArgumentException(IModelOrder.ERROR_ORDER_PRICE_MARKET_NOT_0);
+              throw new ArgumentException(IOrderModel.ERROR_ORDER_PRICE_MARKET_NOT_0);
             }
           } else {
             if (orderPrice <= 0) {
-              throw new ArgumentException(IModelOrder.ERROR_ORDER_PRICE_IS_0);
+              throw new ArgumentException(IOrderModel.ERROR_ORDER_PRICE_IS_0);
             }
           }
 
@@ -290,7 +290,7 @@ namespace DemoExchange.Models {
           base.CanceledTimestamp = entity.CanceledTimestamp;
         }
 
-        public Order(IModelOrder order):
+        public Order(IOrderModel order):
           this(order.AccountId, order.Action, order.Ticker, order.Type, order.Quantity,
             order.OrderPrice, order.TimeInForce) { }
 
@@ -322,16 +322,16 @@ namespace DemoExchange.Models {
         /// <summary>
         /// Use for SELL order books.
         /// </summary>
-        public static readonly Comparer<IModelOrder> STRIKE_PRICE_ASCENDING_COMPARER =
+        public static readonly Comparer<IOrderModel> STRIKE_PRICE_ASCENDING_COMPARER =
           new StrikePriceAscendingComparer();
 
         /// <summary>
         /// Use for BUY order books.
         /// </summary>
-        public static readonly Comparer<IModelOrder> STRIKE_PRICE_DESCENDING_COMPARER =
+        public static readonly Comparer<IOrderModel> STRIKE_PRICE_DESCENDING_COMPARER =
           new StrikePriceDescendingComparer();
 
-        public static Predicate<IModelOrder> ById(String orderId) {
+        public static Predicate<IOrderModel> ById(String orderId) {
           return order => order.OrderId.Equals(orderId);
         }
 
@@ -342,8 +342,8 @@ namespace DemoExchange.Models {
         /// <summary>
         /// Price-Time ascending <c>Comparer</c>.
         /// </summary>
-        private class StrikePriceAscendingComparer : Comparer<IModelOrder> {
-          public override int Compare(IModelOrder o1, IModelOrder o2) {
+        private class StrikePriceAscendingComparer : Comparer<IOrderModel> {
+          public override int Compare(IOrderModel o1, IOrderModel o2) {
             if (o1.StrikePrice > o2.StrikePrice)
               return 1;
             if (o1.StrikePrice < o2.StrikePrice)
@@ -361,8 +361,8 @@ namespace DemoExchange.Models {
         /// Price-Time descending <c>Comparer</c>.
         /// </summary>
         private class StrikePriceDescendingComparer:
-          Comparer<IModelOrder> {
-            public override int Compare(IModelOrder o1, IModelOrder o2) {
+          Comparer<IOrderModel> {
+            public override int Compare(IOrderModel o1, IOrderModel o2) {
               if (o1.StrikePrice < o2.StrikePrice)
                 return 1;
               if (o1.StrikePrice > o2.StrikePrice)
@@ -380,7 +380,7 @@ namespace DemoExchange.Models {
       /// <summary>
       /// Market <c>Order</c> validator.
       /// </summary>
-      public class MarketOrderValidator : IValidator<IModelOrder> {
+      public class MarketOrderValidator : IValidator<IOrderModel> {
         public bool IsValid {
           get { throw new NotImplementedException(); }
         }

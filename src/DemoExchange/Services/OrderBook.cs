@@ -20,7 +20,7 @@ namespace DemoExchange.Services {
     private readonly IDictionary<String, Order> orderIds =
       new Dictionary<String, Order>();
     private readonly List<Order> orders = new List<Order>();
-    private readonly Comparer<IModelOrder> comparer;
+    private readonly Comparer<IOrderModel> comparer;
 
     public String Ticker { get; }
     public OrderAction Type { get; }
@@ -127,7 +127,7 @@ namespace DemoExchange.Services {
       get { return orders; }
     }
 
-    public Comparer<IModelOrder> TestComparer {
+    public Comparer<IOrderModel> TestComparer {
       get { return comparer; }
     }
 #endif
@@ -154,7 +154,7 @@ namespace DemoExchange.Services {
     }
   }
 
-  public class OrderTransactionResponse : BaseResponse<OrderTransaction> {
+  public class OrderTransactionResponse : ResponseBase<OrderTransaction> {
     public OrderTransactionResponse() { }
     public OrderTransactionResponse(OrderTransaction data) : this(Constants.Response.OK, data) { }
     public OrderTransactionResponse(int code, OrderTransaction data) : base(code, data) { }

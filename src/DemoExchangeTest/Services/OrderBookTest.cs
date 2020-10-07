@@ -60,7 +60,7 @@ namespace DemoExchange.Services {
     public void OrderQueueTest_Buy() {
       OrderBook book = new OrderBook("ERX", OrderAction.BUY);
       List<Order> orders = book.TestOrders;
-      Comparer<IModelOrder> comparer = book.TestComparer;
+      Comparer<IOrderModel> comparer = book.TestComparer;
       TestOrder order1 = new TestOrder("accountId", "ERX", OrderType.LIMIT, 100, 1);
       String order1Id = order1.OrderId;
       order1.StrikePrice = 1;
@@ -118,7 +118,7 @@ namespace DemoExchange.Services {
     public void OrderQueueTest_Sell() {
       OrderBook book = new OrderBook("ERX", OrderAction.SELL);
       List<Order> orders = book.TestOrders;
-      Comparer<IModelOrder> comparer = book.TestComparer;
+      Comparer<IOrderModel> comparer = book.TestComparer;
       TestOrder order1 = new TestOrder("accountId", OrderAction.SELL, "ERX", OrderType.LIMIT,
         100, 1);
       String order1Id = order1.OrderId;

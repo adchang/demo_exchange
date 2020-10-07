@@ -13,7 +13,7 @@ namespace DemoExchange.Interface {
   /// <summary>
   /// Model for an order.
   /// </summary>
-  public interface IModelOrder : IModel, IIsValid {
+  public interface IOrderModel : IModel, IIsValid {
     public const String ORDER_ID_NEW = "NEW";
 
     public const String ERROR_STRING_EMTPY = "Cannot be empty";
@@ -38,7 +38,7 @@ namespace DemoExchange.Interface {
     public long CanceledTimestamp { get; }
   }
 
-  public class BaseOrder : IModelOrder {
+  public class OrderBase : IOrderModel {
     public String OrderId { get; }
     public long CreatedTimestamp { get; }
     public String AccountId { get; }
@@ -58,27 +58,27 @@ namespace DemoExchange.Interface {
       get { return true; }
     }
 
-    public BaseOrder(String orderId, long createdTimestamp, String accountId, OrderStatus status,
+    public OrderBase(String orderId, long createdTimestamp, String accountId, OrderStatus status,
       OrderAction action, String ticker, OrderType type, int quantity, int openQuantity,
       decimal orderPrice, decimal strikePrice, OrderTimeInForce timeInForce,
       long toBeCanceledTimestamp, long canceledTimestamp) {
       if (String.IsNullOrWhiteSpace(orderId))
-        throw new ArgumentException(IModelOrder.ERROR_STRING_EMTPY, paramName : nameof(orderId));
+        throw new ArgumentException(IOrderModel.ERROR_STRING_EMTPY, paramName : nameof(orderId));
       if (String.IsNullOrWhiteSpace(accountId))
-        throw new ArgumentException(IModelOrder.ERROR_STRING_EMTPY, paramName : nameof(accountId));
+        throw new ArgumentException(IOrderModel.ERROR_STRING_EMTPY, paramName : nameof(accountId));
       if (String.IsNullOrWhiteSpace(ticker))
-        throw new ArgumentException(IModelOrder.ERROR_STRING_EMTPY, paramName : nameof(ticker));
+        throw new ArgumentException(IOrderModel.ERROR_STRING_EMTPY, paramName : nameof(ticker));
       if (quantity < 0)
-        throw new ArgumentException(IModelOrder.ERROR_QUANTITY_IS_0);
+        throw new ArgumentException(IOrderModel.ERROR_QUANTITY_IS_0);
       if (openQuantity > quantity)
-        throw new ArgumentException(IModelOrder.ERROR_OPEN_QUANITY_GREATER_THAN_QUANITY);
+        throw new ArgumentException(IOrderModel.ERROR_OPEN_QUANITY_GREATER_THAN_QUANITY);
       if (OrderType.MARKET.Equals(type)) {
         if (orderPrice != 0) {
-          throw new ArgumentException(IModelOrder.ERROR_ORDER_PRICE_MARKET_NOT_0);
+          throw new ArgumentException(IOrderModel.ERROR_ORDER_PRICE_MARKET_NOT_0);
         }
       } else {
         if (orderPrice <= 0) {
-          throw new ArgumentException(IModelOrder.ERROR_ORDER_PRICE_IS_0);
+          throw new ArgumentException(IOrderModel.ERROR_ORDER_PRICE_IS_0);
         }
       }
 
@@ -99,9 +99,9 @@ namespace DemoExchange.Interface {
     }
   }
 
-  public abstract class MarketOrder : BaseOrder {
+  public abstract class MarketOrder : OrderBase {
     public MarketOrder(String accountId, OrderAction action, String ticker, int quantity):
-      base(IModelOrder.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, action, ticker,
+      base(IOrderModel.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, action, ticker,
         OrderType.MARKET, quantity, quantity, 0, 0, OrderTimeInForce.DAY, 0, 0) { }
   }
 
@@ -116,19 +116,19 @@ namespace DemoExchange.Interface {
   /// <summary>
   /// Convenience class to instantiate a Buy Limit Day Order.
   /// </summary>
-  public class BuyLimitDayOrder : BaseOrder {
+  public class BuyLimitDayOrder : OrderBase {
     public BuyLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice):
-      base(IModelOrder.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.BUY, ticker,
+      base(IOrderModel.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.BUY, ticker,
         OrderType.LIMIT, quantity, quantity, orderPrice, orderPrice, OrderTimeInForce.DAY, 0, 0) { }
   }
 
   /// <summary>
   /// Convenience class to instantiate a Buy Limit GTC Order.
   /// </summary>
-  public class BuyLimitGoodTilCancelOrder : BaseOrder {
+  public class BuyLimitGoodTilCancelOrder : OrderBase {
     public BuyLimitGoodTilCancelOrder(String accountId, String ticker, int quantity,
         decimal orderPrice):
-      base(IModelOrder.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.BUY, ticker,
+      base(IOrderModel.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.BUY, ticker,
         OrderType.LIMIT, quantity, quantity, orderPrice, orderPrice,
         OrderTimeInForce.GOOD_TIL_CANCELED, 0, 0) { }
   }
@@ -144,19 +144,19 @@ namespace DemoExchange.Interface {
   /// <summary>
   /// Convenience class to instantiate a Sell Limit Day Order.
   /// </summary>
-  public class SellLimitDayOrder : BaseOrder {
+  public class SellLimitDayOrder : OrderBase {
     public SellLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice):
-      base(IModelOrder.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.SELL, ticker,
+      base(IOrderModel.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.SELL, ticker,
         OrderType.LIMIT, quantity, quantity, orderPrice, orderPrice, OrderTimeInForce.DAY, 0, 0) { }
   }
 
   /// <summary>
   /// Convenience class to instantiate a Sell Limit GTC Order.
   /// </summary>
-  public class SellLimitGoodTilCancelOrder : BaseOrder {
+  public class SellLimitGoodTilCancelOrder : OrderBase {
     public SellLimitGoodTilCancelOrder(String accountId, String ticker, int quantity,
         decimal orderPrice):
-      base(IModelOrder.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.SELL, ticker,
+      base(IOrderModel.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, OrderAction.SELL, ticker,
         OrderType.LIMIT, quantity, quantity, orderPrice, orderPrice,
         OrderTimeInForce.GOOD_TIL_CANCELED, 0, 0) { }
   }
@@ -194,18 +194,18 @@ namespace DemoExchange.Interface {
   /// <summary>
   /// Model for an account.
   /// </summary>
-  public interface IModelAccount : IModel, IIsValid {
+  public interface IAccountModel : IModel, IIsValid {
     public String AccountId { get; }
   }
 
-  public class BaseAccount : IModelAccount {
+  public class AccountBase : IAccountModel {
     public String AccountId { get; }
 
     public virtual bool IsValid {
       get { return true; }
     }
 
-    public BaseAccount(String accountId) {
+    public AccountBase(String accountId) {
       AccountId = accountId;
     }
   }

@@ -12,7 +12,7 @@ namespace DemoExchange.Interface {
     /// <summary>
     /// Processes the submitted order.
     /// </summary>
-    public IOrderResponse SubmitOrder(IModelOrder order);
+    public IOrderResponse SubmitOrder(IOrderModel order);
 
     /// <summary>
     /// Cancel the specified order.
@@ -30,26 +30,26 @@ namespace DemoExchange.Interface {
     public ILevel2 GetLevel2(String ticker);
   }
 
-  public interface IOrderResponse : IResponse<IModelOrder> { }
+  public interface IOrderResponse : IResponse<IOrderModel> { }
 
   public class OrderServiceResponse : IOrderResponse {
     public int Code { get; }
-    public IModelOrder Data { get; }
+    public IOrderModel Data { get; }
     public bool HasErrors { get { return Errors != null && Errors.Count > 0; } }
     public List<IError> Errors { get; }
 
-    public OrderServiceResponse(int code, IModelOrder data) {
+    public OrderServiceResponse(int code, IOrderModel data) {
       Code = code;
       Data = data;
     }
 
-    public OrderServiceResponse(int code, IModelOrder data, List<IError> errors):
+    public OrderServiceResponse(int code, IOrderModel data, List<IError> errors):
       this(code, data) {
         Errors = errors;
       }
   }
 
   public interface IAccountService {
-    public bool CanFillOrder(IModelOrder order);
+    public bool CanFillOrder(IOrderModel order);
   }
 }

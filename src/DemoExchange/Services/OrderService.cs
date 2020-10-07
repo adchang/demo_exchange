@@ -61,7 +61,7 @@ namespace DemoExchange.Services {
       }
     }
 
-    public IOrderResponse SubmitOrder(IModelOrder orderRequest) {
+    public IOrderResponse SubmitOrder(IOrderModel orderRequest) {
       // TODO: CheckMarketIsOpen(); This is not correct; should still be able to submit 
       //       orders if market is not open; Just can't trade.
       // TODO: Add tests
@@ -90,7 +90,7 @@ namespace DemoExchange.Services {
       return managers[ticker].Level2;
     }
 
-    private static OrderResponse NewOrder(IModelOrder request) {
+    private static OrderResponse NewOrder(IOrderModel request) {
       try {
         return new OrderResponse(new Order(request));
       } catch (Exception e) {
@@ -101,7 +101,7 @@ namespace DemoExchange.Services {
 
 #if PERF
     public void TestPerfAddOrder(String ticker,
-      List<IModelOrder> buyOrders, List<IModelOrder> sellOrders) {
+      List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
       OrderManager manager = new OrderManager(ticker);
       manager.TestPerfAddOrder(buyOrders, sellOrders);
       managers.Add(ticker, manager);
@@ -342,10 +342,10 @@ namespace DemoExchange.Services {
 #endif
 
 #if PERF
-    public void TestPerfAddOrder(List<IModelOrder> buyOrders, List<IModelOrder> sellOrders) {
+    public void TestPerfAddOrder(List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
       int i = 0;
       using var buy = new OrderContext();
-      foreach (IModelOrder request in buyOrders) {
+      foreach (IOrderModel request in buyOrders) {
         Order order = new Order(request);
         buy.Orders.Add((OrderEntity)order);
         BuyBook.TestPerfAddOrderNoSort(order);
@@ -358,7 +358,7 @@ namespace DemoExchange.Services {
 
       i = 0;
       using var sell = new OrderContext();
-      foreach (IModelOrder request in sellOrders) {
+      foreach (IOrderModel request in sellOrders) {
         Order order = new Order(request);
         sell.Orders.Add((OrderEntity)order);
         SellBook.TestPerfAddOrderNoSort(order);
@@ -372,12 +372,12 @@ namespace DemoExchange.Services {
 #endif
   }
 
-  public class OrderResponse : BaseResponse<IModelOrder>, IOrderResponse {
+  public class OrderResponse : ResponseBase<IOrderModel>, IOrderResponse {
     public OrderResponse() { }
-    public OrderResponse(IModelOrder data) : this(Constants.Response.OK, data) { }
-    public OrderResponse(int code, IModelOrder data) : base(code, data) { }
-    public OrderResponse(int code, IModelOrder data, Error error) : base(code, data, error) { }
-    public OrderResponse(int code, IModelOrder data, List<IError> errors) : base(code,
+    public OrderResponse(IOrderModel data) : this(Constants.Response.OK, data) { }
+    public OrderResponse(int code, IOrderModel data) : base(code, data) { }
+    public OrderResponse(int code, IOrderModel data, Error error) : base(code, data, error) { }
+    public OrderResponse(int code, IOrderModel data, List<IError> errors) : base(code,
       data, errors) { }
   }
 }
