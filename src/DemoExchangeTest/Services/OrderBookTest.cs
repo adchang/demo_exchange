@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
@@ -210,7 +212,7 @@ namespace DemoExchange.Services {
       Assert.NotEqual(0, order.CanceledTimestamp);
       Assert.Equal(10, book.Count);
       Assert.False(orderIds.ContainsKey(order.OrderId));
-      Assert.Null(orders.Find(Orders.ById(order.OrderId)));
+      Assert.Null(orders.Find(Orders.Predicates.ById(order.OrderId)));
     }
 
     [Fact]
@@ -226,14 +228,28 @@ namespace DemoExchange.Services {
     [Fact]
     [Trait("Category", "Unit")]
     public void LoadOrdersTest() {
-      OrderBook book = new OrderBook("ERX", OrderAction.BUY);
-      var context = new Mock<IOrderContext>();
-      // TODO: Test book.LoadOrders(context.Object);
-      // Verify the Where is correct, and return 3 orders
+      OrderBook book = new OrderBook("ERX", OrderAction.BUY);;
+      var data = new List<OrderEntity> {
+        (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 1M),
+        (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 2M),
+        (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 3M)
+      }.AsQueryable();
 
-      /*Assert.Equal(3, book.TestOrders[0].StrikePrice);
+      var context = new Mock<IOrderContext>();
+      context.Setup(c => c.GetAllOpenOrdersByTickerAndAction("ERX", OrderAction.BUY))
+        .Returns(data);
+
+      book.LoadOrders(context.Object);
+      Assert.Equal(3, book.TestOrders[0].StrikePrice);
       Assert.Equal(2, book.TestOrders[1].StrikePrice);
-      Assert.Equal(1, book.TestOrders[2].StrikePrice);*/
+      Assert.Equal(1, book.TestOrders[2].StrikePrice);
     }
   }
 }
+// Mocking DbSet
+// var mockOrders = new Mock<DbSet<OrderEntity>>();
+// mockOrders.As<IQueryable<OrderEntity>>().Setup(m => m.Provider).Returns(data.Provider);
+// mockOrders.As<IQueryable<OrderEntity>>().Setup(m => m.Expression).Returns(data.Expression);
+// mockOrders.As<IQueryable<OrderEntity>>().Setup(m => m.ElementType).Returns(data.ElementType);
+// mockOrders.As<IQueryable<OrderEntity>>().Setup(m => m.GetEnumerator())
+//   .Returns(data.GetEnumerator());

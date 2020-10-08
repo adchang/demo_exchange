@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using static Utils.Preconditions;
+using Microsoft.EntityFrameworkCore;
 
 // QUESTION: Use timer callbacks to manage GTC order?
 namespace DemoExchange.Services {
@@ -61,11 +63,10 @@ namespace DemoExchange.Services {
       // TODO: Add tests
       CheckNotNull(context, paramName : nameof(context));
       // QUESTION: Confirm the WHERE is part of the query; ie it doesn't retrieve all orders, then filter on server
-      var query = context.Orders.Where(order =>
-        (order.Ticker.Equals(Ticker)) &&
-        (order.Action == Type) &&
-        (order.Status == OrderStatus.OPEN)
-      ).ToList();
+      // var query = context.Orders
+      //   .Where(Orders.Predicates.OpenByTickerAndAction(Ticker, Type))
+      //   .ToList();
+      var query = context.GetAllOpenOrdersByTickerAndAction(Ticker, Type).ToList();
 
       query.ForEach(entity => {
         Order order = new Order(entity);

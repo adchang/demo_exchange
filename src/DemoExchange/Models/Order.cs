@@ -331,8 +331,21 @@ namespace DemoExchange.Models {
         public static readonly Comparer<IOrderModel> STRIKE_PRICE_DESCENDING_COMPARER =
           new StrikePriceDescendingComparer();
 
-        public static Predicate<IOrderModel> ById(String orderId) {
-          return order => order.OrderId.Equals(orderId);
+        public class Predicates {
+          public static Predicate<IOrderModel> ById(String orderId) {
+            return order => order.OrderId.Equals(orderId);
+          }
+
+          public static Func<OrderEntity, bool> OpenByTickerAndAction(String ticker,
+            OrderAction action) {
+            return order => (order.Status == OrderStatus.OPEN) &&
+              (order.Ticker.Equals(ticker)) &&
+              (order.Action == action);
+          }
+
+          private Predicates() {
+            // Prevent instantiation
+          }
         }
 
         private Orders() {

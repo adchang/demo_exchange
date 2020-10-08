@@ -292,4 +292,23 @@ namespace DemoExchange.Models {
       Assert.NotEqual(0, open.CanceledTimestamp);
     }
   }
+
+  public class OrdersPredicatesTest {
+    [Fact]
+    [Trait("Category", "Unit")]
+    public void OpenByTickerAndActionTest() {
+      TestOrder order = new TestOrder() {
+        Status = OrderStatus.CANCELLED,
+        Ticker = "ER",
+        Action = OrderAction.SELL
+      };
+      Assert.False(Orders.Predicates.OpenByTickerAndAction("ERX", OrderAction.BUY).Invoke(order));
+      order.Status = OrderStatus.OPEN;
+      Assert.False(Orders.Predicates.OpenByTickerAndAction("ERX", OrderAction.BUY).Invoke(order));
+      order.Ticker = "ERX";
+      Assert.False(Orders.Predicates.OpenByTickerAndAction("ERX", OrderAction.BUY).Invoke(order));
+      order.Action = OrderAction.BUY;
+      Assert.True(Orders.Predicates.OpenByTickerAndAction("ERX", OrderAction.BUY).Invoke(order));
+    }
+  }
 }
