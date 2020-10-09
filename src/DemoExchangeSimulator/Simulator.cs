@@ -35,8 +35,7 @@ namespace DemoExchangeSimulator {
       logger.Information("Concurrent threads: " + numThreads);
       Console.WriteLine("");
 
-      // List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
-      List<String> tickers = new List<String> { "UPRO" };
+      List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
       logger.Information("Tickers: " + String.Join(", ", tickers));
       if (minOrders > 0) {
         msg = "\n\n********** SEEDING ORDER BOOK **********\n";
