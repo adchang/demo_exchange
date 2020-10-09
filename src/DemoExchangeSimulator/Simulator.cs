@@ -21,6 +21,7 @@ namespace DemoExchangeSimulator {
       String msg = "";
       int minOrders = 1;
       int numTrades = 1;
+      bool limitOrders = true;
       int numThreads = 1;
 
       Console.WriteLine("\nHello! I am a simulator for DemoExchange\n");
@@ -28,12 +29,15 @@ namespace DemoExchangeSimulator {
       logger.Information("Orders to seed: " + minOrders);
       Console.WriteLine("How many trades to execute?: ");
       logger.Information("Trades to execute: " + numTrades);
+      Console.WriteLine("Include limit orders?: ");
+      logger.Information("Limit orders: " + limitOrders);
       Console.WriteLine("How many concurrent threads?: ");
       logger.Information("Concurrent threads: " + numThreads);
       Console.WriteLine("");
 
-      List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
-      logger.Information("Tickers: " + Utils.Strings.ToString(tickers));
+      // List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
+      List<String> tickers = new List<String> { "UPRO" };
+      logger.Information("Tickers: " + String.Join(", ", tickers));
       if (minOrders > 0) {
         msg = "\n\n********** SEEDING ORDER BOOK **********\n";
         Console.WriteLine(msg);
@@ -57,11 +61,29 @@ namespace DemoExchangeSimulator {
       }
 
       if (numTrades > 0) {
-        if (minOrders == 0) {
-          tickers.ForEach(ticker => service.AddTicker(ticker));
-        } else {
-          service.TestPerfLoadOrderBook();
-        }
+        msg = "\n\n********** LOADING ORDERS **********\n";
+        Console.WriteLine(msg);
+        logger.Information(msg);
+        long loadStart = Now;
+        ParallelOptions loadOpt = new ParallelOptions() {
+          MaxDegreeOfParallelism = tickers.Count
+        };
+        bool addTicker = minOrders == 0;
+        Parallel.For(0, tickers.Count, loadOpt, i => {
+          String ticker = tickers[i];
+          Tuple<int, int> result;
+          long loadStart = Now;
+          if (addTicker) {
+            result = service.AddTicker(ticker);
+          } else {
+            result = service.TestPerfLoadOrderBook(ticker);
+          }
+          msg = String.Format("Loaded {1} BUY and {2} {3} orders in {0} milliseconds",
+            Stop(loadStart), result.Item1, result.Item2, ticker);
+          Console.WriteLine(msg);
+          logger.Information(msg);
+
+        });
 
         msg = "\n\n********** BEGIN TRADING **********\n";
         Console.WriteLine(msg);
@@ -71,7 +93,7 @@ namespace DemoExchangeSimulator {
           MaxDegreeOfParallelism = numThreads
         };
         Parallel.For(0, numTrades, opt, i => {
-          int orderType = (rnd.Next(1, 5));
+          int orderType = (rnd.Next(1, limitOrders ? 5 : 3));
           String ticker = tickers[rnd.Next(1, tickers.Count + 1) - 1];
           Quote quote = (Quote)service.GetQuote(ticker);
           int sign = rnd.Next(1, 3) == 1 ? 1 : -1;

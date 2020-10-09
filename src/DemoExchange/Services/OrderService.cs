@@ -12,14 +12,14 @@ using static Utils.Time;
 
 namespace DemoExchange.Services {
   public interface IOrderInternalService : IOrderService {
-    public void AddTicker(String ticker);
+    public Tuple<int, int> AddTicker(String ticker);
     public void OpenMarket();
     public void CloseMarket();
 
-#if PERF
+#if (PERF || PERF_FINE || PERF_FINEST)
     public void TestPerfAddOrder(String ticker,
       List<IOrderModel> buyOrders, List<IOrderModel> sellOrders);
-    public void TestPerfLoadOrderBook();
+    public Tuple<int, int> TestPerfLoadOrderBook(String ticker);
 #endif
   }
 
@@ -62,10 +62,12 @@ namespace DemoExchange.Services {
 #endif
     }
 
-    public void AddTicker(String ticker) {
+    public Tuple<int, int> AddTicker(String ticker) {
       // TODO: AddTicker preconditions & tests
       lock(managers) {
-        managers.Add(ticker, new OrderManager(ticker));
+        OrderManager manager = new OrderManager(ticker);
+        managers.Add(ticker, manager);
+        return manager.Count;
       }
     }
 
@@ -107,7 +109,7 @@ namespace DemoExchange.Services {
       }
     }
 
-#if PERF
+#if (PERF || PERF_FINE || PERF_FINEST)
     public void TestPerfAddOrder(String ticker,
       List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
       OrderManager manager = new OrderManager(ticker);
@@ -115,8 +117,11 @@ namespace DemoExchange.Services {
       managers.Add(ticker, manager);
     }
 
-    public void TestPerfLoadOrderBook() {
-      managers.Values.ToList().ForEach(mgr => mgr.TetPerfLoadOrderBook());
+    public Tuple<int, int> TestPerfLoadOrderBook(String ticker) {
+      OrderManager manager = managers[ticker];
+      lock(manager) {
+        return manager.TestPerfLoadOrderBook();
+      }
     }
 #endif
   }
@@ -128,6 +133,9 @@ namespace DemoExchange.Services {
     private readonly OrderBook BuyBook;
     private readonly OrderBook SellBook;
 
+    public Tuple<int, int> Count {
+      get { return new Tuple<int, int>(BuyBook.Count, SellBook.Count); }
+    }
     public Quote Quote {
       get { return new Quote(BuyBook.First.StrikePrice, SellBook.First.StrikePrice); }
     }
@@ -143,7 +151,7 @@ namespace DemoExchange.Services {
 
     public OrderResponse SubmitOrder(IOrderContext context,
       IAccountService accountService, Order order) {
-#if PERF
+#if (PERF || PERF_FINE || PERF_FINEST)
       long start = Now;
 #endif
       OrderResponse insertResponse = InsertOrder(context, order);
@@ -168,7 +176,7 @@ namespace DemoExchange.Services {
 #if DIAGNOSTICS
         DiagnosticsWriteDetails(fillResponse.Data);
 #endif
-#if PERF
+#if (PERF || PERF_FINE || PERF_FINEST)
         logger.Information(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
         return new OrderResponse(order);
@@ -194,7 +202,7 @@ namespace DemoExchange.Services {
           done = true;
         }
       }
-#if PERF
+#if (PERF || PERF_FINE || PERF_FINEST)
       logger.Information(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
       return insertResponse;
@@ -345,7 +353,7 @@ namespace DemoExchange.Services {
     }
 #endif
 
-#if PERF
+#if (PERF || PERF_FINE || PERF_FINEST)
     public void TestPerfAddOrder(List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
       int i = 0;
       using OrderContext buy = new OrderContext();
@@ -374,10 +382,12 @@ namespace DemoExchange.Services {
       SellBook.TestPerfSort();
     }
 
-    public void TetPerfLoadOrderBook() {
+    public Tuple<int, int> TestPerfLoadOrderBook() {
       using OrderContext context = new OrderContext();
       BuyBook.TestPerfLoadOrders(context);
       SellBook.TestPerfLoadOrders(context);
+
+      return new Tuple<int, int>(BuyBook.Count, SellBook.Count);
     }
 #endif
   }
