@@ -227,8 +227,7 @@ namespace DemoExchange.Services {
 
     [Fact]
     [Trait("Category", "Unit")]
-    public void LoadOrdersTest() {
-      OrderBook book = new OrderBook("ERX", OrderAction.BUY);;
+    public void OrderBookLoadOrdersTest() {
       var data = new List<OrderEntity> {
         (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 1M),
         (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 2M),
@@ -239,7 +238,7 @@ namespace DemoExchange.Services {
       context.Setup(c => c.GetAllOpenOrdersByTickerAndAction("ERX", OrderAction.BUY))
         .Returns(data);
 
-      book.LoadOrders(context.Object);
+      OrderBook book = new OrderBook(context.Object, "ERX", OrderAction.BUY);;
       Assert.Equal(3, book.TestOrders[0].StrikePrice);
       Assert.Equal(2, book.TestOrders[1].StrikePrice);
       Assert.Equal(1, book.TestOrders[2].StrikePrice);

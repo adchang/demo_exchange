@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using DemoExchange;
+using System.Text;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using static Utils.Preconditions;
 using static Utils.Time;
 
@@ -15,9 +15,17 @@ namespace DemoExchange.Services {
     public void AddTicker(String ticker);
     public void OpenMarket();
     public void CloseMarket();
+
+#if PERF
+    public void TestPerfAddOrder(String ticker,
+      List<IOrderModel> buyOrders, List<IOrderModel> sellOrders);
+    public void TestPerfLoadOrderBook();
+#endif
   }
 
   public class OrderService : IOrderInternalService {
+    private readonly ILogger logger = Log.Logger;
+
     public const String MARKET_CLOSED = "Market is closed.";
 
     private readonly IDictionary<String, OrderManager> managers =
@@ -71,7 +79,7 @@ namespace DemoExchange.Services {
 
       OrderManager manager = managers[response.Data.Ticker];
       lock(manager) {
-        using var context = new OrderContext();
+        using OrderContext context = new OrderContext();
         return manager.SubmitOrder(context, accountService, (Order)response.Data);
       }
     }
@@ -106,11 +114,17 @@ namespace DemoExchange.Services {
       manager.TestPerfAddOrder(buyOrders, sellOrders);
       managers.Add(ticker, manager);
     }
+
+    public void TestPerfLoadOrderBook() {
+      managers.Values.ToList().ForEach(mgr => mgr.TetPerfLoadOrderBook());
+    }
 #endif
   }
 
   // QUESTION: Assumes order book always has at least 1 order, ie market maker
   public class OrderManager {
+    private readonly ILogger logger = Log.Logger;
+
     private readonly OrderBook BuyBook;
     private readonly OrderBook SellBook;
 
@@ -122,9 +136,9 @@ namespace DemoExchange.Services {
     }
 
     public OrderManager(String ticker) {
-      BuyBook = new OrderBook(ticker, OrderAction.BUY);
-      SellBook = new OrderBook(ticker, OrderAction.SELL);
-      LoadOrderBook();
+      using OrderContext context = new OrderContext();
+      BuyBook = new OrderBook(context, ticker, OrderAction.BUY);
+      SellBook = new OrderBook(context, ticker, OrderAction.SELL);
     }
 
     public OrderResponse SubmitOrder(IOrderContext context,
@@ -132,9 +146,6 @@ namespace DemoExchange.Services {
 #if PERF
       long start = Now;
 #endif
-      if (!order.IsValid) {
-        throw new NotImplementedException(); // TODO
-      }
       OrderResponse insertResponse = InsertOrder(context, order);
       if (insertResponse.HasErrors) {
         return insertResponse;
@@ -158,7 +169,7 @@ namespace DemoExchange.Services {
         DiagnosticsWriteDetails(fillResponse.Data);
 #endif
 #if PERF
-        Console.WriteLine(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+        logger.Information(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
         return new OrderResponse(order);
       }
@@ -184,19 +195,12 @@ namespace DemoExchange.Services {
         }
       }
 #if PERF
-      Console.WriteLine(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+      logger.Information(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
       return insertResponse;
     }
 
-    // QUESTION: Shouldn't this be just part of new OrderBook()?
-    private void LoadOrderBook() {
-      using var context = new OrderContext();
-      BuyBook.LoadOrders(context);
-      SellBook.LoadOrders(context);
-    }
-
-    private static OrderTransactionResponse FillMarketOrder(IAccountService accountService,
+    private OrderTransactionResponse FillMarketOrder(IAccountService accountService,
       Order order, OrderBook book) {
 #if PERF_FINEST
       long start = Now;
@@ -206,7 +210,6 @@ namespace DemoExchange.Services {
       bool done = false;
       List<Order> filledOrders = new List<Order>();
       List<Transaction> transactions = new List<Transaction>();
-      OrderTransactionResponse response = new OrderTransactionResponse();
       while (!done) {
         if (book.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
         Order buyOrder = order.IsBuyOrder ? order : book.First;
@@ -238,18 +241,17 @@ namespace DemoExchange.Services {
         }
       }
 #if PERF_FINEST
-      Console.WriteLine(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+      logger.Information(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
-      response.Code = Constants.Response.CREATED;
-      response.Data = new OrderTransaction(filledOrders, transactions);
-      return response;
+
+      return new OrderTransactionResponse(Constants.Response.CREATED,
+        new OrderTransaction(filledOrders, transactions));
     }
 
     private OrderTransactionResponse TryFillOrderBook(IAccountService accountService) {
 #if PERF_FINEST
       long start = Now;
 #endif
-      OrderTransactionResponse response = new OrderTransactionResponse();
 
       Order buyOrder = BuyBook.First;
       Order sellOrder = SellBook.First;
@@ -284,26 +286,26 @@ namespace DemoExchange.Services {
         filledOrder.Complete();
       }
 #if PERF_FINEST
-      Console.WriteLine(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+      logger.Information(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
-      response.Code = Constants.Response.CREATED;
-      response.Data = new OrderTransaction(filledOrders, transactions);
-      return response;
+
+      return new OrderTransactionResponse(Constants.Response.CREATED,
+        new OrderTransaction(filledOrders, transactions));
     }
 
-    private static OrderResponse InsertOrder(IOrderContext context, Order order) {
+    private OrderResponse InsertOrder(IOrderContext context, Order order) {
       context.Orders.Add((OrderEntity)order);
       try {
         context.SaveChanges();
       } catch (Exception e) {
-        // TODO logger.Warning("Db exception management");
+        logger.Warning("InsertOrder failed", e);
         return new OrderResponse(Constants.Response.INTERNAL_SERVER_ERROR,
           order, new Error("", "", e.Message));
       }
       return new OrderResponse(order);
     }
 
-    private static OrderTransactionResponse SaveOrderTransaction(IOrderContext context,
+    private OrderTransactionResponse SaveOrderTransaction(IOrderContext context,
       OrderTransaction data) {
       data.Orders.ForEach(order => {
         context.Orders.Add((OrderEntity)order);
@@ -316,7 +318,8 @@ namespace DemoExchange.Services {
       try {
         context.SaveChanges();
       } catch (Exception e) {
-        // TODO logger.Warning("Db exception management");
+        // QUESTION: What to do here in terms of transaction integrity?
+        logger.Warning("SaveOrderTransaction failed", e);
         return new OrderTransactionResponse(Constants.Response.INTERNAL_SERVER_ERROR,
           data, new Error("", "", e.Message));
       }
@@ -329,22 +332,23 @@ namespace DemoExchange.Services {
 
 #if DIAGNOSTICS
     private void DiagnosticsWriteDetails(OrderTransaction transaction) {
-      Console.WriteLine("Order details:");
-      transaction.Orders.ForEach(order => Console.WriteLine("     " + order.ToString()));
-      Console.WriteLine("Transaction details:");
-      transaction.Transactions.ForEach(transaction => Console.WriteLine("     " + transaction.ToString()));
-
+      StringBuilder sb = new StringBuilder();
+      sb.Append("Order details:\n");
+      transaction.Orders.ForEach(order => sb.Append("     " + order.ToString() + "\n"));
+      sb.Append("Transaction details:\n");
+      transaction.Transactions.ForEach(transaction => sb.Append("     " + transaction.ToString() + "\n"));
       Quote q = (Quote)Quote;
-      Console.WriteLine("  SPREAD: " + q.ToString());
+      sb.Append("\n  SPREAD: " + q.ToString());
       Level2 l2 = (Level2)Level2;
-      Console.WriteLine("  LEVEL 2:\n" + l2.ToString());
+      sb.Append("\n  LEVEL 2:\n" + l2.ToString());
+      logger.Information(sb.ToString());
     }
 #endif
 
 #if PERF
     public void TestPerfAddOrder(List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
       int i = 0;
-      using var buy = new OrderContext();
+      using OrderContext buy = new OrderContext();
       foreach (IOrderModel request in buyOrders) {
         Order order = new Order(request);
         buy.Orders.Add((OrderEntity)order);
@@ -357,7 +361,7 @@ namespace DemoExchange.Services {
       BuyBook.TestPerfSort();
 
       i = 0;
-      using var sell = new OrderContext();
+      using OrderContext sell = new OrderContext();
       foreach (IOrderModel request in sellOrders) {
         Order order = new Order(request);
         sell.Orders.Add((OrderEntity)order);
@@ -368,6 +372,12 @@ namespace DemoExchange.Services {
       }
       sell.SaveChanges();
       SellBook.TestPerfSort();
+    }
+
+    public void TetPerfLoadOrderBook() {
+      using OrderContext context = new OrderContext();
+      BuyBook.TestPerfLoadOrders(context);
+      SellBook.TestPerfLoadOrders(context);
     }
 #endif
   }

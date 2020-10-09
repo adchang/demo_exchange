@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Utils {
   public class Strings {
@@ -8,6 +9,13 @@ namespace Utils {
 
     public static String GetValue(String value, String nullEmptyValue) {
       return String.IsNullOrWhiteSpace(value) ? nullEmptyValue : value;
+    }
+
+    public static String ToString(List<String> list) {
+      String data = "";
+      list.ForEach(s => data += ", " + s);
+
+      return data;
     }
 
     private Strings() {

@@ -1,24 +1,43 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DemoExchange;
 using DemoExchange.Interface;
-using DemoExchange.Models;
 using DemoExchange.Services;
-using Microsoft.VisualBasic.CompilerServices;
+using Serilog;
 using static Utils.Time;
 
 namespace DemoExchangeSimulator {
   public class Simulator {
-    readonly Random rnd = new Random();
+    private readonly ILogger logger = Log.Logger;
 
-#pragma warning disable IDE0059
-    public void Start(int minOrders, int numTrades, int numThreads) {
-      OrderService service;
+    private readonly IOrderInternalService service;
+    private readonly Random rnd = new Random();
+
+    public Simulator(IOrderInternalService service) {
+      this.service = service;
+    }
+
+    public void Execute(string[] args) {
+      String msg = "";
+      int minOrders = 1;
+      int numTrades = 1;
+      int numThreads = 1;
+
+      Console.WriteLine("\nHello! I am a simulator for DemoExchange\n");
+      Console.WriteLine("How many orders to seed?: ");
+      logger.Information("Orders to seed: " + minOrders);
+      Console.WriteLine("How many trades to execute?: ");
+      logger.Information("Trades to execute: " + numTrades);
+      Console.WriteLine("How many concurrent threads?: ");
+      logger.Information("Concurrent threads: " + numThreads);
+      Console.WriteLine("");
+
       List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
+      logger.Information("Tickers: " + Utils.Strings.ToString(tickers));
       if (minOrders > 0) {
-        service = new OrderService(new Dependencies.AccountService());
-        Console.WriteLine("\n\n********** SEEDING ORDER BOOK **********\n");
+        msg = "\n\n********** SEEDING ORDER BOOK **********\n";
+        Console.WriteLine(msg);
+        logger.Information(msg);
         ParallelOptions opt = new ParallelOptions() {
           MaxDegreeOfParallelism = tickers.Count
         };
@@ -31,14 +50,22 @@ namespace DemoExchangeSimulator {
           List<IOrderModel> sellOrders = GenerateInitialOrders(minOrders, ticker,
             basePrice, false);
           service.TestPerfAddOrder(ticker, buyOrders, sellOrders);
-          Console.WriteLine(String.Format("{3}: Added {1} buy orders and {2} sell orders in {0} milliseconds", Stop(seedStart), buyOrders.Count, sellOrders.Count, ticker));
+          msg = String.Format("{3}: Added {1} buy orders and {2} sell orders in {0} milliseconds", Stop(seedStart), buyOrders.Count, sellOrders.Count, ticker);
+          Console.WriteLine(msg);
+          logger.Information(msg);
         });
       }
 
       if (numTrades > 0) {
-        service = new OrderService(new Dependencies.AccountService());
-        tickers.ForEach(ticker => service.AddTicker(ticker));
-        Console.WriteLine("\n\n********** BEGIN TRADING **********\n");
+        if (minOrders == 0) {
+          tickers.ForEach(ticker => service.AddTicker(ticker));
+        } else {
+          service.TestPerfLoadOrderBook();
+        }
+
+        msg = "\n\n********** BEGIN TRADING **********\n";
+        Console.WriteLine(msg);
+        logger.Information(msg);
         long tradeStart = Now;
         ParallelOptions opt = new ParallelOptions() {
           MaxDegreeOfParallelism = numThreads
@@ -62,14 +89,19 @@ namespace DemoExchangeSimulator {
             service.SubmitOrder(new SellLimitDayOrder("lmt" + i,
               ticker, RandomQuantity, price));
           }
-          Console.WriteLine(String.Format("Executed order in {0} milliseconds\n", Stop(orderStart)));
+          msg = String.Format("Executed order in {0} milliseconds\n", Stop(orderStart));
+          Console.WriteLine(msg);
+          logger.Information(msg);
         });
-        Console.WriteLine(String.Format("Executed {1} trades with {2} threads in {0} milliseconds",
-          Stop(tradeStart), numTrades, numThreads));
+        msg = String.Format("Executed {1} trades with {2} threads in {0} milliseconds",
+          Stop(tradeStart), numTrades, numThreads);
+        Console.WriteLine(msg);
+        logger.Information(msg);
       }
-      Console.WriteLine("\n\n********** END TRADING **********\n");
+      msg = "\n\n********** END TRADING **********\n";
+      Console.WriteLine(msg);
+      logger.Information(msg);
     }
-#pragma warning restore IDE0059
 
     private int RandomQuantity {
       get {
@@ -97,6 +129,7 @@ namespace DemoExchangeSimulator {
           new SellLimitDayOrder(prefix + i,
             ticker, RandomQuantity, price));
       }
+
       return orders;
     }
   }

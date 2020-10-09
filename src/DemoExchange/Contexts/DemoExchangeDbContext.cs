@@ -10,6 +10,7 @@ namespace DemoExchange.Contexts {
   }
 
   // TODO: DI & https://docs.microsoft.com/en-us/ef/core/miscellaneous/context-pooling
+  // https://exceptionnotfound.net/using-entity-framework-dbcontext-with-dependency-injection/
   public class DemoExchangeDbContext : DbContext, IDbContext {
     protected override void OnConfiguring(DbContextOptionsBuilder options) =>
       options.UseSqlServer("Server=loki,1433;Database=demo_exchange;User Id=demo_exchange_user;Password=PASSWORD;"); // HACK: Move connection string to config file

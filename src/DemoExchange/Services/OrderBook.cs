@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
+using Serilog;
 using static Utils.Preconditions;
-using Microsoft.EntityFrameworkCore;
 
 // QUESTION: Use timer callbacks to manage GTC order?
 namespace DemoExchange.Services {
@@ -51,30 +49,13 @@ namespace DemoExchange.Services {
       }
     }
 
-    public OrderBook(String ticker, OrderAction type) {
+    public OrderBook(IOrderContext context, String ticker, OrderAction type) {
       Ticker = ticker;
       Type = type;
       comparer = OrderAction.BUY.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
-    }
-
-    public void LoadOrders(IOrderContext context) {
-      // TODO: Add tests
-      CheckNotNull(context, paramName : nameof(context));
-      // QUESTION: Confirm the WHERE is part of the query; ie it doesn't retrieve all orders, then filter on server
-      // var query = context.Orders
-      //   .Where(Orders.Predicates.OpenByTickerAndAction(Ticker, Type))
-      //   .ToList();
-      var query = context.GetAllOpenOrdersByTickerAndAction(Ticker, Type).ToList();
-
-      query.ForEach(entity => {
-        Order order = new Order(entity);
-        orderIds.Add(order.OrderId, order);
-        orders.Add(order);
-      });
-
-      orders.Sort(comparer);
+      LoadOrders(context);
     }
 
     public void AddOrder(Order order) {
@@ -119,7 +100,26 @@ namespace DemoExchange.Services {
       orders.Remove(order);
     }
 
+    private void LoadOrders(IOrderContext context) {
+      context.GetAllOpenOrdersByTickerAndAction(Ticker, Type).ToList()
+        .ForEach(entity => {
+          Order order = new Order(entity);
+          orderIds.Add(order.OrderId, order);
+          orders.Add(order);
+        });
+
+      orders.Sort(comparer);
+    }
+
 #if DEBUG
+    public OrderBook(String ticker, OrderAction type) {
+      Ticker = ticker;
+      Type = type;
+      comparer = OrderAction.BUY.Equals(type) ?
+        Orders.STRIKE_PRICE_DESCENDING_COMPARER :
+        Orders.STRIKE_PRICE_ASCENDING_COMPARER;
+    }
+
     public IDictionary<String, Order> TestOrderIds {
       get { return orderIds; }
     }
@@ -134,6 +134,14 @@ namespace DemoExchange.Services {
 #endif
 
 #if PERF
+    public OrderBook(String ticker, OrderAction type, bool perf) {
+      Ticker = ticker;
+      Type = type;
+      comparer = OrderAction.BUY.Equals(type) ?
+        Orders.STRIKE_PRICE_DESCENDING_COMPARER :
+        Orders.STRIKE_PRICE_ASCENDING_COMPARER;
+    }
+
     public void TestPerfAddOrderNoSort(Order order) {
       orderIds.Add(order.OrderId, order);
       orders.Add(order);
@@ -141,6 +149,12 @@ namespace DemoExchange.Services {
 
     public void TestPerfSort() {
       orders.Sort(comparer);
+    }
+
+    public void TestPerfLoadOrders(IOrderContext context) {
+      orderIds.Clear();
+      orders.Clear();
+      LoadOrders(context);
     }
 #endif
   }
