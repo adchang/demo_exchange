@@ -18,6 +18,15 @@ namespace DemoExchangeSimulator {
     }
 
     public void Execute(string[] args) {
+      try {
+        ExecuteSimulation(args);
+      } catch (Exception e) {
+        logger.Fatal("Simulator failed: " + e.Message);
+        Console.WriteLine("Oops...something went wrong :( Sorry...");
+      }
+    }
+
+    private void ExecuteSimulation(string[] args) {
       String msg = "";
       int minOrders = 1;
       int numTrades = 1;
@@ -97,18 +106,22 @@ namespace DemoExchangeSimulator {
           Quote quote = (Quote)service.GetQuote(ticker);
           int sign = rnd.Next(1, 3) == 1 ? 1 : -1;
           long orderStart = Now;
+          IOrderResponse response;
           if (orderType == 1) {
-            service.SubmitOrder(new BuyMarketOrder("mkt" + i, ticker, RandomQuantity));
+            response = service.SubmitOrder(new BuyMarketOrder("mkt" + i, ticker, RandomQuantity));
           } else if (orderType == 2) {
-            service.SubmitOrder(new SellMarketOrder("mkt" + i, ticker, RandomQuantity));
+            response = service.SubmitOrder(new SellMarketOrder("mkt" + i, ticker, RandomQuantity));
           } else if (orderType == 3) {
             decimal price = quote.Ask + (sign * (rnd.Next(1, 10000) / 10000000M));
-            service.SubmitOrder(new BuyLimitDayOrder("lmt" + i,
+            response = service.SubmitOrder(new BuyLimitDayOrder("lmt" + i,
               ticker, RandomQuantity, price));
           } else {
             decimal price = quote.Bid + (sign * (rnd.Next(1, 10000) / 10000000M));
-            service.SubmitOrder(new SellLimitDayOrder("lmt" + i,
+            response = service.SubmitOrder(new SellLimitDayOrder("lmt" + i,
               ticker, RandomQuantity, price));
+          }
+          if (response.HasErrors) {
+            throw new Exception(response.Errors[0].Description);
           }
           msg = String.Format("Executed order in {0} milliseconds\n", Stop(orderStart));
           Console.WriteLine(msg);

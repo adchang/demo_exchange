@@ -28,13 +28,17 @@ namespace DemoExchange.Services {
 
     public const String MARKET_CLOSED = "Market is closed.";
 
+    // Question: ConcurrentDictionary instead? https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2?view=net-5.0
     private readonly IDictionary<String, OrderManager> managers =
       new Dictionary<String, OrderManager>();
+    private readonly IDemoExchangeDbContextFactory<OrderContext> orderContextFactory;
     private readonly IAccountService accountService;
 
     public bool IsMarketOpen { get; private set; }
 
-    public OrderService(IAccountService accountService) {
+    public OrderService(IDemoExchangeDbContextFactory<OrderContext> orderContextFactory,
+      IAccountService accountService) {
+      this.orderContextFactory = orderContextFactory;
       this.accountService = accountService;
     }
 
@@ -65,7 +69,8 @@ namespace DemoExchange.Services {
     public Tuple<int, int> AddTicker(String ticker) {
       // TODO: AddTicker preconditions & tests
       lock(managers) {
-        OrderManager manager = new OrderManager(ticker);
+        using OrderContext context = orderContextFactory.Create();
+        OrderManager manager = new OrderManager(context, ticker);
         managers.Add(ticker, manager);
         return manager.Count;
       }
@@ -81,7 +86,7 @@ namespace DemoExchange.Services {
 
       OrderManager manager = managers[response.Data.Ticker];
       lock(manager) {
-        using OrderContext context = new OrderContext();
+        using OrderContext context = orderContextFactory.Create();
         return manager.SubmitOrder(context, accountService, (Order)response.Data);
       }
     }
@@ -113,14 +118,15 @@ namespace DemoExchange.Services {
     public void TestPerfAddOrder(String ticker,
       List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
       OrderManager manager = new OrderManager(ticker);
-      manager.TestPerfAddOrder(buyOrders, sellOrders);
+      manager.TestPerfAddOrder(buyOrders, sellOrders, orderContextFactory);
       managers.Add(ticker, manager);
     }
 
     public Tuple<int, int> TestPerfLoadOrderBook(String ticker) {
       OrderManager manager = managers[ticker];
       lock(manager) {
-        return manager.TestPerfLoadOrderBook();
+        using OrderContext context = orderContextFactory.Create();
+        return manager.TestPerfLoadOrderBook(context);
       }
     }
 #endif
@@ -143,8 +149,7 @@ namespace DemoExchange.Services {
       get { return new Level2(BuyBook.Level2, SellBook.Level2); }
     }
 
-    public OrderManager(String ticker) {
-      using OrderContext context = new OrderContext();
+    public OrderManager(IOrderContext context, String ticker) {
       BuyBook = new OrderBook(context, ticker, OrderAction.BUY);
       SellBook = new OrderBook(context, ticker, OrderAction.SELL);
     }
@@ -354,9 +359,15 @@ namespace DemoExchange.Services {
 #endif
 
 #if (PERF || PERF_FINE || PERF_FINEST)
-    public void TestPerfAddOrder(List<IOrderModel> buyOrders, List<IOrderModel> sellOrders) {
+    public OrderManager(String ticker) {
+      BuyBook = new OrderBook(ticker, OrderAction.BUY, true);
+      SellBook = new OrderBook(ticker, OrderAction.SELL, true);
+    }
+
+    public void TestPerfAddOrder(List<IOrderModel> buyOrders, List<IOrderModel> sellOrders,
+      IDemoExchangeDbContextFactory<OrderContext> orderContextFactory) {
       int i = 0;
-      using OrderContext buy = new OrderContext();
+      using OrderContext buy = orderContextFactory.Create();
       foreach (IOrderModel request in buyOrders) {
         Order order = new Order(request);
         buy.Orders.Add((OrderEntity)order);
@@ -369,7 +380,7 @@ namespace DemoExchange.Services {
       BuyBook.TestPerfSort();
 
       i = 0;
-      using OrderContext sell = new OrderContext();
+      using OrderContext sell = orderContextFactory.Create();
       foreach (IOrderModel request in sellOrders) {
         Order order = new Order(request);
         sell.Orders.Add((OrderEntity)order);
@@ -382,12 +393,11 @@ namespace DemoExchange.Services {
       SellBook.TestPerfSort();
     }
 
-    public Tuple<int, int> TestPerfLoadOrderBook() {
-      using OrderContext context = new OrderContext();
+    public Tuple<int, int> TestPerfLoadOrderBook(IOrderContext context) {
       BuyBook.TestPerfLoadOrders(context);
       SellBook.TestPerfLoadOrders(context);
 
-      return new Tuple<int, int>(BuyBook.Count, SellBook.Count);
+      return Count;
     }
 #endif
   }

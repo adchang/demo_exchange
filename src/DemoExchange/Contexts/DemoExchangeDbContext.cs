@@ -9,11 +9,30 @@ namespace DemoExchange.Contexts {
     public Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry Entry(object entity);
   }
 
-  // TODO: DI & https://docs.microsoft.com/en-us/ef/core/miscellaneous/context-pooling
-  // https://exceptionnotfound.net/using-entity-framework-dbcontext-with-dependency-injection/
+  public interface IDemoExchangeDbContextFactory<T> where T : DemoExchangeDbContext {
+    public T Create();
+  }
+
+  public class ConnectionStrings {
+    public String DemoExchangeDb { get; set; }
+  }
+
+  public class DemoExchangeDbContextFactory : IDemoExchangeDbContextFactory<DemoExchangeDbContext> {
+    protected readonly DbContextOptions<DemoExchangeDbContext> options;
+
+    public DemoExchangeDbContextFactory(ConnectionStrings connectionStrings) {
+      var optionsBuilder = new DbContextOptionsBuilder<DemoExchangeDbContext>();
+      options = optionsBuilder.UseSqlServer(connectionStrings.DemoExchangeDb).Options;
+    }
+
+    public virtual DemoExchangeDbContext Create() {
+      return new DemoExchangeDbContext(options);
+    }
+  }
+
   public class DemoExchangeDbContext : DbContext, IDbContext {
-    protected override void OnConfiguring(DbContextOptionsBuilder options) =>
-      options.UseSqlServer("Server=loki,1433;Database=demo_exchange;User Id=demo_exchange_user;Password=PASSWORD;"); // HACK: Move connection string to config file
+    public DemoExchangeDbContext(DbContextOptions options):
+      base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
       base.OnModelCreating(modelBuilder);

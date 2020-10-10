@@ -1,5 +1,6 @@
 ﻿using System;
 using DemoExchange;
+using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Services;
 using Microsoft.Extensions.Configuration;
@@ -22,10 +23,13 @@ namespace DemoExchangeSimulator {
       Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(config)
         .CreateLogger();
+      ConnectionStrings connectionStrings = new ConnectionStrings();
+      config.GetSection("ConnectionStrings").Bind(connectionStrings);
 
       return new ServiceCollection()
-        .AddSingleton(config)
         .AddSingleton<Simulator>()
+        .AddSingleton<ConnectionStrings>(connectionStrings)
+        .AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>()
         .AddSingleton<IOrderInternalService, OrderService>()
         .AddSingleton<IAccountService, Dependencies.AccountService>()
         .BuildServiceProvider();

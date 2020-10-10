@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using DemoExchange.Interface;
 using DemoExchange.Models;
@@ -16,6 +15,16 @@ namespace DemoExchange.Contexts {
       OrderAction type);
   }
 
+  public class OrderContextFactory : DemoExchangeDbContextFactory,
+    IDemoExchangeDbContextFactory<OrderContext> {
+
+      public OrderContextFactory(ConnectionStrings connectionStrings) : base(connectionStrings) { }
+
+      public override OrderContext Create() {
+        return new OrderContext(options);
+      }
+    }
+
   public class OrderContext : DemoExchangeDbContext, IOrderContext {
     public DbSet<OrderEntity> Orders { get; private set; }
     public DbSet<TransactionEntity> Transactions { get; private set; }
@@ -26,5 +35,8 @@ namespace DemoExchange.Contexts {
       // TODO Test
       return Orders.Where(OpenByTickerAndAction(ticker, type)).AsQueryable();
     }
+
+    public OrderContext(DbContextOptions<DemoExchangeDbContext> options):
+      base(options) { }
   }
 }
