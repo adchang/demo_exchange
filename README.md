@@ -8,6 +8,12 @@ POC for an exchange written in C# and backed by SQLServer
 - Quote, Level 2
 
 ## Roadmap
+- Stop/Trailing Stop
 - Order expiration
 - Order Update/Cancel
-- Stop/Trailing Stop
+
+## Solution Details
+### Aliases
+Handy aliases for your environment
+
+    source .bash_aliases_demo_exchange

@@ -191,6 +191,41 @@ namespace DemoExchange.Interface {
     MARKET_CLOSE
   }
 
+  public class OrderModelView {
+    public String OrderId { get; set; }
+    public long CreatedTimestamp { get; set; }
+    public String AccountId { get; set; }
+    public OrderStatus Status { get; set; }
+    public OrderAction Action { get; set; }
+    public String Ticker { get; set; }
+    public OrderType Type { get; set; }
+    public int Quantity { get; set; }
+    public int OpenQuantity { get; set; }
+    public decimal OrderPrice { get; set; }
+    public decimal StrikePrice { get; set; }
+    public OrderTimeInForce TimeInForce { get; set; }
+    public long ToBeCanceledTimestamp { get; set; }
+    public long CanceledTimestamp { get; set; }
+
+    public override String ToString() {
+      return "{OrderId: " + OrderId + ", " +
+        "CreatedTimestamp: " + CreatedTimestamp + ", " +
+        "AccountId: " + AccountId + ", " +
+        "Status: " + Status + ", " +
+        "Action: " + Action + ", " +
+        "Ticker: " + Ticker + ", " +
+        "Type: " + Type + ", " +
+        "Quantity: " + Quantity + ", " +
+        "OpenQuantity: " + OpenQuantity + ", " +
+        "OrderPrice: " + OrderPrice.ToString(Constants.FORMAT_PRICE) + ", " +
+        "StrikePrice: " + StrikePrice.ToString(Constants.FORMAT_PRICE) + ", " +
+        "TimeInForce: " + TimeInForce + ", " +
+        "ToBeCanceledTimestamp: " + ToBeCanceledTimestamp + ", " +
+        "CanceledTimestamp: " + CanceledTimestamp + ", " +
+        "}";
+    }
+  }
+
   /// <summary>
   /// Model for an account.
   /// </summary>
