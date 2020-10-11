@@ -1,0 +1,21 @@
+export VERSION='0.0.1a'
+
+demo-exchange-order-up() {
+  demo-exchange-order-build;
+  demo-exchange-order-run;
+}
+demo-exchange-order-build() {
+  docker rm -f demo_exchange.order_service-$VERSION;
+  docker image rm demo_exchange.order_service:$VERSION;
+  docker build --tag demo_exchange.order_service:$VERSION .
+  docker rmi $(docker images -f 'dangling=true' -q)
+}
+demo-exchange-order-run() {
+  docker run -v /opt/adchang/_log/demo_exchange:/log --publish 8080:80 --detach --name demo_exchange.order_service-$VERSION demo_exchange.order_service:$VERSION
+}
+demo-exchange-order-start() {
+  docker-start demo_exchange.order_service-$VERSION
+}
+demo-exchange-order-stop() {
+  docker-stop demo_exchange.order_service-$VERSION
+}
