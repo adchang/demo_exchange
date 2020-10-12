@@ -154,6 +154,7 @@ namespace DemoExchange.Services {
       SellBook = new OrderBook(context, ticker, OrderAction.SELL);
     }
 
+    // QUESTION: Consider making async: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap
     public OrderResponse SubmitOrder(IOrderContext context,
       IAccountService accountService, Order order) {
 #if (PERF || PERF_FINE || PERF_FINEST)
@@ -354,7 +355,7 @@ namespace DemoExchange.Services {
       sb.Append("\n  SPREAD: " + q.ToString());
       Level2 l2 = (Level2)Level2;
       sb.Append("\n  LEVEL 2:\n" + l2.ToString());
-      logger.Information(sb.ToString());
+      logger.Verbose(sb.ToString());
     }
 #endif
 

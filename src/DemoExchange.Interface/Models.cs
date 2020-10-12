@@ -13,7 +13,7 @@ namespace DemoExchange.Interface {
   /// <summary>
   /// Model for an order.
   /// </summary>
-  public interface IOrderModel : IModel, IIsValid {
+  public interface IOrderModel : IModel {
     public const String ORDER_ID_NEW = "NEW";
 
     public const String ERROR_STRING_EMTPY = "Cannot be empty";
@@ -38,7 +38,7 @@ namespace DemoExchange.Interface {
     public long CanceledTimestamp { get; }
   }
 
-  public class OrderBase : IOrderModel {
+  public class OrderBase : IOrderModel, IIsValid {
     public String OrderId { get; }
     public long CreatedTimestamp { get; }
     public String AccountId { get; }
@@ -99,7 +99,7 @@ namespace DemoExchange.Interface {
     }
   }
 
-  public abstract class MarketOrder : OrderBase {
+  public class MarketOrder : OrderBase {
     public MarketOrder(String accountId, OrderAction action, String ticker, int quantity):
       base(IOrderModel.ORDER_ID_NEW, 0, accountId, OrderStatus.OPEN, action, ticker,
         OrderType.MARKET, quantity, quantity, 0, 0, OrderTimeInForce.DAY, 0, 0) { }
@@ -191,7 +191,7 @@ namespace DemoExchange.Interface {
     MARKET_CLOSE
   }
 
-  public class OrderModelView {
+  public class OrderModelView : IOrderModel {
     public String OrderId { get; set; }
     public long CreatedTimestamp { get; set; }
     public String AccountId { get; set; }
@@ -222,6 +222,50 @@ namespace DemoExchange.Interface {
         "TimeInForce: " + TimeInForce + ", " +
         "ToBeCanceledTimestamp: " + ToBeCanceledTimestamp + ", " +
         "CanceledTimestamp: " + CanceledTimestamp + ", " +
+        "}";
+    }
+  }
+
+  public class NewOrderModelView {
+    public String AccountId { get; set; }
+    public OrderAction Action { get; set; }
+    public String Ticker { get; set; }
+    public OrderType Type { get; set; }
+    public int Quantity { get; set; }
+    public decimal OrderPrice { get; set; }
+    public OrderTimeInForce TimeInForce { get; set; }
+
+    public override String ToString() {
+      return "{AccountId: " + AccountId + ", " +
+        "Action: " + Action + ", " +
+        "Ticker: " + Ticker + ", " +
+        "Type: " + Type + ", " +
+        "Quantity: " + Quantity + ", " +
+        "OrderPrice: " + OrderPrice.ToString(Constants.FORMAT_PRICE) + ", " +
+        "TimeInForce: " + TimeInForce + ", " +
+        "}";
+    }
+  }
+
+  public class NewMarketOrderModelView {
+    public String AccountId { get; set; }
+    public OrderAction Action { get; set; }
+    public String Ticker { get; set; }
+    public int Quantity { get; set; }
+
+    public NewMarketOrderModelView(String accountId, OrderAction action, String ticker,
+      int quantity) {
+      AccountId = accountId;
+      Action = action;
+      Ticker = ticker;
+      Quantity = quantity;
+    }
+
+    public override String ToString() {
+      return "{AccountId: " + AccountId + ", " +
+        "Action: " + Action + ", " +
+        "Ticker: " + Ticker + ", " +
+        "Quantity: " + Quantity + ", " +
         "}";
     }
   }

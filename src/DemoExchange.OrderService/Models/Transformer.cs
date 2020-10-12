@@ -22,5 +22,29 @@ namespace DemoExchange.OrderService.Models {
           CanceledTimestamp = entity.CanceledTimestamp
       };
     }
+
+    public static OrderModelView ToOrderModelView(NewOrderModelView view) {
+      return new OrderModelView {
+        AccountId = view.AccountId,
+          Action = view.Action,
+          Ticker = view.Ticker,
+          Type = view.Type,
+          Quantity = view.Quantity,
+          OrderPrice = view.OrderPrice,
+          TimeInForce = view.TimeInForce
+      };
+    }
+
+    public static NewOrderModelView ToNewOrderModelView(NewMarketOrderModelView view) {
+      return new NewOrderModelView {
+        AccountId = view.AccountId,
+          Action = view.Action,
+          Ticker = view.Ticker,
+          Type = OrderType.MARKET,
+          Quantity = view.Quantity,
+          OrderPrice = 0,
+          TimeInForce = OrderTimeInForce.DAY
+      };
+    }
   }
 }

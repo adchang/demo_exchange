@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using DemoExchange;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,7 +24,7 @@ namespace DemoExchange.OrderService {
         .ReadFrom.Configuration(Configuration)
         .CreateLogger();
       logger = Log.Logger;
-      logger.Debug("Logger created");
+      logger.Information("Logger created");
       ConnectionStrings connectionStrings = new ConnectionStrings();
       Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
 #if DEBUG
@@ -45,7 +39,31 @@ namespace DemoExchange.OrderService {
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
       services.AddSingleton<IOrderInternalService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountService, Dependencies.AccountService>();
-      logger.Debug("ConfigureServices done");
+
+      /* TODO Register the Swagger generator
+      services.AddSwaggerGen(c => {
+        c.SwaggerDoc("v1", new OpenApiInfo {
+          Version = "v1",
+            Title = "DemoExchange API",
+            Description = "API for DemoExchange",
+            TermsOfService = new Uri("https://example.com/terms"),
+            Contact = new OpenApiContact {
+              Name = "ER-X",
+                Email = string.Empty,
+                Url = new Uri("https://er-x.io"),
+            },
+            License = new OpenApiLicense {
+              Name = "Use under LICX",
+                Url = new Uri("https://example.com/license"),
+            }
+        });
+
+        // Set the comments path for the Swagger JSON and UI.
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        c.IncludeXmlComments(xmlPath);
+      });*/
+      logger.Information("ConfigureServices done");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {

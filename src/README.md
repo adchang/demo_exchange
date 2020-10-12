@@ -13,15 +13,43 @@ Client-side library with ready-to-use implementations
 ## Naming convention
 Where X is the domain,
 
-- XModel: DTO representing the domain data type
-- XViewModel: DTO representing the view model
-- XService: Service
+- XEntity: Persistence object for the domain data type
+- XContext: Database context
+- XContextFactory: Factory for the database context
+- XModel: Client DTO representing the domain data type
+- XViewModel: Client DTO representing the view model
+- XTransformer: Entity to ViewModel transformers
+- XService: Service for the domain
+- XServiceController: Controller for the service domain
 - XServiceResponse: Response object from service processing
-- XEntity: Persistence object
-- XBase: Base class if applicable
+- XBase: Client base class for the domain data type
 - TestX: For testing purposes
+
+## Logging
+
+- Verbose: For diagnostics purposes and may contain sensitive application data. Should not be enabled in production.
+
+  Must be surrounded by DIAGNOSTICS symbol
+
+- Debug: Transient, for development purposes only.
+
+  Can be left in code if it helps with development, but must be surrounded by DEBUG symbol
+
+- Information: General flow of the application
+- Warning: Abnormal or unexpected event in the application flow, typically from programming error
+- Error: Application execution is stopped due to a failure in current activity
+- Fatal: Unrecoverable application or crash that requires immediate attention
 
 ## Preprocessor symbols
 - DEBUG: For testing purposes
+
+  Methods should start with Test
+  
 - DIAGNOSTICS: For diagnosing issues in staging
+
+  Methods should start with Diagnostics
+
 - PERF, PERF_FINE, PERF_FINEST: For performance logging
+
+  Methods should start with TestPerf
+

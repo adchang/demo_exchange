@@ -54,10 +54,6 @@ namespace DemoExchange.Models {
       [Required]
       public long CanceledTimestamp { get; set; }
 
-      public virtual bool IsValid {
-        get { throw new NotImplementedException(); }
-      }
-
       public virtual OrderEntity ShallowCopy() {
         return (OrderEntity)this.MemberwiseClone();
       }
@@ -96,7 +92,7 @@ namespace DemoExchange.Models {
     /// <summary>
     /// Base Class representing an Order.
     /// </summary>
-    public class Order : OrderEntity, IOrderModel {
+    public class Order : OrderEntity, IOrderModel, IIsValid {
       public const int TIME_IN_FORCE_TO_BE_CANCELLED_DAYS = 90;
 
       public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not OPEN OrderId: {0}";
@@ -294,7 +290,7 @@ namespace DemoExchange.Models {
           this(order.AccountId, order.Action, order.Ticker, order.Type, order.Quantity,
             order.OrderPrice, order.TimeInForce) { }
 
-        public override bool IsValid {
+        public bool IsValid {
           get { return true; } // TODO: throw new NotImplementedException();
         }
 
