@@ -4,10 +4,15 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
-COPY DemoExchange.OrderService.csproj .
+ADD src/Utils Utils
+ADD src/DemoExchange.Interface DemoExchange.Interface
+ADD src/DemoExchange DemoExchange
+WORKDIR /src/DemoExchange.OrderService
+COPY src/DemoExchange.OrderService/DemoExchange.OrderService.csproj .
 RUN dotnet restore
-COPY . .
-RUN dotnet publish -c release -o /app
+COPY src/DemoExchange.OrderService .
+RUN dotnet publish -c release -o /app 
+# --no-restore
 FROM build AS publish
 
 FROM base AS final

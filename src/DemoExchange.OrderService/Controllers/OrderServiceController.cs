@@ -1,4 +1,4 @@
-#define DIAGNOSTICS // HACK: Move to CD pipeline
+//#define DIAGNOSTICS // HACK: Move to CD pipeline
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -77,7 +77,7 @@ namespace DemoExchange.OrderService.Controllers {
         return StatusCode(StatusCodes.Status500InternalServerError);
       }
 
-#if STAGING
+#if DIAGNOSTICS
       logger.Verbose("SubmitOrder response: " + response.ToString());
 #endif
       logger.Information("SubmitMarketOrder done");

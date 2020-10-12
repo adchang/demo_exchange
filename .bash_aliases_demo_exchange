@@ -7,7 +7,7 @@ demo-exchange-order-up() {
 demo-exchange-order-build() {
   docker rm -f demo_exchange.order_service-$ORDER_SERVICE_VERSION;
   docker image rm demo_exchange.order_service:$ORDER_SERVICE_VERSION;
-  docker build --tag demo_exchange.order_service:$ORDER_SERVICE_VERSION .
+  docker build -f src/DemoExchange.OrderService/Dockerfile --tag demo_exchange.order_service:$ORDER_SERVICE_VERSION .
   docker rmi $(docker images -f 'dangling=true' -q)
 }
 demo-exchange-order-run() {

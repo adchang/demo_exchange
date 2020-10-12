@@ -5,7 +5,7 @@ WebService bootstrap for Order Service
 ### To run in Docker
 Linux
 
-    1. cd src/DemoExchange.OrderService
+    1. cd {projectRoot}
     2. demo-exchange-order-up
 
 ### API examples
