@@ -38,7 +38,7 @@ namespace DemoExchange.OrderService {
           Title = "DemoExchange.OrderService",
             Version = "v1",
             Description = "API for DemoExchange",
-            TermsOfService = new Uri("https://example.com/terms"),
+            TermsOfService = new Uri("https://er-x.io/terms"),
             Contact = new OpenApiContact {
               Name = "ER-X",
                 Email = string.Empty,
@@ -46,7 +46,7 @@ namespace DemoExchange.OrderService {
             },
             License = new OpenApiLicense {
               Name = "Use under LICX",
-                Url = new Uri("https://example.com/license"),
+                Url = new Uri("https://er-x.io/license"),
 
             }
         });
@@ -56,8 +56,6 @@ namespace DemoExchange.OrderService {
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         c.IncludeXmlComments(xmlPath);*/
       });
-      services.AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
       services.AddSingleton<ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
       services.AddSingleton<IOrderInternalService, DemoExchange.Services.OrderService>();
