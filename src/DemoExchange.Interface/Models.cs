@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace DemoExchange.Interface {
   /// <summary>
@@ -161,6 +162,7 @@ namespace DemoExchange.Interface {
         OrderTimeInForce.GOOD_TIL_CANCELED, 0, 0) { }
   }
 
+  [JsonConverter(typeof(JsonStringEnumConverter))]
   public enum OrderStatus {
     OPEN, // Default
     COMPLETED,
@@ -169,11 +171,13 @@ namespace DemoExchange.Interface {
     DELETED
   }
 
+  [JsonConverter(typeof(JsonStringEnumConverter))]
   public enum OrderAction {
     BUY, // Default
     SELL
   }
 
+  [JsonConverter(typeof(JsonStringEnumConverter))]
   public enum OrderType {
     MARKET, // Default
     LIMIT,
@@ -185,6 +189,7 @@ namespace DemoExchange.Interface {
     IMMEDIATE_OR_CANCEL
   }
 
+  [JsonConverter(typeof(JsonStringEnumConverter))]
   public enum OrderTimeInForce {
     DAY, // Default
     GOOD_TIL_CANCELED,

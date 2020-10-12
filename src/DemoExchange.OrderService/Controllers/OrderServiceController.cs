@@ -31,8 +31,7 @@ namespace DemoExchange.OrderService.Controllers {
 
     // TODO scopeRequiredByApi
 
-    [Route(Routes.Orders.DEFAULT_ORDERS + "/{orderId}")]
-    [HttpGet("/{orderId}")]
+    [HttpGet(Routes.Orders.DEFAULT_ORDERS + "/{orderId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -58,8 +57,7 @@ namespace DemoExchange.OrderService.Controllers {
       return Ok(OrderTransformer.ToOrderModelView(entity));
     }
 
-    [Route(Routes.Orders.DEFAULT_ORDERS)]
-    [HttpPost]
+    [HttpPost(Routes.Orders.DEFAULT_ORDERS)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -101,8 +99,7 @@ namespace DemoExchange.OrderService.Controllers {
       return Ok(response);
     }
 
-    [Route(Routes.Orders.DEFAULT_MARKET_ORDER)]
-    [HttpPost]
+    [HttpPost(Routes.Orders.DEFAULT_MARKET_ORDER)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -112,7 +109,7 @@ namespace DemoExchange.OrderService.Controllers {
       return SubmitOrder(OrderTransformer.ToNewOrderModelView(request));
     }
 
-    [Route(Routes.Orders.DEFAULT_ORDERS + "/start")]
+    [HttpGet(Routes.Orders.DEFAULT_ORDERS + "/start")]
     public void StartOrderService() {
       logger.Information("StartOrderService");
 

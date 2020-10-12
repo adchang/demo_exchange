@@ -1,3 +1,4 @@
+using System;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Services;
@@ -33,18 +34,9 @@ namespace DemoExchange.OrderService {
 
       services.AddControllers();
       services.AddSwaggerGen(c => {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "DemoExchange.OrderService", Version = "v1" });
-      });
-      services.AddSingleton<ConnectionStrings>(connectionStrings);
-      services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
-      services.AddSingleton<IOrderInternalService, DemoExchange.Services.OrderService>();
-      services.AddSingleton<IAccountService, Dependencies.AccountService>();
-
-      /* TODO Register the Swagger generator
-      services.AddSwaggerGen(c => {
         c.SwaggerDoc("v1", new OpenApiInfo {
-          Version = "v1",
-            Title = "DemoExchange API",
+          Title = "DemoExchange.OrderService",
+            Version = "v1",
             Description = "API for DemoExchange",
             TermsOfService = new Uri("https://example.com/terms"),
             Contact = new OpenApiContact {
@@ -55,14 +47,22 @@ namespace DemoExchange.OrderService {
             License = new OpenApiLicense {
               Name = "Use under LICX",
                 Url = new Uri("https://example.com/license"),
+
             }
         });
 
-        // Set the comments path for the Swagger JSON and UI.
+        /* Set the comments path for the Swagger JSON and UI.
         var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        c.IncludeXmlComments(xmlPath);
-      });*/
+        c.IncludeXmlComments(xmlPath);*/
+      });
+      services.AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+      services.AddSingleton<ConnectionStrings>(connectionStrings);
+      services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
+      services.AddSingleton<IOrderInternalService, DemoExchange.Services.OrderService>();
+      services.AddSingleton<IAccountService, Dependencies.AccountService>();
+
       logger.Information("ConfigureServices done");
     }
 
