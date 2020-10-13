@@ -1,4 +1,20 @@
 # Code
+
+## Goals
+
+- POC an opinionated tech-stack for a high-performance exchange that is primarily Microsoft, C# centric backend with an eye towards potential polyglot microservices.
+- Learn dotnet and other packages. Small business domain to focus on flushing out coding conventions and implementing new aspects of a robust and secure application environment. Follow along with commit history like a tutorial.
+
+**Out of scope**
+- Frontend, but favor [Flutter](https://flutter.dev/) for multi-platform UI
+- Async processing, event propagation
+- Monitoring
+- Big data and ML
+
+## Architecture Overview
+
+### Domain
+
 Envisioned to be 2 services
 - Account: Account and user management
 - Exchange: Everything else
@@ -7,8 +23,36 @@ It is important to differentiate Account and Account Portfolio. Account manages 
 
 Eventually though, transaction volume will necessitate horizontal scaling and partitioning. The order service is designed to be partitionable by ticker; an order service can be configured to process specific ticker(s). Some aspects of account portfolio should be split out from order service. However, the two domains should remain on the same database server to ensure we still have transactional integrity. Portfolio balance is not something we want to rely on eventual consistency; we need to know portfolio holdings at point of order fulfillment.
 
-## Interface
-Client-side library with ready-to-use implementations
+### Tiers
+
+- API Facade/Gateway: L7 proxy for service aggregation, user authentication, basic validation, rate limiting, and statistics.
+
+    Implements IXApi and XApi a reference implementation in the sdk. IXApi implements IXService
+
+- Controller: Service wrapper for route management, user authorization, row-level security, and response packaging.
+
+    Implements IXService and IXPrivateService, and XServiceHttp a reference implementation in the sdk.
+
+- Service: Business logic layer.
+
+### Frameworks & Packages
+
+**RPC & Data Serialization**: [gRPC](https://grpc.io/), [protobuf](https://developers.google.com/protocol-buffers)
+
+**Persistence & Cacheing**: [SQLServer in-memory](https://docs.microsoft.com/en-us/sql/relational-databases/in-memory-database), [Redis](https://redis.io/), 
+
+**DevOps**: [GitHub](https://github.com/), [Travis](https://travis-ci.org/)
+
+**Operational**: [Kubernetes](https://kubernetes.io/), [Docker](https://www.docker.com/), [Istio](https://istio.io/)
+
+
+
+
+
+
+
+## Api and Interface
+Client-side libraries with ready-to-use implementations. Api is the public library and Interface is the internal library.
 
 ## Naming convention
 Where X is the domain,
@@ -20,7 +64,10 @@ Where X is the domain,
 - XViewModel: Client DTO representing the view model
 - XTransformer: Entity to ViewModel transformers
 - XService: Service for the domain
+- XPrivateService: Private API for the domain, for microservices
 - XServiceController: Controller for the service domain
+- XApi: Reference client implementation of the public facing API for the domain
+- XServiceHttp: Reference client impleemntation of the 
 - XServiceResponse: Response object from service processing
 - XBase: Client base class for the domain data type
 - TestX: For testing purposes
