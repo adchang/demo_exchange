@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package erx.api.order; // No hyphens in package name
+option csharp_namespace = "DemoExchange.Api.Order";
+
+// TODO: decimal use double for now https://visualrecode.com/blog/csharp-decimals-in-grpc/
+
+message Order {
+  string order_id = 1;
+  uint64 created_timestamp = 2;
+  string account_id = 3;
+  OrderStatus status = 4;
+  OrderAction action = 5;
+  string ticker = 6;
+  OrderType type = 7;
+  uint32 quantity = 8;
+  uint32 open_quantity = 9;
+  double order_price = 10;
+  double strike_price = 11;
+  OrderTimeInForce time_in_force = 12;
+  uint64 to_be_canceled_timestamp = 13;
+  uint64 canceled_timestamp = 14;
+}
+
+enum OrderStatus {
+  OPEN = 0;
+  COMPLETED = 1;
+  UPDATED = 2;
+  CANCELLED = 3;
+  DELETED = 4;
+}
+
+enum OrderAction {
+  BUY = 0;
+  SELL = 1;
+}
+
+enum OrderType {
+  MARKET = 0;
+  LIMIT = 1;
+  STOP_MARKET = 2;
+  STOP_LIMIT = 3;
+  TRAILING_STOP_MARKET = 4;
+  TRAILING_STOP_LIMIT = 5;
+  FILL_OR_KILL = 6;
+  IMMEDIATE_OR_CANCEL = 7;
+}
+
+enum OrderTimeInForce {
+  DAY = 0;
+  GOOD_TIL_CANCELED = 1;
+  MARKET_CLOSE = 2;
+}
+
+message MarketOrderRequest {
+  string account_id = 1;
+  OrderAction action = 2;
+  string ticker = 3;
+  uint32 quantity = 4;
+}
+
+message OrderRequest {
+  string account_id = 1;
+  OrderAction action = 2;
+  string ticker = 3;
+  OrderType type = 4;
+  uint32 quantity = 5;
+  double order_price = 6;
+  OrderTimeInForce time_in_force = 7;
+}
+
+message Quote {
+  double bid = 1;
+  double ask = 2;
+  double last = 3;
+  uint32 volume = 4;
+}
+
+enum QuoteType {
+  BID = 0;
+  ASK = 1;
+}
+
+message Level2 {
+  repeated Level2Quote bids = 1;
+  repeated Level2Quote asks = 2;
+
+  message Level2Quote {
+    double price = 1;
+    uint32 quantity = 2;
+  }
+}
+
+message QuoteRequest {
+  string ticker = 1;
+}

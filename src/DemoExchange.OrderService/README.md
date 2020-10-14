@@ -1,5 +1,7 @@
 # Order Service
-WebService bootstrap for Order Service
+WebService HTTP1.1 bootstrap for Order Service
+
+This is an example to demonstrate dotnet controller and an OpenAPI implementation. Actual microservice-to-microservice would be implemented using gRPC.
 
 ## App Details
 ### To run in Docker

@@ -14,11 +14,11 @@ namespace DemoExchange.OrderService {
   public class Startup {
     private ILogger logger;
 
+    public IConfiguration Configuration { get; }
+
     public Startup(IConfiguration configuration) {
       Configuration = configuration;
     }
-
-    public IConfiguration Configuration { get; }
 
     public void ConfigureServices(IServiceCollection services) {
       Log.Logger = new LoggerConfiguration()
@@ -29,7 +29,7 @@ namespace DemoExchange.OrderService {
       ConnectionStrings connectionStrings = new ConnectionStrings();
       Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
 #if DEBUG
-      logger.Debug("Connection String: " + connectionStrings.DemoExchangeDb);
+      logger.Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
 
       services.AddControllers();

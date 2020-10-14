@@ -3,7 +3,7 @@
 ## Goals
 
 - POC an opinionated tech-stack for a high-performance exchange that is primarily Microsoft, C# centric backend with an eye towards potential polyglot microservices.
-- Learn dotnet and other packages. Small business domain to focus on flushing out coding conventions and implementing new aspects of a robust and secure application environment. Follow along with commit history like a tutorial.
+- Learn dotnet and other packages. Small business domain to focus on flushing out coding conventions and implementing new aspects of a robust and secure application environment. Follow along with [commit history like a tutorial](https://docs.google.com/document/d/1cFWrQyfAGYdtYoevVmW26hGT1Nw2f16iywPYAVQoVTM/edit).
 
 **Out of scope**
 - Frontend, but favor [Flutter](https://flutter.dev/) for multi-platform UI
@@ -25,15 +25,15 @@ Eventually though, transaction volume will necessitate horizontal scaling and pa
 
 ### Tiers
 
-- API Facade/Gateway: L7 proxy for service aggregation, user authentication, basic validation, rate limiting, and statistics.
+- API Facade/Gateway: L7 proxy for service aggregation, user authentication, basic validation, rate limiting, and statistics. Supports both OpenAPI (HTTP1.1) and gRPC (HTTP2)
 
-    Implements IXApi and XApi a reference implementation in the sdk. IXApi implements IXService
+    Implements service.proto
 
-- Controller: Service wrapper for route management, user authorization, row-level security, and response packaging.
+- gRPC Services: Service wrapper for user authorization, row-level security, and response packaging.
 
-    Implements IXService and IXPrivateService, and XServiceHttp a reference implementation in the sdk.
+    Note: OpenAPI equivalent would be implemented using dotnet Controller (DemoExchangeOrderService is a sample implementation). Microservice-to-microservice should really use HTTP2 over HTTP1.1.
 
-- Service: Business logic layer.
+- Services: Business logic layer.
 
 ### Frameworks & Packages
 
@@ -45,12 +45,6 @@ Eventually though, transaction volume will necessitate horizontal scaling and pa
 
 **Operational**: [Kubernetes](https://kubernetes.io/), [Docker](https://www.docker.com/), [Istio](https://istio.io/)
 
-
-
-
-
-
-
 ## Api and Interface
 Client-side libraries with ready-to-use implementations. Api is the public library and Interface is the internal library.
 
@@ -60,15 +54,13 @@ Where X is the domain,
 - XEntity: Persistence object for the domain data type
 - XContext: Database context
 - XContextFactory: Factory for the database context
-- XModel: Client DTO representing the domain data type
-- XViewModel: Client DTO representing the view model
-- XTransformer: Entity to ViewModel transformers
+- X: 
+    - protobuf for over-the-wire serialization
+    - POCO representing the domain
+- XTransformer: Entity/POCO to protobuf transformers
 - XService: Service for the domain
-- XPrivateService: Private API for the domain, for microservices
-- XServiceController: Controller for the service domain
-- XApi: Reference client implementation of the public facing API for the domain
-- XServiceHttp: Reference client impleemntation of the 
-- XServiceResponse: Response object from service processing
+- XRequest: protobuf representing the request
+- XResponse: Response object from service processing
 - XBase: Client base class for the domain data type
 - TestX: For testing purposes
 
