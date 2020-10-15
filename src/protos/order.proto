@@ -105,14 +105,20 @@ message AddTickerResponse {
 }
 
 service OrderService {
+  rpc IsMarketOpen(Empty) returns (BoolMessage);
+
+  rpc GetOrder(StringMessage) returns (Order);
+  rpc SubmitOrder(OrderRequest) returns (OrderResponse);
+  rpc CancelOrder(StringMessage) returns (OrderResponse);
+
+  rpc GetLevel2(StringMessage) returns (Level2);
+  rpc GetQuote(StringMessage) returns (Quote);
+
+  // Admin services
+  rpc InitializeService(Empty) returns (Empty);
   rpc AddTicker(StringMessage) returns (AddTickerResponse);
   rpc OpenMarket(Empty) returns (Empty);
   rpc CloseMarket(Empty) returns (Empty);
-  rpc IsMarketOpen(Empty) returns (BoolMessage);
-  rpc SubmitOrder(OrderRequest) returns (OrderResponse);
-  rpc CancelOrder(StringMessage) returns (OrderResponse);
-  rpc GetQuote(StringMessage) returns (Quote);
-  rpc GetLevel2(StringMessage) returns (Level2);
 
   // TODO: Remove
   rpc Echo(StringMessage) returns (StringMessage);

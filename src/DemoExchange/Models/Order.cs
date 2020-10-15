@@ -286,6 +286,10 @@ namespace DemoExchange.Models {
       base.CanceledTimestamp = entity.CanceledTimestamp;
     }
 
+    public OrderBL(OrderRequest request) : this(request.AccountId, request.Action, request.Ticker,
+      request.Type, request.Quantity, Convert.ToDecimal(request.OrderPrice),
+      request.TimeInForce) { }
+
     public bool IsValid {
       get { return true; } // TODO: throw new NotImplementedException();
     }

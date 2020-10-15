@@ -49,37 +49,11 @@ namespace DemoExchange.Services {
           }
         }
 
-        public void OpenMarket() {
-#if DEBUG
-          IsMarketOpen = true;
-#else
-          // TODO If Market hours, set marketOpen to true;
-          throw new InvalidOperationException(MARKET_CLOSED);
-#endif
-        }
+        public IOrderModel GetOrder(String orderId) {
+          using OrderContext context = orderContextFactory.Create();
+          OrderEntity entity = context.Orders.Find(Guid.Parse(orderId));
 
-        public void CloseMarket() {
-#if DEBUG
-          IsMarketOpen = false;
-#else
-          // TODO If !Market hours, set marketOpen to false;
-          throw new InvalidOperationException(MARKET_CLOSED);
-#endif
-        }
-
-        public AddTickerResponse AddTicker(String ticker) {
-          // TODO: AddTicker preconditions & tests
-          lock(managers) {
-            using OrderContext context = orderContextFactory.Create();
-            OrderManager manager = new OrderManager(context, ticker);
-            managers.Add(ticker, manager);
-
-            AddTickerResponse response = new AddTickerResponse();
-            response.BuyOrderCount = manager.Count.Item1;
-            response.SellOrderCount = manager.Count.Item2;
-
-            return response;
-          }
+          return ((entity == null) ? null : new OrderBL(entity));
         }
 
         public IResponse<IOrderModel, OrderResponse> SubmitOrder(IOrderModel request) {
@@ -99,24 +73,49 @@ namespace DemoExchange.Services {
           throw new NotImplementedException();
         }
 
-        public Quote GetQuote(String ticker) {
-          // TODO: GetQuote preconditions & tests
-          return managers[ticker].Quote;
-        }
-
         public Level2 GetLevel2(String ticker) {
           // TODO: GetLevel2 preconditions & tests
           return managers[ticker].Level2;
         }
 
-        /*private static OrderResponse NewOrder(IOrderModel request) {
-          try {
-            return new OrderResponse(new Order(request));
-          } catch (Exception e) {
-            return new OrderResponse(Constants.Response.BAD_REQUEST, request,
-              new Error("", "", e.Message));
+        public Quote GetQuote(String ticker) {
+          // TODO: GetQuote preconditions & tests
+          return managers[ticker].Quote;
+        }
+
+        public AddTickerResponse AddTicker(String ticker) {
+          // TODO: AddTicker preconditions & tests
+          lock(managers) {
+            using OrderContext context = orderContextFactory.Create();
+            OrderManager manager = new OrderManager(context, ticker);
+            managers.Add(ticker, manager);
+
+            AddTickerResponse response = new AddTickerResponse {
+              BuyOrderCount = manager.Count.Item1,
+              SellOrderCount = manager.Count.Item2
+            };
+
+            return response;
           }
-        }*/
+        }
+
+        public void OpenMarket() {
+#if DEBUG
+          IsMarketOpen = true;
+#else
+          // TODO If Market hours, set marketOpen to true;
+          throw new InvalidOperationException(MARKET_CLOSED);
+#endif
+        }
+
+        public void CloseMarket() {
+#if DEBUG
+          IsMarketOpen = false;
+#else
+          // TODO If !Market hours, set marketOpen to false;
+          throw new InvalidOperationException(MARKET_CLOSED);
+#endif
+        }
 
 #if (PERF || PERF_FINE || PERF_FINEST)
         public void TestPerfAddOrder(String ticker,
@@ -146,6 +145,7 @@ namespace DemoExchange.Services {
         public Tuple<int, int> Count {
           get { return new Tuple<int, int>(BuyBook.Count, SellBook.Count); }
         }
+
         public Quote Quote {
           get {
             return new Quote {
@@ -154,6 +154,7 @@ namespace DemoExchange.Services {
             };
           }
         }
+
         public Level2 Level2 {
           get {
             Level2 level2 = new Level2();

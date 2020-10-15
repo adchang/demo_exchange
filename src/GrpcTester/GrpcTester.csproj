@@ -6,11 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="../protos/common.proto" Link="common.proto" />
-    <Protobuf Include="../protos/order.proto" Link="order.proto" GrpcServices="Client" />
+    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
   </ItemGroup>
 
+  <!--
   <ItemGroup>
+    <Protobuf Include="../protos/common.proto" Link="common.proto" />
+    <Protobuf Include="../protos/order.proto" Link="order.proto" GrpcServices="Client" />
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
     <PackageReference Include="Grpc.Tools" Version="2.32.0">
@@ -18,5 +20,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+-->
 
 </Project>
