@@ -1,44 +1,45 @@
 using System;
+using DemoExchange.Api.Order;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 
 namespace DemoExchange {
   public class TestUtils {
-    public static Order NewBuyMarketOrder(String accountId, String ticker, int quantity) {
-      return new Order(new BuyMarketOrder(accountId, ticker, quantity));
+    public static OrderBL NewBuyMarketOrder(String accountId, String ticker, int quantity) {
+      return new OrderBL(accountId, OrderAction.Buy, ticker, OrderType.Market, quantity,
+        0, OrderTimeInForce.Day);
     }
 
-    public static Order NewBuyLimitDayOrder() {
-      return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.BUY);
+    public static OrderBL NewBuyLimitDayOrder() {
+      return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.Buy);
     }
 
-    public static Order NewBuyLimitDayOrder(decimal strikePrice) {
-      return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.BUY);
+    public static OrderBL NewBuyLimitDayOrder(decimal strikePrice) {
+      return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.Buy);
     }
 
-    public static Order NewBuyLimitDayOrder(String accountId, String ticker, int quantity,
+    public static OrderBL NewBuyLimitDayOrder(String accountId, String ticker, int quantity,
       decimal strikePrice) {
-      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.BUY);
+      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.Buy);
     }
 
-    public static Order NewSellLimitDayOrder() {
-      return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.SELL);
+    public static OrderBL NewSellLimitDayOrder() {
+      return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.Sell);
     }
 
-    public static Order NewSellLimitDayOrder(decimal strikePrice) {
-      return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.SELL);
+    public static OrderBL NewSellLimitDayOrder(decimal strikePrice) {
+      return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.Sell);
     }
 
-    public static Order NewSellLimitDayOrder(String accountId, String ticker, int quantity,
+    public static OrderBL NewSellLimitDayOrder(String accountId, String ticker, int quantity,
       decimal strikePrice) {
-      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.SELL);
+      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.Sell);
     }
 
-    public static Order NewLimitDayOrder(String accountId, String ticker, int quantity,
-      decimal strikePrice, OrderAction action) {
-      return new Order(OrderAction.BUY.Equals(action) ?
-        new BuyLimitDayOrder(accountId, ticker, quantity, strikePrice) :
-        new SellLimitDayOrder(accountId, ticker, quantity, strikePrice));
+    public static OrderBL NewLimitDayOrder(String accountId, String ticker, int quantity,
+      decimal orderPrice, OrderAction action) {
+      return new OrderBL(accountId, action, ticker, OrderType.Limit, quantity,
+        orderPrice, OrderTimeInForce.Day);
     }
 
     private TestUtils() {
@@ -46,7 +47,7 @@ namespace DemoExchange {
     }
   }
 
-  public class TestOrder : Order {
+  public class TestOrder : OrderBL {
     public new String OrderId {
       get { return ((OrderEntity)this).OrderId.ToString(); }
       set {
@@ -138,11 +139,11 @@ namespace DemoExchange {
 
     public TestOrder(String accountId, String ticker, OrderType type,
       int quantity, decimal strikePrice) : this(accountId,
-      OrderAction.BUY, ticker, type, quantity, strikePrice) { }
+      OrderAction.Buy, ticker, type, quantity, strikePrice) { }
 
     public TestOrder(String accountId, OrderAction action, String ticker, OrderType type,
       int quantity, decimal strikePrice) : base(accountId,
-      action, ticker, type, quantity, strikePrice, OrderTimeInForce.DAY) { }
+      action, ticker, type, quantity, strikePrice, OrderTimeInForce.Day) { }
 
     public new TestOrder ShallowCopy() {
       return (TestOrder)this.MemberwiseClone();

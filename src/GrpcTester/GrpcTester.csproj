@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="../protos/order.proto" Link="order.proto" />
-    <Protobuf Include="../protos/order_service.proto" Link="order_service.proto" GrpcServices="Client" />
+    <Protobuf Include="../protos/common.proto" Link="common.proto" />
+    <Protobuf Include="../protos/order.proto" Link="order.proto" GrpcServices="Client" />
   </ItemGroup>
 
   <ItemGroup>

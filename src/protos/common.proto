@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package erx.api; // No hyphens in package name
+option csharp_namespace = "DemoExchange.Api";
+
+message Empty { }
+
+message StringMessage {
+  string value = 1;
+}
+
+message IntMessage {
+  int32 value = 1;
+}
+
+message LongMessage {
+  int64 value = 1;
+}
+
+message DoubleMessage {
+  double value = 1;
+}
+
+message BoolMessage {
+  bool value = 1;
+}
+
+message Error {
+  string property_name = 1;
+  string code = 2;
+  string description = 3;
+}

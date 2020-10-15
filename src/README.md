@@ -3,7 +3,7 @@
 ## Goals
 
 - POC an opinionated tech-stack for a high-performance exchange that is primarily Microsoft, C# centric backend with an eye towards potential polyglot microservices.
-- Learn dotnet and other packages. Small business domain to focus on flushing out coding conventions and implementing new aspects of a robust and secure application environment. Follow along with [commit history like a tutorial](https://docs.google.com/document/d/1cFWrQyfAGYdtYoevVmW26hGT1Nw2f16iywPYAVQoVTM/edit).
+- Learn dotnet and other packages. Small business domain to focus on flushing out coding conventions and implementing new aspects of a robust and secure application environment. Follow along with [commit history like a tutorial](https://docs.google.com/document/d/1cFWrQyfAGYdtYoevVmW26hGT1Nw2f16iywPYAVQoVTM/edit#heading=h.xu2up6xyb01e).
 
 **Out of scope**
 - Frontend, but favor [Flutter](https://flutter.dev/) for multi-platform UI
@@ -31,7 +31,7 @@ Eventually though, transaction volume will necessitate horizontal scaling and pa
 
 - gRPC Services: Service wrapper for user authorization, row-level security, and response packaging.
 
-    Note: OpenAPI equivalent would be implemented using dotnet Controller (DemoExchangeOrderService is a sample implementation). Microservice-to-microservice should really use HTTP2 over HTTP1.1.
+    Note: OpenAPI equivalent would be implemented using dotnet Controller (DemoExchangeOrderService is a sample implementation). Microservice-to-microservice should really use HTTP2 over HTTP1.1. Additionally, streams over websocket.
 
 - Services: Business logic layer.
 
@@ -51,18 +51,19 @@ Client-side libraries with ready-to-use implementations. Api is the public libra
 ## Naming convention
 Where X is the domain,
 
-- XEntity: Persistence object for the domain data type
+- XEntity: Persistence object for the domain data type.
 - XContext: Database context
 - XContextFactory: Factory for the database context
-- X: 
-    - protobuf for over-the-wire serialization
-    - POCO representing the domain
-- XTransformer: Entity/POCO to protobuf transformers
+- X: Protobuf for over-the-wire serialization. Base class in inheritance hierarchy
+- XBL: POCO representing the business logic layer. Inherits from XEntity.
+- XTransformer: Request/Entity/BL transformers
 - XService: Service for the domain
-- XRequest: protobuf representing the request
+- XRequest: Protobuf representing the request
 - XResponse: Response object from service processing
 - XBase: Client base class for the domain data type
 - TestX: For testing purposes
+
+## [CI/CD pipeline](https://docs.google.com/document/d/1cFWrQyfAGYdtYoevVmW26hGT1Nw2f16iywPYAVQoVTM/edit#heading=h.50grtwc2j6jd)
 
 ## Logging
 

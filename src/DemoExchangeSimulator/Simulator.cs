@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DemoExchange.Api.Order;
 using DemoExchange.Interface;
+using DemoExchange.Models;
 using DemoExchange.Services;
 using Serilog;
 using static Utils.Time;
@@ -10,10 +12,10 @@ namespace DemoExchangeSimulator {
   public class Simulator {
     private readonly ILogger logger = Log.Logger;
 
-    private readonly IOrderInternalService service;
+    private readonly IOrderTestPerfService service;
     private readonly Random rnd = new Random();
 
-    public Simulator(IOrderInternalService service) {
+    public Simulator(IOrderTestPerfService service) {
       this.service = service;
     }
 
@@ -82,7 +84,8 @@ namespace DemoExchangeSimulator {
           Tuple<int, int> result;
           long loadStart = Now;
           if (addTicker) {
-            result = service.AddTicker(ticker);
+            AddTickerResponse response = service.AddTicker(ticker);
+            result = new Tuple<int, int>(response.BuyOrderCount, response.SellOrderCount);
           } else {
             result = service.TestPerfLoadOrderBook(ticker);
           }
@@ -106,18 +109,18 @@ namespace DemoExchangeSimulator {
           Quote quote = (Quote)service.GetQuote(ticker);
           int sign = rnd.Next(1, 3) == 1 ? 1 : -1;
           long orderStart = Now;
-          IOrderResponse response;
+          IResponse<IOrderModel, OrderResponse> response;
           if (orderType == 1) {
-            response = service.SubmitOrder(new BuyMarketOrder("mkt" + i, ticker, RandomQuantity));
+            response = service.SubmitOrder(NewBuyMarketOrder("mkt" + i, ticker, RandomQuantity));
           } else if (orderType == 2) {
-            response = service.SubmitOrder(new SellMarketOrder("mkt" + i, ticker, RandomQuantity));
+            response = service.SubmitOrder(NewSellMarketOrder("mkt" + i, ticker, RandomQuantity));
           } else if (orderType == 3) {
-            decimal price = quote.Ask + (sign * (rnd.Next(1, 10000) / 10000000M));
-            response = service.SubmitOrder(new BuyLimitDayOrder("lmt" + i,
+            decimal price = Convert.ToDecimal(quote.Ask) + (sign * (rnd.Next(1, 10000) / 10000000M));
+            response = service.SubmitOrder(NewBuyLimitDayOrder("lmt" + i,
               ticker, RandomQuantity, price));
           } else {
-            decimal price = quote.Bid + (sign * (rnd.Next(1, 10000) / 10000000M));
-            response = service.SubmitOrder(new SellLimitDayOrder("lmt" + i,
+            decimal price = Convert.ToDecimal(quote.Bid) + (sign * (rnd.Next(1, 10000) / 10000000M));
+            response = service.SubmitOrder(NewSellLimitDayOrder("lmt" + i,
               ticker, RandomQuantity, price));
           }
           if (response.HasErrors) {
@@ -158,13 +161,40 @@ namespace DemoExchangeSimulator {
       for (int i = 0; i < numOrders; i++) {
         decimal price = basePrice + (sign * (rnd.Next(1, 10000) / 10000000M));
         orders.Add(isBuy ?
-          new BuyLimitDayOrder(prefix + i,
+          NewBuyLimitDayOrder(prefix + i,
             ticker, RandomQuantity, price) :
-          new SellLimitDayOrder(prefix + i,
+          NewSellLimitDayOrder(prefix + i,
             ticker, RandomQuantity, price));
       }
 
       return orders;
+    }
+
+    private static OrderBL NewBuyLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice) {
+      return NewLimitDayOrder(accountId, ticker, quantity, orderPrice, OrderAction.Buy);
+    }
+
+    private static OrderBL NewSellLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice) {
+      return NewLimitDayOrder(accountId, ticker, quantity, orderPrice, OrderAction.Sell);
+    }
+
+    private static OrderBL NewLimitDayOrder(String accountId, String ticker, int quantity,
+      decimal orderPrice, OrderAction action) {
+      return new OrderBL(accountId, action, ticker, OrderType.Limit, quantity,
+        orderPrice, OrderTimeInForce.Day);
+    }
+
+    private static OrderBL NewBuyMarketOrder(String accountId, String ticker, int quantity) {
+      return NewMarketOrder(accountId, OrderAction.Buy, ticker, quantity);
+    }
+
+    private static OrderBL NewSellMarketOrder(String accountId, String ticker, int quantity) {
+      return NewMarketOrder(accountId, OrderAction.Sell, ticker, quantity);
+    }
+
+    private static OrderBL NewMarketOrder(String accountId, OrderAction type, String ticker, int quantity) {
+      return new OrderBL(accountId, type, ticker, OrderType.Market, quantity,
+        0, OrderTimeInForce.Day);
     }
   }
 }

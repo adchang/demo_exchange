@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DemoExchange.Api.Order;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
@@ -21,10 +22,10 @@ namespace DemoExchange.OrderService.Controllers {
     private readonly List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
 
     private readonly IDemoExchangeDbContextFactory<OrderContext> orderContextFactory;
-    private readonly IOrderInternalService service;
+    private readonly IOrderService service;
 
     public OrderServiceController(IDemoExchangeDbContextFactory<OrderContext> orderContextFactory,
-      IOrderInternalService service) {
+      IOrderService service) {
       this.orderContextFactory = orderContextFactory;
       this.service = service;
     }
@@ -36,7 +37,7 @@ namespace DemoExchange.OrderService.Controllers {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<OrderModelView>> GetOrder(String orderId) {
+    public async Task<ActionResult<Order>> GetOrder(String orderId) {
       logger.Information("GetOrder: " + orderId);
 
       // TODO: Authorization: User is admin or creator of the order
@@ -54,7 +55,7 @@ namespace DemoExchange.OrderService.Controllers {
         return BadRequest();
       }
 
-      return Ok(OrderTransformer.ToOrderModelView(entity));
+      return Ok(OrderTransformer.ToOrder(entity));
     }
 
     [HttpPost(Routes.Orders.DEFAULT_ORDERS)]
@@ -62,14 +63,14 @@ namespace DemoExchange.OrderService.Controllers {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public ActionResult<IOrderResponse> SubmitOrder(NewOrderModelView request) {
+    public ActionResult<OrderResponse> SubmitOrder(OrderRequest request) {
       logger.Information("SubmitOrder");
 #if DIAGNOSTICS
       logger.Verbose("SubmitOrder: " + request.ToString());
 #endif
-      IOrderResponse response = null;
+      IResponse<IOrderModel, OrderResponse> response = null;
       try {
-        response = service.SubmitOrder(OrderTransformer.ToOrderModelView(request));
+        response = service.SubmitOrder(OrderTransformer.ToOrderBL(request));
       } catch (Exception e) {
         logger.Error("SubmitOrder Server Error: " + request.ToString() +
           " Exception: " + e.Message +
@@ -92,11 +93,11 @@ namespace DemoExchange.OrderService.Controllers {
             " Exception: " + response.Errors[0].Description);
           return StatusCode(StatusCodes.Status500InternalServerError);
         } else {
-          return BadRequest(response);
+          return BadRequest(response.ToMessage());
         }
       }
 
-      return Ok(response);
+      return Ok(response.ToMessage());
     }
 
     [HttpPost(Routes.Orders.DEFAULT_MARKET_ORDER)]
@@ -104,9 +105,9 @@ namespace DemoExchange.OrderService.Controllers {
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public ActionResult<IOrderResponse> SubmitMarketOrder(NewMarketOrderModelView request) {
+    public ActionResult<OrderResponse> SubmitMarketOrder(MarketOrderRequest request) {
       logger.Information("SubmitMarketOrder");
-      return SubmitOrder(OrderTransformer.ToNewOrderModelView(request));
+      return SubmitOrder(OrderTransformer.ToOrderRequest(request));
     }
 
     [HttpGet(Routes.Orders.DEFAULT_ORDERS + "/start")]

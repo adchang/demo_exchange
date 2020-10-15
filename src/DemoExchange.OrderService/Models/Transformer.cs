@@ -1,11 +1,11 @@
 using System;
-using DemoExchange.Interface;
+using DemoExchange.Api.Order;
 using DemoExchange.Models;
 
 namespace DemoExchange.OrderService.Models {
   public class OrderTransformer {
-    public static OrderModelView ToOrderModelView(OrderEntity entity) {
-      return new OrderModelView {
+    public static Order ToOrder(OrderEntity entity) {
+      return new Order {
         OrderId = entity.OrderId.ToString(),
           CreatedTimestamp = entity.CreatedTimestamp,
           AccountId = entity.AccountId,
@@ -15,35 +15,35 @@ namespace DemoExchange.OrderService.Models {
           Type = entity.Type,
           Quantity = entity.Quantity,
           OpenQuantity = entity.OpenQuantity,
-          OrderPrice = entity.OrderPrice,
-          StrikePrice = entity.StrikePrice,
+          OrderPrice = Convert.ToDouble(entity.OrderPrice),
+          StrikePrice = Convert.ToDouble(entity.StrikePrice),
           TimeInForce = entity.TimeInForce,
           ToBeCanceledTimestamp = entity.ToBeCanceledTimestamp,
           CanceledTimestamp = entity.CanceledTimestamp
       };
     }
 
-    public static OrderModelView ToOrderModelView(NewOrderModelView view) {
-      return new OrderModelView {
-        AccountId = view.AccountId,
-          Action = view.Action,
-          Ticker = view.Ticker,
-          Type = view.Type,
-          Quantity = view.Quantity,
-          OrderPrice = view.OrderPrice,
-          TimeInForce = view.TimeInForce
-      };
+    public static OrderBL ToOrderBL(OrderRequest request) {
+      return new OrderBL(
+        request.AccountId,
+        request.Action,
+        request.Ticker,
+        request.Type,
+        request.Quantity,
+        Convert.ToDecimal(request.OrderPrice),
+        request.TimeInForce
+      );
     }
 
-    public static NewOrderModelView ToNewOrderModelView(NewMarketOrderModelView view) {
-      return new NewOrderModelView {
-        AccountId = view.AccountId,
-          Action = view.Action,
-          Ticker = view.Ticker,
-          Type = OrderType.MARKET,
-          Quantity = view.Quantity,
+    public static OrderRequest ToOrderRequest(MarketOrderRequest request) {
+      return new OrderRequest {
+        AccountId = request.AccountId,
+          Action = request.Action,
+          Ticker = request.Ticker,
+          Type = OrderType.Market,
+          Quantity = request.Quantity,
           OrderPrice = 0,
-          TimeInForce = OrderTimeInForce.DAY
+          TimeInForce = OrderTimeInForce.Day
       };
     }
   }

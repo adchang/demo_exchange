@@ -1,25 +1,27 @@
 syntax = "proto3";
 
-package erx.api.order; // No hyphens in package name
+import "common.proto";
+
+package erx.api.order;
 option csharp_namespace = "DemoExchange.Api.Order";
 
-// TODO: decimal use double for now https://visualrecode.com/blog/csharp-decimals-in-grpc/
+// TODO: decimal use double for now https://docs.microsoft.com/en-us/aspnet/core/grpc/protobuf?view=aspnetcore-3.1#scalar-value-types
 
 message Order {
   string order_id = 1;
-  uint64 created_timestamp = 2;
+  int64 created_timestamp = 2;
   string account_id = 3;
   OrderStatus status = 4;
   OrderAction action = 5;
   string ticker = 6;
   OrderType type = 7;
-  uint32 quantity = 8;
-  uint32 open_quantity = 9;
+  int32 quantity = 8;
+  int32 open_quantity = 9;
   double order_price = 10;
   double strike_price = 11;
   OrderTimeInForce time_in_force = 12;
-  uint64 to_be_canceled_timestamp = 13;
-  uint64 canceled_timestamp = 14;
+  int64 to_be_canceled_timestamp = 13;
+  int64 canceled_timestamp = 14;
 }
 
 enum OrderStatus {
@@ -56,7 +58,7 @@ message MarketOrderRequest {
   string account_id = 1;
   OrderAction action = 2;
   string ticker = 3;
-  uint32 quantity = 4;
+  int32 quantity = 4;
 }
 
 message OrderRequest {
@@ -64,7 +66,7 @@ message OrderRequest {
   OrderAction action = 2;
   string ticker = 3;
   OrderType type = 4;
-  uint32 quantity = 5;
+  int32 quantity = 5;
   double order_price = 6;
   OrderTimeInForce time_in_force = 7;
 }
@@ -73,7 +75,7 @@ message Quote {
   double bid = 1;
   double ask = 2;
   double last = 3;
-  uint32 volume = 4;
+  int32 volume = 4;
 }
 
 enum QuoteType {
@@ -81,16 +83,37 @@ enum QuoteType {
   ASK = 1;
 }
 
+message Level2Quote {
+  double price = 1;
+  int32 quantity = 2;
+}
+
 message Level2 {
   repeated Level2Quote bids = 1;
   repeated Level2Quote asks = 2;
-
-  message Level2Quote {
-    double price = 1;
-    uint32 quantity = 2;
-  }
 }
 
-message QuoteRequest {
-  string ticker = 1;
+message OrderResponse {
+  int32 code = 1;
+  Order data = 2;
+  repeated Error errors = 3;
+}
+
+message AddTickerResponse {
+  int32 buy_order_count = 1;
+  int32 sell_order_count = 2;
+}
+
+service OrderService {
+  rpc AddTicker(StringMessage) returns (AddTickerResponse);
+  rpc OpenMarket(Empty) returns (Empty);
+  rpc CloseMarket(Empty) returns (Empty);
+  rpc IsMarketOpen(Empty) returns (BoolMessage);
+  rpc SubmitOrder(OrderRequest) returns (OrderResponse);
+  rpc CancelOrder(StringMessage) returns (OrderResponse);
+  rpc GetQuote(StringMessage) returns (Quote);
+  rpc GetLevel2(StringMessage) returns (Level2);
+
+  // TODO: Remove
+  rpc Echo(StringMessage) returns (StringMessage);
 }

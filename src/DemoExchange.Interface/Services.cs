@@ -1,55 +1,73 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Threading;
+using DemoExchange.Api;
+using DemoExchange.Api.Order;
+using Grpc.Core;
+using Grpc.Net.Client;
 
 namespace DemoExchange.Interface {
-
   /// <summary>
   /// A service to manage orders.
   /// </summary>
   public interface IOrderService {
     public bool IsMarketOpen { get; }
 
+    public AddTickerResponse AddTicker(String ticker);
+
+    public void OpenMarket();
+
+    public void CloseMarket();
+
     /// <summary>
     /// Processes the submitted order.
     /// </summary>
-    public IOrderResponse SubmitOrder(IOrderModel order);
+    public IResponse<IOrderModel, OrderResponse> SubmitOrder(IOrderModel request);
 
     /// <summary>
     /// Cancel the specified order.
     /// </summary>
-    public IOrderResponse CancelOrder(String Id);
+    public IResponse<IOrderModel, OrderResponse> CancelOrder(String orderId);
 
     /// <summary>
     /// Get quote for specified ticker.
     /// </summary>
-    public IQuote GetQuote(String ticker);
+    public Quote GetQuote(String ticker);
 
     /// <summary>
     /// Get Level 2 for specified ticker.
     /// </summary>
-    public ILevel2 GetLevel2(String ticker);
+    public Level2 GetLevel2(String ticker);
   }
 
-  public interface IOrderResponse : IResponse<IOrderModel> { }
+  /// <summary>
+  /// Grpc client to OrderService.
+  /// </summary>
+  public interface IOrderServiceRpcClient {
+    public AsyncUnaryCall<AddTickerResponse> AddTickerAsync(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
 
-  public class OrderServiceResponse : IOrderResponse {
-    public int Code { get; }
-    public IOrderModel Data { get; }
-    public bool HasErrors { get { return Errors != null && Errors.Count > 0; } }
-    public List<IError> Errors { get; }
+    public AsyncUnaryCall<Empty> OpenMarketAsync(Empty request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
 
-    public OrderServiceResponse(int code, IOrderModel data) {
-      Code = code;
-      Data = data;
-    }
+    public AsyncUnaryCall<Empty> CloseMarketAsync(Empty request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
 
-    public OrderServiceResponse(int code, IOrderModel data, List<IError> errors):
-      this(code, data) {
-        Errors = errors;
-      }
+    public AsyncUnaryCall<BoolMessage> IsMarketOpenAsync(Empty request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+
+    public AsyncUnaryCall<OrderResponse> SubmitOrderAsync(OrderRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+
+    public AsyncUnaryCall<OrderResponse> CancelOrderAsync(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+
+    public AsyncUnaryCall<Quote> GetQuoteAsync(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+
+    public AsyncUnaryCall<Level2> GetLevel2Async(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+  }
+
+  /// <summary>
+  /// Grpc client to OrderService.
+  /// </summary>
+  public class OrderServiceRpcClient : OrderService.OrderServiceClient, IOrderServiceRpcClient {
+    public OrderServiceRpcClient(GrpcChannel channel) : base(channel) { }
   }
 
   public interface IAccountService {
-    public bool CanFillOrder(IOrderModel order);
+    public bool CanFillOrder(Order order);
   }
 }

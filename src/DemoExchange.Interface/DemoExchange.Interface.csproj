@@ -4,4 +4,14 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <!-- QUESTION: Consider a more modular/light weight packaging -->
+  <ItemGroup>
+    <Protobuf Include="../protos/common.proto" Link="common.proto" />
+    <Protobuf Include="../protos/order.proto" Link="order.proto" GrpcServices="Both" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.27.0" />
+  </ItemGroup>
+
 </Project>

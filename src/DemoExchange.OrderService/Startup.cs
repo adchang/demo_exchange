@@ -58,7 +58,7 @@ namespace DemoExchange.OrderService {
       });
       services.AddSingleton<ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
-      services.AddSingleton<IOrderInternalService, DemoExchange.Services.OrderService>();
+      services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountService, Dependencies.AccountService>();
 
       logger.Information("ConfigureServices done");

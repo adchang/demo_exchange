@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DemoExchange.Api;
+using DemoExchange.Api.Order;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
-using Serilog;
 using static Utils.Preconditions;
 
 // QUESTION: Use timer callbacks to manage GTC order?
@@ -17,9 +18,9 @@ namespace DemoExchange.Services {
     public const String ERROR_ORDER_EXISTS = "Error Order Exists : OrderId: {0}";
     public const String ERROR_ORDER_NOT_EXISTS = "Error Order Not Exists : OrderId: {0}";
 
-    private readonly IDictionary<String, Order> orderIds =
-      new Dictionary<String, Order>();
-    private readonly List<Order> orders = new List<Order>();
+    private readonly IDictionary<String, OrderBL> orderIds =
+      new Dictionary<String, OrderBL>();
+    private readonly List<OrderBL> orders = new List<OrderBL>();
     private readonly Comparer<IOrderModel> comparer;
 
     public String Ticker { get; }
@@ -27,7 +28,7 @@ namespace DemoExchange.Services {
     public String Name {
       get { return Ticker + " " + Type; }
     }
-    public Order First {
+    public OrderBL First {
       get { return orders[0]; }
     }
     public int Count {
@@ -36,13 +37,15 @@ namespace DemoExchange.Services {
     public bool IsEmpty {
       get { return orders.Count == 0; }
     }
-    public List<ILevel2Quote> Level2 {
+    public List<Level2Quote> Level2 {
       get {
-        List<ILevel2Quote> quotes = new List<ILevel2Quote>();
+        List<Level2Quote> quotes = new List<Level2Quote>();
         int numQuotes = Math.Min(AppConstants.LEVEL_2_QUOTE_SIZE, orders.Count);
         for (int i = 0; i < numQuotes; i++) {
-          quotes.Add(new Level2Quote(orders[i].StrikePrice,
-            orders[i].OpenQuantity));
+          quotes.Add(new Level2Quote {
+            Price = Convert.ToDouble(orders[i].StrikePrice),
+              Quantity = orders[i].OpenQuantity
+          });
         }
 
         return quotes;
@@ -52,17 +55,17 @@ namespace DemoExchange.Services {
     public OrderBook(IOrderContext context, String ticker, OrderAction type) {
       Ticker = ticker;
       Type = type;
-      comparer = OrderAction.BUY.Equals(type) ?
+      comparer = OrderAction.Buy.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
       LoadOrders(context);
     }
 
-    public void AddOrder(Order order) {
+    public void AddOrder(OrderBL order) {
       CheckNotNull(order, paramName : nameof(order));
-      CheckArgument(!OrderType.MARKET.Equals(order.Type),
+      CheckArgument(!OrderType.Market.Equals(order.Type),
         String.Format(ERROR_MARKET_ORDER, order.OrderId));
-      CheckArgument(OrderStatus.OPEN.Equals(order.Status),
+      CheckArgument(OrderStatus.Open.Equals(order.Status),
         String.Format(ERROR_NOT_OPEN_ORDER, order.OrderId));
       CheckArgument(Ticker.Equals(order.Ticker),
         String.Format(ERROR_TICKER, Ticker, order.OrderId));
@@ -77,20 +80,20 @@ namespace DemoExchange.Services {
       orders.Sort(comparer);
     }
 
-    public Order CancelOrder(String orderId) {
+    public OrderBL CancelOrder(String orderId) {
       CheckNotNullOrWhitespace(orderId, paramName : nameof(orderId));
 
       CheckArgument(orderIds.ContainsKey(orderId),
         String.Format(ERROR_ORDER_NOT_EXISTS, orderId));
 
-      Order order = orderIds[orderId];
+      OrderBL order = orderIds[orderId];
       RemoveOrder(order);
       order.Cancel();
 
       return order;
     }
 
-    public void RemoveOrder(Order order) {
+    public void RemoveOrder(OrderBL order) {
       CheckNotNull(order);
 
       CheckArgument(orderIds.ContainsKey(order.OrderId),
@@ -103,7 +106,7 @@ namespace DemoExchange.Services {
     private void LoadOrders(IOrderContext context) {
       context.GetAllOpenOrdersByTickerAndAction(Ticker, Type).ToList()
         .ForEach(entity => {
-          Order order = new Order(entity);
+          OrderBL order = new OrderBL(entity);
           orderIds.Add(order.OrderId, order);
           orders.Add(order);
         });
@@ -115,16 +118,16 @@ namespace DemoExchange.Services {
     public OrderBook(String ticker, OrderAction type) {
       Ticker = ticker;
       Type = type;
-      comparer = OrderAction.BUY.Equals(type) ?
+      comparer = OrderAction.Buy.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
     }
 
-    public IDictionary<String, Order> TestOrderIds {
+    public IDictionary<String, OrderBL> TestOrderIds {
       get { return orderIds; }
     }
 
-    public List<Order> TestOrders {
+    public List<OrderBL> TestOrders {
       get { return orders; }
     }
 
@@ -137,12 +140,12 @@ namespace DemoExchange.Services {
     public OrderBook(String ticker, OrderAction type, bool perf) {
       Ticker = ticker;
       Type = type;
-      comparer = OrderAction.BUY.Equals(type) ?
+      comparer = OrderAction.Buy.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
     }
 
-    public void TestPerfAddOrderNoSort(Order order) {
+    public void TestPerfAddOrderNoSort(OrderBL order) {
       orderIds.Add(order.OrderId, order);
       orders.Add(order);
     }
@@ -159,21 +162,24 @@ namespace DemoExchange.Services {
 #endif
   }
 
-  public class OrderTransaction {
-    public List<Order> Orders { get; }
+  public class OrderTransactionBL {
+    public List<OrderBL> Orders { get; }
     public List<Transaction> Transactions { get; }
 
-    public OrderTransaction(List<Order> orders, List<Transaction> transactions) {
+    public OrderTransactionBL(List<OrderBL> orders, List<Transaction> transactions) {
       Orders = orders;
       Transactions = transactions;
     }
   }
 
-  public class OrderTransactionResponse : ResponseBase<OrderTransaction> {
-    public OrderTransactionResponse() { }
-    public OrderTransactionResponse(OrderTransaction data) : this(Constants.Response.OK, data) { }
-    public OrderTransactionResponse(int code, OrderTransaction data) : base(code, data) { }
-    public OrderTransactionResponse(int code, OrderTransaction data, Error error) : base(code, data, error) { }
-    public OrderTransactionResponse(int code, OrderTransaction data, List<IError> errors) : base(code, data, errors) { }
+  public class OrderTransactionResponseBL : ResponseBase<OrderTransactionBL, String> {
+    public OrderTransactionResponseBL() { }
+    public OrderTransactionResponseBL(OrderTransactionBL data) : base(data) { }
+    public OrderTransactionResponseBL(int code, OrderTransactionBL data) : base(code, data) { }
+    public OrderTransactionResponseBL(int code, OrderTransactionBL data, Error error) : base(code, data, error) { }
+    public OrderTransactionResponseBL(int code, OrderTransactionBL data, List<Error> errors) : base(code, data, errors) { }
+    public override String ToMessage() {
+      return "" + Code;
+    }
   }
 }

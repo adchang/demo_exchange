@@ -30,7 +30,7 @@ namespace DemoExchangeSimulator {
         .AddSingleton<Simulator>()
         .AddSingleton<ConnectionStrings>(connectionStrings)
         .AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>()
-        .AddSingleton<IOrderInternalService, OrderService>()
+        .AddSingleton<IOrderTestPerfService, OrderService>()
         .AddSingleton<IAccountService, Dependencies.AccountService>()
         .BuildServiceProvider();
     }

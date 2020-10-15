@@ -1,4 +1,5 @@
 using System;
+using DemoExchange.Api.Order;
 using DemoExchange.Interface;
 using Serilog;
 
@@ -9,7 +10,7 @@ namespace DemoExchange {
 
       public AccountService() { }
 
-      public bool CanFillOrder(IOrderModel order) {
+      public bool CanFillOrder(Order order) {
         logger.Debug("TODO, should probably return a response instead of a bool");
         return true;
       }

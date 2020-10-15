@@ -64,11 +64,11 @@ namespace DemoExchange.Models {
     public DateTime CreatedDateTime {
       get { return FromTicks(CreatedTimestamp); }
     }
-    public new Order BuyOrder {
-      get { return (Order)base.BuyOrder; }
+    public new OrderBL BuyOrder {
+      get { return (OrderBL)base.BuyOrder; }
     }
-    public new Order SellOrder {
-      get { return (Order)base.SellOrder; }
+    public new OrderBL SellOrder {
+      get { return (OrderBL)base.SellOrder; }
     }
     public new String Ticker {
       get { return base.Ticker; }
@@ -80,7 +80,7 @@ namespace DemoExchange.Models {
       get { return base.Price; }
     }
 
-    public Transaction(Order buyOrder, Order sellOrder, string ticker, int quantity,
+    public Transaction(OrderBL buyOrder, OrderBL sellOrder, string ticker, int quantity,
       decimal price) {
       // TODO Precondtions
       base.TransactionId = Guid.NewGuid();
