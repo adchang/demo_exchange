@@ -6,12 +6,12 @@ using Serilog;
 namespace DemoExchange {
   public partial class Dependencies {
     public class AccountService : IAccountService {
-      private readonly ILogger logger = Log.Logger;
+      private static Serilog.ILogger logger => Serilog.Log.ForContext<AccountService>();
 
       public AccountService() { }
 
       public bool CanFillOrder(Order order) {
-        logger.Debug("TODO, should probably return a response instead of a bool");
+        logger.Here().Debug("TODO, should probably return a response instead of a bool");
         return true;
       }
     }

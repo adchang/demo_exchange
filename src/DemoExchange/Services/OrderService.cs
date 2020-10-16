@@ -26,7 +26,8 @@ namespace DemoExchange.Services {
 #else
       public class OrderService : IOrderService {
 #endif
-        private readonly ILogger logger = Log.Logger;
+        private static Serilog.ILogger logger => Serilog.Log.ForContext<OrderService>();
+
         public const String MARKET_CLOSED = "Market is closed.";
 
         // Question: ConcurrentDictionary instead? https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2?view=net-5.0
@@ -137,7 +138,7 @@ namespace DemoExchange.Services {
 
       // QUESTION: Assumes order book always has at least 1 order, ie market maker
       public class OrderManager {
-        private readonly ILogger logger = Log.Logger;
+        private static Serilog.ILogger logger => Serilog.Log.ForContext<OrderManager>();
 
         private readonly OrderBook BuyBook;
         private readonly OrderBook SellBook;
@@ -199,7 +200,7 @@ namespace DemoExchange.Services {
             DiagnosticsWriteDetails(fillResponse.Data);
 #endif
 #if (PERF || PERF_FINE || PERF_FINEST)
-            logger.Information(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+            logger.Here().Information(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
             return new OrderResponseBL(order);
           }
@@ -225,7 +226,7 @@ namespace DemoExchange.Services {
             }
           }
 #if (PERF || PERF_FINE || PERF_FINEST)
-          logger.Information(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+          logger.Here().Information(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
           return insertResponse;
         }
@@ -271,7 +272,7 @@ namespace DemoExchange.Services {
             }
           }
 #if PERF_FINEST
-          logger.Information(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+          logger.Here().Information(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
 
           return new OrderTransactionResponseBL(Constants.Response.CREATED,
@@ -316,7 +317,7 @@ namespace DemoExchange.Services {
             filledOrder.Complete();
           }
 #if PERF_FINEST
-          logger.Information(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+          logger.Here().Information(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
 
           return new OrderTransactionResponseBL(Constants.Response.CREATED,
@@ -328,7 +329,7 @@ namespace DemoExchange.Services {
           try {
             context.SaveChanges();
           } catch (Exception e) {
-            logger.Warning("InsertOrder failed", e);
+            logger.Here().Warning("InsertOrder failed", e);
             return new OrderResponseBL(Constants.Response.INTERNAL_SERVER_ERROR,
               order, new Error {
                 Description = e.Message
@@ -352,7 +353,7 @@ namespace DemoExchange.Services {
             context.SaveChanges();
           } catch (Exception e) {
             // QUESTION: What to do here in terms of transaction integrity?
-            logger.Warning("SaveOrderTransaction failed", e);
+            logger.Here().Warning("SaveOrderTransaction failed", e);
             return new OrderTransactionResponseBL(Constants.Response.INTERNAL_SERVER_ERROR,
               data, new Error {
                 Description = e.Message
@@ -401,7 +402,7 @@ namespace DemoExchange.Services {
           transaction.Transactions.ForEach(transaction => sb.Append("     " + transaction.ToString() + "\n"));
           sb.Append("\n  SPREAD: " + QuoteToString(Quote));
           sb.Append("\n  LEVEL 2:\n" + Level2ToString(Level2));
-          logger.Verbose(sb.ToString());
+          logger.Here().Verbose(sb.ToString());
         }
 #endif
 

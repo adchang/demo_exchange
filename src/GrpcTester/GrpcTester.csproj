@@ -9,12 +9,14 @@
     <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
+  </ItemGroup>
   <!--
   <ItemGroup>
     <Protobuf Include="../protos/common.proto" Link="common.proto" />
     <Protobuf Include="../protos/order.proto" Link="order.proto" GrpcServices="Client" />
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
-    <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
     <PackageReference Include="Grpc.Tools" Version="2.32.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

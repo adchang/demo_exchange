@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
@@ -18,12 +14,13 @@ namespace DemoExchange.OrderServiceGrpc {
       Host.CreateDefaultBuilder(args)
       .ConfigureWebHostDefaults(webBuilder => {
         webBuilder
-          .UseKestrel(options => {
-            options.Listen(IPAddress.Loopback, 8081);
-            options.Listen(IPAddress.Loopback, 8091, listenOptions => {
-              listenOptions.UseHttps("localhost.pfx", "");
-            });
-          })
+          // Uncomment useKestrel for non-docker run to use the localhost.pfx, which will override launchsettings.json in developlment
+          // .UseKestrel(options => {
+          //   options.Listen(IPAddress.Loopback, 8081);
+          //   options.Listen(IPAddress.Loopback, 8091, listenOptions => {
+          //     listenOptions.UseHttps("localhost.pfx", "");
+          //   });
+          // })
           .UseSerilog()
           .UseStartup<Startup>();
       });

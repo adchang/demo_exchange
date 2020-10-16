@@ -15,7 +15,7 @@ using Serilog;
 
 namespace DemoExchange.OrderServiceGrpc {
   public class Startup {
-    private ILogger logger;
+    private static Serilog.ILogger logger => Serilog.Log.ForContext<Startup>();
 
     public IConfiguration Configuration { get; }
 
@@ -27,12 +27,11 @@ namespace DemoExchange.OrderServiceGrpc {
       Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(Configuration)
         .CreateLogger();
-      logger = Log.Logger;
-      logger.Information("Logger created");
+      logger.Here().Information("Logger created");
       ConnectionStrings connectionStrings = new ConnectionStrings();
       Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
 #if DEBUG
-      logger.Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
+      logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
 
       services.AddGrpc();
@@ -41,7 +40,7 @@ namespace DemoExchange.OrderServiceGrpc {
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountService, Dependencies.AccountService>();
 
-      logger.Information("ConfigureServices done");
+      logger.Here().Information("ConfigureServices done");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
