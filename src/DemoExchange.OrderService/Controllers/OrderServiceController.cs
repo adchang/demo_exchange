@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
@@ -30,7 +30,7 @@ namespace DemoExchange.OrderService.Controllers {
       this.service = service;
     }
 
-    // TODO scopeRequiredByApi
+    // TODO: scopeRequiredByApi
 
     [HttpGet(Routes.Orders.DEFAULT_ORDERS + "/{orderId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+package erx.api; // No hyphens in package name
+option csharp_namespace = "DemoExchange.Api";
+
+// TODO: decimal use double for now https://docs.microsoft.com/en-us/aspnet/core/grpc/protobuf?view=aspnetcore-3.1#scalar-value-types
+
+message Empty { }
+
+message StringMessage {
+  string value = 1;
+}
+
+message IntMessage {
+  int32 value = 1;
+}
+
+message LongMessage {
+  int64 value = 1;
+}
+
+message DoubleMessage {
+  double value = 1;
+}
+
+message BoolMessage {
+  bool value = 1;
+}
+
+message Error {
+  string property_name = 1;
+  string code = 2;
+  string description = 3;
+}
+
+message User {
+  string user_id = 1;
+  int64 created_timestamp = 2;
+  int64 last_updated_timestamp = 3;
+  //UserStatus status = 4;
+  string first_name = 5;
+  string middle_name = 6;
+  string last_name = 7;
+  //enum gender = 8;
+  //string salutation = 9;
+  //??? birth_date = 10;
+}
+
+message Account {
+  string account_id = 1;
+  int64 created_timestamp = 2;
+  int64 last_updated_timestamp = 3;
+  AccountStatus status = 4;
+  string first_name = 5;
+  string middle_name = 6;
+  string last_name = 7;
+  //string account_name = 8; // eg. For a trust
+
+  repeated Address addresses = 8;
+}
+
+enum AccountStatus {
+  ACCOUNT_PENDING_VERIFICATION = 0;
+  ACCOUNT_PENDING_APPROVAL = 1;
+  ACCOUNT_OPEN = 2;
+  ACCOUNT_SUSPENDED = 3;
+  ACCOUNT_CANCELLED = 4;
+  ACCOUNT_DELETED = 5;
+}
+
+message AccountUser {
+  string account_id = 1;
+  string user_id = 2;
+  //AccountUserType type = 3;
+}
+
+message Address {
+  string address_id = 1;
+  string account_id = 2;
+  int64 created_timestamp = 3;
+  int64 last_updated_timestamp = 4;
+  AddressType type = 5;
+  string line_1 = 6;
+  string line_2 = 7;
+  string subdistrict = 8;
+  string district = 9;
+  string city = 10;
+  string province = 11;
+  string postal_code = 12;
+  string country = 13;
+}
+
+enum AddressType {
+  ADDRESS_HOME = 0;
+  ADDRESS_WORK = 1;
+  ADDRESS_MAILING = 2;
+}
+
+message AccountList {
+  repeated Account accounts = 1;
+}
+
+message AccountRequest {
+  string first_name = 1;
+  string middle_name = 2;
+  string last_name = 3;
+}
+
+message AccountResponse {
+  int32 code = 1;
+  Account data = 2;
+  repeated Error errors = 3;
+}
+
+message AddressRequest {
+  string account_id = 1;
+  AddressType type = 2;
+  string line_1 = 3;
+  string line_2 = 4;
+  string subdistrict = 5;
+  string district = 6;
+  string city = 7;
+  string province = 8;
+  string postal_code = 9;
+  string country = 10;
+}
+
+message AddressResponse {
+  int32 code = 1;
+  Address data = 2;
+  repeated Error errors = 3;
+}
+
+message CanFillOrderRequest {
+  Order order = 1;
+  int32 fill_quantity = 2;
+}
+
+message CanFillOrderResponse {
+  bool value = 1;
+}
+
+message Order {
+  string order_id = 1;
+  int64 created_timestamp = 2;
+  string account_id = 3;
+  Account account = 4;
+  OrderStatus status = 5;
+  OrderAction action = 6;
+  string ticker = 7;
+  OrderType type = 8;
+  int32 quantity = 9;
+  int32 open_quantity = 10;
+  double order_price = 11;
+  double strike_price = 12;
+  OrderTimeInForce time_in_force = 13;
+  int64 to_be_canceled_timestamp = 14;
+  int64 canceled_timestamp = 15;
+}
+
+enum OrderStatus {
+  ORDER_OPEN = 0;
+  ORDER_COMPLETED = 1;
+  ORDER_UPDATED = 2;
+  ORDER_CANCELLED = 3;
+  ORDER_DELETED = 4;
+}
+
+enum OrderAction {
+  ORDER_BUY = 0;
+  ORDER_SELL = 1;
+}
+
+enum OrderType {
+  ORDER_MARKET = 0;
+  ORDER_LIMIT = 1;
+  ORDER_STOP_MARKET = 2;
+  ORDER_STOP_LIMIT = 3;
+  ORDER_TRAILING_STOP_MARKET = 4;
+  ORDER_TRAILING_STOP_LIMIT = 5;
+  ORDER_FILL_OR_KILL = 6;
+  ORDER_IMMEDIATE_OR_CANCEL = 7;
+}
+
+enum OrderTimeInForce {
+  ORDER_DAY = 0;
+  ORDER_GOOD_TIL_CANCELED = 1;
+  ORDER_MARKET_CLOSE = 2;
+}
+
+message MarketOrderRequest {
+  string account_id = 1;
+  OrderAction action = 2;
+  string ticker = 3;
+  int32 quantity = 4;
+}
+
+message OrderRequest {
+  string account_id = 1;
+  OrderAction action = 2;
+  string ticker = 3;
+  OrderType type = 4;
+  int32 quantity = 5;
+  double order_price = 6;
+  OrderTimeInForce time_in_force = 7;
+}
+
+message Quote {
+  double bid = 1;
+  double ask = 2;
+  double last = 3;
+  int32 volume = 4;
+}
+
+enum QuoteType {
+  QUOTE_BID = 0;
+  QUOTE_ASK = 1;
+}
+
+message Level2Quote {
+  double price = 1;
+  int32 quantity = 2;
+}
+
+message Level2 {
+  repeated Level2Quote bids = 1;
+  repeated Level2Quote asks = 2;
+}
+
+message OrderResponse {
+  int32 code = 1;
+  Order data = 2;
+  repeated Error errors = 3;
+}
+
+message AddTickerResponse {
+  int32 buy_order_count = 1;
+  int32 sell_order_count = 2;
+}

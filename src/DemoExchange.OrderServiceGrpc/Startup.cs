@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using DemoExchange.Api;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Services;
+using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -15,7 +18,7 @@ using Serilog;
 
 namespace DemoExchange.OrderServiceGrpc {
   public class Startup {
-    private static Serilog.ILogger logger => Serilog.Log.ForContext<Startup>();
+    private static Serilog.ILogger Logger => Serilog.Log.ForContext<Startup>();
 
     public IConfiguration Configuration { get; }
 
@@ -27,20 +30,25 @@ namespace DemoExchange.OrderServiceGrpc {
       Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(Configuration)
         .CreateLogger();
-      logger.Here().Information("Logger created");
+      Logger.Here().Information("Logger created");
       ConnectionStrings connectionStrings = new ConnectionStrings();
       Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
 #if DEBUG
-      logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
+      Logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
+      var httpHandler = new HttpClientHandler();
+      httpHandler.ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+      var channel = GrpcChannel.ForAddress("https://loki:8091",
+        new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddGrpc();
       services.AddSingleton<ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
-      services.AddSingleton<IAccountService, Dependencies.AccountService>();
+      services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));
 
-      logger.Here().Information("ConfigureServices done");
+      Logger.Here().Information("ConfigureServices done");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {

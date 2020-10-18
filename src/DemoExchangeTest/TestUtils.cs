@@ -1,45 +1,45 @@
 using System;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 
 namespace DemoExchange {
   public class TestUtils {
     public static OrderBL NewBuyMarketOrder(String accountId, String ticker, int quantity) {
-      return new OrderBL(accountId, OrderAction.Buy, ticker, OrderType.Market, quantity,
-        0, OrderTimeInForce.Day);
+      return new OrderBL(accountId, OrderAction.OrderBuy, ticker, OrderType.OrderMarket, quantity,
+        0, OrderTimeInForce.OrderDay);
     }
 
     public static OrderBL NewBuyLimitDayOrder() {
-      return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.Buy);
+      return NewLimitDayOrder(Guid.NewGuid().ToString(), "ERX", 100, 18.81M, OrderAction.OrderBuy);
     }
 
     public static OrderBL NewBuyLimitDayOrder(decimal strikePrice) {
-      return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.Buy);
+      return NewLimitDayOrder(Guid.NewGuid().ToString(), "ERX", 100, strikePrice, OrderAction.OrderBuy);
     }
 
     public static OrderBL NewBuyLimitDayOrder(String accountId, String ticker, int quantity,
       decimal strikePrice) {
-      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.Buy);
+      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.OrderBuy);
     }
 
     public static OrderBL NewSellLimitDayOrder() {
-      return NewLimitDayOrder("acct", "ERX", 100, 18.81M, OrderAction.Sell);
+      return NewLimitDayOrder(Guid.NewGuid().ToString(), "ERX", 100, 18.81M, OrderAction.OrderSell);
     }
 
     public static OrderBL NewSellLimitDayOrder(decimal strikePrice) {
-      return NewLimitDayOrder("acct", "ERX", 100, strikePrice, OrderAction.Sell);
+      return NewLimitDayOrder(Guid.NewGuid().ToString(), "ERX", 100, strikePrice, OrderAction.OrderSell);
     }
 
     public static OrderBL NewSellLimitDayOrder(String accountId, String ticker, int quantity,
       decimal strikePrice) {
-      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.Sell);
+      return NewLimitDayOrder(accountId, ticker, quantity, strikePrice, OrderAction.OrderSell);
     }
 
     public static OrderBL NewLimitDayOrder(String accountId, String ticker, int quantity,
       decimal orderPrice, OrderAction action) {
-      return new OrderBL(accountId, action, ticker, OrderType.Limit, quantity,
-        orderPrice, OrderTimeInForce.Day);
+      return new OrderBL(accountId, action, ticker, OrderType.OrderLimit, quantity,
+        orderPrice, OrderTimeInForce.OrderDay);
     }
 
     private TestUtils() {
@@ -61,9 +61,9 @@ namespace DemoExchange {
       }
     }
     public new String AccountId {
-      get { return ((OrderEntity)this).AccountId; }
+      get { return ((OrderEntity)this).AccountId.ToString(); }
       set {
-        ((OrderEntity)this).AccountId = value;
+        ((OrderEntity)this).AccountId = Guid.Parse(value);
       }
     }
     public new OrderStatus Status {
@@ -139,11 +139,11 @@ namespace DemoExchange {
 
     public TestOrder(String accountId, String ticker, OrderType type,
       int quantity, decimal strikePrice) : this(accountId,
-      OrderAction.Buy, ticker, type, quantity, strikePrice) { }
+      OrderAction.OrderBuy, ticker, type, quantity, strikePrice) { }
 
     public TestOrder(String accountId, OrderAction action, String ticker, OrderType type,
       int quantity, decimal strikePrice) : base(accountId,
-      action, ticker, type, quantity, strikePrice, OrderTimeInForce.Day) { }
+      action, ticker, type, quantity, strikePrice, OrderTimeInForce.OrderDay) { }
 
     public new TestOrder ShallowCopy() {
       return (TestOrder)this.MemberwiseClone();

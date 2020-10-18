@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
@@ -13,38 +13,39 @@ namespace DemoExchange.Services {
     [Fact]
     [Trait("Category", "Unit")]
     public void AddOrderTest() {
-      OrderBook book = new OrderBook("ERX", OrderAction.Buy);
+      OrderBook book = new OrderBook("ERX", OrderAction.OrderBuy);
       Exception e = Assert.Throws<ArgumentNullException>(() =>
         book.AddOrder(null));
       Assert.Equal("Value cannot be null. (Parameter 'order')",
         e.Message);
-      OrderBL buyMarket = TestUtils.NewBuyMarketOrder("acct", "E", 100);
+      String accountId = Guid.NewGuid().ToString();
+      OrderBL buyMarket = TestUtils.NewBuyMarketOrder(accountId, "E", 100);
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyMarket));
       Assert.Equal(String.Format(OrderBook.ERROR_MARKET_ORDER, buyMarket.OrderId),
         e.Message);
-      OrderBL buyLimit = TestUtils.NewBuyLimitDayOrder("acct", "E", 100, 0.50M);
+      OrderBL buyLimit = TestUtils.NewBuyLimitDayOrder(accountId, "E", 100, 0.50M);
       buyLimit.Cancel();
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyLimit));
       Assert.Equal(String.Format(OrderBook.ERROR_NOT_OPEN_ORDER, buyLimit.OrderId),
         e.Message);
-      buyLimit = TestUtils.NewBuyLimitDayOrder("acct", "E", 100, 0.50M);
+      buyLimit = TestUtils.NewBuyLimitDayOrder(accountId, "E", 100, 0.50M);
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(buyLimit));
       Assert.Equal(String.Format(OrderBook.ERROR_TICKER, "ERX", buyLimit.OrderId),
         e.Message);
-      OrderBL sellLimit = TestUtils.NewSellLimitDayOrder("acct", "ERX", 100, 18.81M);
+      OrderBL sellLimit = TestUtils.NewSellLimitDayOrder(accountId, "ERX", 100, 18.81M);
       e = Assert.Throws<ArgumentException>(() =>
         book.AddOrder(sellLimit));
-      Assert.Equal(String.Format(OrderBook.ERROR_ACTION, OrderAction.Buy, sellLimit.Action),
+      Assert.Equal(String.Format(OrderBook.ERROR_ACTION, OrderAction.OrderBuy, sellLimit.Action),
         e.Message);
 
-      OrderBL order1 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.81M);
-      OrderBL order2 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.82M);
-      OrderBL order3 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.83M);
-      OrderBL order4 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.84M);
-      OrderBL order5 = TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.85M);
+      OrderBL order1 = TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 18.81M);
+      OrderBL order2 = TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 18.82M);
+      OrderBL order3 = TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 18.83M);
+      OrderBL order4 = TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 18.84M);
+      OrderBL order5 = TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 18.85M);
       book.AddOrder(order3);
       book.AddOrder(order5);
       book.AddOrder(order1);
@@ -60,18 +61,19 @@ namespace DemoExchange.Services {
     [Fact]
     [Trait("Category", "Unit")]
     public void OrderQueueTest_Buy() {
-      OrderBook book = new OrderBook("ERX", OrderAction.Buy);
+      String accountId = Guid.NewGuid().ToString();
+      OrderBook book = new OrderBook("ERX", OrderAction.OrderBuy);
       List<OrderBL> orders = book.TestOrders;
       Comparer<IOrderModel> comparer = book.TestComparer;
-      TestOrder order1 = new TestOrder("accountId", "ERX", OrderType.Limit, 100, 1);
+      TestOrder order1 = new TestOrder(accountId, "ERX", OrderType.OrderLimit, 100, 1);
       String order1Id = order1.OrderId;
       order1.StrikePrice = 1;
       order1.CreatedTimestamp = 1;
-      TestOrder order2 = new TestOrder("accountId", "ERX", OrderType.Limit, 100, 1);
+      TestOrder order2 = new TestOrder(accountId, "ERX", OrderType.OrderLimit, 100, 1);
       String order2Id = order2.OrderId;
       order2.StrikePrice = 2;
       order2.CreatedTimestamp = 2;
-      TestOrder order3 = new TestOrder("accountId", "ERX", OrderType.Limit, 100, 1);
+      TestOrder order3 = new TestOrder(accountId, "ERX", OrderType.OrderLimit, 100, 1);
       String order3Id = order3.OrderId;
       order3.StrikePrice = 3;
       order3.CreatedTimestamp = 3;
@@ -118,20 +120,21 @@ namespace DemoExchange.Services {
     [Fact]
     [Trait("Category", "Unit")]
     public void OrderQueueTest_Sell() {
-      OrderBook book = new OrderBook("ERX", OrderAction.Sell);
+      String accountId = Guid.NewGuid().ToString();
+      OrderBook book = new OrderBook("ERX", OrderAction.OrderSell);
       List<OrderBL> orders = book.TestOrders;
       Comparer<IOrderModel> comparer = book.TestComparer;
-      TestOrder order1 = new TestOrder("accountId", OrderAction.Sell, "ERX", OrderType.Limit,
+      TestOrder order1 = new TestOrder(accountId, OrderAction.OrderSell, "ERX", OrderType.OrderLimit,
         100, 1);
       String order1Id = order1.OrderId;
       order1.StrikePrice = 1;
       order1.CreatedTimestamp = 1;
-      TestOrder order2 = new TestOrder("accountId", OrderAction.Sell, "ERX", OrderType.Limit,
+      TestOrder order2 = new TestOrder(accountId, OrderAction.OrderSell, "ERX", OrderType.OrderLimit,
         100, 1);
       String order2Id = order2.OrderId;
       order2.StrikePrice = 2;
       order2.CreatedTimestamp = 2;
-      TestOrder order3 = new TestOrder("accountId", OrderAction.Sell, "ERX", OrderType.Limit,
+      TestOrder order3 = new TestOrder(accountId, OrderAction.OrderSell, "ERX", OrderType.OrderLimit,
         100, 1);
       String order3Id = order3.OrderId;
       order3.StrikePrice = 3;
@@ -183,7 +186,7 @@ namespace DemoExchange.Services {
     [Trait("Category", "Unit")]
     public void CancelOrderTest_parameter(String input) {
       String eMsg = "orderId is null, empty, or contains only white-space characters";
-      OrderBook book = new OrderBook("ERX", OrderAction.Buy);
+      OrderBook book = new OrderBook("ERX", OrderAction.OrderBuy);
       Exception e = Assert.Throws<ArgumentException>(() =>
         book.CancelOrder(input));
       Assert.Equal(eMsg, e.Message);
@@ -192,7 +195,7 @@ namespace DemoExchange.Services {
     [Fact]
     [Trait("Category", "Unit")]
     public void CancelOrderTest() {
-      OrderBook book = new OrderBook("ERX", OrderAction.Buy);
+      OrderBook book = new OrderBook("ERX", OrderAction.OrderBuy);
       Exception e = Assert.Throws<ArgumentException>(() =>
         book.CancelOrder("someId"));
       Assert.Equal("Error Order Not Exists : OrderId: someId", e.Message);
@@ -208,7 +211,7 @@ namespace DemoExchange.Services {
       Assert.Equal(11, book.Count);
       Assert.True(orderIds.ContainsKey(order.OrderId));
       book.CancelOrder(order.OrderId);
-      Assert.Equal(OrderStatus.Cancelled, order.Status);
+      Assert.Equal(OrderStatus.OrderCancelled, order.Status);
       Assert.NotEqual(0, order.CanceledTimestamp);
       Assert.Equal(10, book.Count);
       Assert.False(orderIds.ContainsKey(order.OrderId));
@@ -218,27 +221,28 @@ namespace DemoExchange.Services {
     [Fact]
     [Trait("Category", "Unit")]
     public void OrderBookPropertiesTest() {
-      OrderBook book = new OrderBook("ERX", OrderAction.Buy);
-      Assert.Equal("ERX Buy", book.Name);
+      OrderBook book = new OrderBook("ERX", OrderAction.OrderBuy);
+      Assert.Equal("ERX OrderBuy", book.Name);
       Assert.Equal(0, book.Count);
-      book.AddOrder(TestUtils.NewBuyLimitDayOrder("acct", "ERX", 100, 18.81M));
+      book.AddOrder(TestUtils.NewBuyLimitDayOrder(Guid.NewGuid().ToString(), "ERX", 100, 18.81M));
       Assert.Equal(1, book.Count);
     }
 
     [Fact]
     [Trait("Category", "Unit")]
     public void OrderBookLoadOrdersTest() {
+      String accountId = Guid.NewGuid().ToString();
       var data = new List<OrderEntity> {
-        (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 1M),
-        (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 2M),
-        (OrderEntity)TestUtils.NewBuyLimitDayOrder("acctI", "ERX", 100, 3M)
+        (OrderEntity)TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 1M),
+        (OrderEntity)TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 2M),
+        (OrderEntity)TestUtils.NewBuyLimitDayOrder(accountId, "ERX", 100, 3M)
       }.AsQueryable();
 
       var context = new Mock<IOrderContext>();
-      context.Setup(c => c.GetAllOpenOrdersByTickerAndAction("ERX", OrderAction.Buy))
+      context.Setup(c => c.GetAllOpenOrdersByTickerAndAction("ERX", OrderAction.OrderBuy))
         .Returns(data);
 
-      OrderBook book = new OrderBook(context.Object, "ERX", OrderAction.Buy);;
+      OrderBook book = new OrderBook(context.Object, "ERX", OrderAction.OrderBuy);;
       Assert.Equal(3, book.TestOrders[0].StrikePrice);
       Assert.Equal(2, book.TestOrders[1].StrikePrice);
       Assert.Equal(1, book.TestOrders[2].StrikePrice);

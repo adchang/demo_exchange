@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
+    <ProjectReference Include="../DemoExchange.Interface.ClientAccount/DemoExchange.Interface.ClientAccount.csproj" />
+    <ProjectReference Include="../DemoExchange.Interface.ClientOrder/DemoExchange.Interface.ClientOrder.csproj" />
   </ItemGroup>
 
   <ItemGroup>

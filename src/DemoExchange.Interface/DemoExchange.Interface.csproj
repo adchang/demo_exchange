@@ -4,14 +4,17 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
-  <!-- QUESTION: Consider a more modular/light weight packaging -->
   <ItemGroup>
-    <Protobuf Include="../protos/common.proto" Link="common.proto" />
-    <Protobuf Include="../protos/order.proto" Link="order.proto" GrpcServices="Both" />
+    <Protobuf Include="../protos/messages.proto" Link="messages.proto" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.27.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.13.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.32.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Serilog" Version="2.10.0" />
   </ItemGroup>
 

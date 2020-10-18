@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using DemoExchange.Services;
@@ -171,30 +171,30 @@ namespace DemoExchangeSimulator {
     }
 
     private static OrderBL NewBuyLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice) {
-      return NewLimitDayOrder(accountId, ticker, quantity, orderPrice, OrderAction.Buy);
+      return NewLimitDayOrder(accountId, ticker, quantity, orderPrice, OrderAction.OrderBuy);
     }
 
     private static OrderBL NewSellLimitDayOrder(String accountId, String ticker, int quantity, decimal orderPrice) {
-      return NewLimitDayOrder(accountId, ticker, quantity, orderPrice, OrderAction.Sell);
+      return NewLimitDayOrder(accountId, ticker, quantity, orderPrice, OrderAction.OrderSell);
     }
 
     private static OrderBL NewLimitDayOrder(String accountId, String ticker, int quantity,
       decimal orderPrice, OrderAction action) {
-      return new OrderBL(accountId, action, ticker, OrderType.Limit, quantity,
-        orderPrice, OrderTimeInForce.Day);
+      return new OrderBL(accountId, action, ticker, OrderType.OrderLimit, quantity,
+        orderPrice, OrderTimeInForce.OrderDay);
     }
 
     private static OrderBL NewBuyMarketOrder(String accountId, String ticker, int quantity) {
-      return NewMarketOrder(accountId, OrderAction.Buy, ticker, quantity);
+      return NewMarketOrder(accountId, OrderAction.OrderBuy, ticker, quantity);
     }
 
     private static OrderBL NewSellMarketOrder(String accountId, String ticker, int quantity) {
-      return NewMarketOrder(accountId, OrderAction.Sell, ticker, quantity);
+      return NewMarketOrder(accountId, OrderAction.OrderSell, ticker, quantity);
     }
 
     private static OrderBL NewMarketOrder(String accountId, OrderAction type, String ticker, int quantity) {
-      return new OrderBL(accountId, type, ticker, OrderType.Market, quantity,
-        0, OrderTimeInForce.Day);
+      return new OrderBL(accountId, type, ticker, OrderType.OrderMarket, quantity,
+        0, OrderTimeInForce.OrderDay);
     }
   }
 }

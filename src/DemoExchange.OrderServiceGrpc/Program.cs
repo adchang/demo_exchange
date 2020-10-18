@@ -16,8 +16,8 @@ namespace DemoExchange.OrderServiceGrpc {
         webBuilder
           // Uncomment useKestrel for non-docker run to use the localhost.pfx, which will override launchsettings.json in developlment
           // .UseKestrel(options => {
-          //   options.Listen(IPAddress.Loopback, 8081);
-          //   options.Listen(IPAddress.Loopback, 8091, listenOptions => {
+          //   options.Listen(IPAddress.Loopback, 8082);
+          //   options.Listen(IPAddress.Loopback, 8092, listenOptions => {
           //     listenOptions.UseHttps("localhost.pfx", "");
           //   });
           // })

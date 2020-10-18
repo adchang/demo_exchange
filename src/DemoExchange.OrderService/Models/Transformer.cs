@@ -1,5 +1,5 @@
 using System;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Models;
 
 namespace DemoExchange.OrderService.Models {
@@ -8,7 +8,7 @@ namespace DemoExchange.OrderService.Models {
       return new Order {
         OrderId = entity.OrderId.ToString(),
           CreatedTimestamp = entity.CreatedTimestamp,
-          AccountId = entity.AccountId,
+          AccountId = entity.AccountId.ToString(),
           Status = entity.Status,
           Action = entity.Action,
           Ticker = entity.Ticker,
@@ -40,10 +40,10 @@ namespace DemoExchange.OrderService.Models {
         AccountId = request.AccountId,
           Action = request.Action,
           Ticker = request.Ticker,
-          Type = OrderType.Market,
+          Type = OrderType.OrderMarket,
           Quantity = request.Quantity,
           OrderPrice = 0,
-          TimeInForce = OrderTimeInForce.Day
+          TimeInForce = OrderTimeInForce.OrderDay
       };
     }
   }

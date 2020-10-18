@@ -1,5 +1,5 @@
 using System;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +37,20 @@ namespace DemoExchange.Contexts {
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
       base.OnModelCreating(modelBuilder);
+      modelBuilder
+        .Entity<AccountEntity>()
+        .Property(e => e.Status)
+        .HasConversion(
+          v => v.ToString(),
+          v => (AccountStatus)Enum.Parse(typeof(AccountStatus), v));
+
+      modelBuilder
+        .Entity<AddressEntity>()
+        .Property(e => e.Type)
+        .HasConversion(
+          v => v.ToString(),
+          v => (AddressType)Enum.Parse(typeof(AddressType), v));
+
       modelBuilder
         .Entity<OrderEntity>()
         .Property(e => e.Status)

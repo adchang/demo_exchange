@@ -8,10 +8,11 @@
     <ProjectReference Include="../DemoExchange/DemoExchange.csproj">
       <Properties>DefineConstants=PERF;DIAGNOSTICS</Properties>
     </ProjectReference>
+    <ProjectReference Include="../DemoExchange.Interface.ClientAccount/DemoExchange.Interface.ClientAccount.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-rc.1.20451.14" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
@@ -21,6 +22,7 @@
     <PackageReference Include="Serilog.Exceptions" Version="5.6.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00887" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
   </ItemGroup>
 
 </Project>

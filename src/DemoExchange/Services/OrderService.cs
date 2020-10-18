@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using DemoExchange.Api;
-using DemoExchange.Api.Order;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
@@ -26,20 +26,21 @@ namespace DemoExchange.Services {
 #else
       public class OrderService : IOrderService {
 #endif
-        private static Serilog.ILogger logger => Serilog.Log.ForContext<OrderService>();
+        private static Serilog.ILogger Logger => Serilog.Log.ForContext<OrderService>();
 
         public const String MARKET_CLOSED = "Market is closed.";
 
-        // Question: ConcurrentDictionary instead? https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2?view=net-5.0
+        // Should not be using a ConcurrentDictionary due to the nature of queue processing
+        // Different threads still need to wait synchronously
         private readonly IDictionary<String, OrderManager> managers =
           new Dictionary<String, OrderManager>();
         private readonly IDemoExchangeDbContextFactory<OrderContext> orderContextFactory;
-        private readonly IAccountService accountService;
+        private readonly IAccountServiceRpcClient accountService;
 
         public bool IsMarketOpen { get; private set; }
 
         public OrderService(IDemoExchangeDbContextFactory<OrderContext> orderContextFactory,
-          IAccountService accountService) {
+          IAccountServiceRpcClient accountService) {
           this.orderContextFactory = orderContextFactory;
           this.accountService = accountService;
         }
@@ -63,10 +64,14 @@ namespace DemoExchange.Services {
           // TODO: Add tests
           CheckNotNull(request, paramName : nameof(request));
 
+          // These cannot be async because of the lock on the manager; order matching is 
+          // inherently a queue process because of time priority
           OrderManager manager = managers[request.Ticker];
           lock(manager) {
             using OrderContext context = orderContextFactory.Create();
-            return manager.SubmitOrder(context, accountService, (OrderBL)request);
+            IResponse<IOrderModel, OrderResponse> response = manager.SubmitOrder(context, accountService, (OrderBL)request);
+
+            return response;
           }
         }
 
@@ -104,7 +109,7 @@ namespace DemoExchange.Services {
 #if DEBUG
           IsMarketOpen = true;
 #else
-          // TODO If Market hours, set marketOpen to true;
+          // TODO: If Market hours, set marketOpen to true;
           throw new InvalidOperationException(MARKET_CLOSED);
 #endif
         }
@@ -113,7 +118,7 @@ namespace DemoExchange.Services {
 #if DEBUG
           IsMarketOpen = false;
 #else
-          // TODO If !Market hours, set marketOpen to false;
+          // TODO: If !Market hours, set marketOpen to false;
           throw new InvalidOperationException(MARKET_CLOSED);
 #endif
         }
@@ -138,7 +143,7 @@ namespace DemoExchange.Services {
 
       // QUESTION: Assumes order book always has at least 1 order, ie market maker
       public class OrderManager {
-        private static Serilog.ILogger logger => Serilog.Log.ForContext<OrderManager>();
+        private static Serilog.ILogger Logger => Serilog.Log.ForContext<OrderManager>();
 
         private readonly OrderBook BuyBook;
         private readonly OrderBook SellBook;
@@ -167,13 +172,13 @@ namespace DemoExchange.Services {
         }
 
         public OrderManager(IOrderContext context, String ticker) {
-          BuyBook = new OrderBook(context, ticker, OrderAction.Buy);
-          SellBook = new OrderBook(context, ticker, OrderAction.Sell);
+          BuyBook = new OrderBook(context, ticker, OrderAction.OrderBuy);
+          SellBook = new OrderBook(context, ticker, OrderAction.OrderSell);
         }
 
         // QUESTION: Consider making async: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap
         public OrderResponseBL SubmitOrder(IOrderContext context,
-          IAccountService accountService, OrderBL order) {
+          IAccountServiceRpcClient accountService, OrderBL order) {
 #if (PERF || PERF_FINE || PERF_FINEST)
           long start = Now;
 #endif
@@ -188,35 +193,39 @@ namespace DemoExchange.Services {
           if (order.IsMarketOrder) {
             // QUESTION: Could potentially optimize to not do an initial save of a Market order
             //           but can we allow order entry during market close hours? What's MarketOnOpen?
+            // The actual outcome of the match will be responded back asynchronously
             OrderTransactionResponseBL fillResponse = FillMarketOrder(accountService, order, book);
             if (fillResponse.HasErrors) {
-              return new OrderResponseBL(fillResponse.Code, order, fillResponse.Errors);
+              return insertResponse;
             }
             fillResponse = SaveOrderTransaction(context, fillResponse.Data);
             if (fillResponse.HasErrors) {
-              return new OrderResponseBL(fillResponse.Code, order, fillResponse.Errors);
+              return insertResponse;
             }
 #if DIAGNOSTICS
             DiagnosticsWriteDetails(fillResponse.Data);
 #endif
 #if (PERF || PERF_FINE || PERF_FINEST)
-            logger.Here().Information(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+            Logger.Here().Information(String.Format("SubmitOrder: Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
             return new OrderResponseBL(order);
           }
 
-          book.AddOrder(order); // HACK: Technically, this should return back as Submitted, and the TryFillOrderBook is a separate process that runs continuously
+          book.AddOrder(order);
           bool done = false;
           while (!done) {
             if (BuyBook.IsEmpty || SellBook.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
+            // The new order triggered a match
+            // We'll try to match it here, but respond back with the insertResponse regardless
+            // The actual outcome of the match will be responded back asynchronously
             if (BuyBook.First.StrikePrice >= SellBook.First.StrikePrice) {
               OrderTransactionResponseBL fillResponse = TryFillOrderBook(accountService);
               if (fillResponse.HasErrors) {
-                return new OrderResponseBL(fillResponse.Code, order, fillResponse.Errors);
+                return insertResponse;
               }
               fillResponse = SaveOrderTransaction(context, fillResponse.Data);
               if (fillResponse.HasErrors) {
-                return new OrderResponseBL(fillResponse.Code, order, fillResponse.Errors);
+                return insertResponse;
               }
 #if DIAGNOSTICS
               DiagnosticsWriteDetails(fillResponse.Data);
@@ -226,12 +235,12 @@ namespace DemoExchange.Services {
             }
           }
 #if (PERF || PERF_FINE || PERF_FINEST)
-          logger.Here().Information(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+          Logger.Here().Information(String.Format("SubmitOrder: Processed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
           return insertResponse;
         }
 
-        private static OrderTransactionResponseBL FillMarketOrder(IAccountService accountService,
+        private OrderTransactionResponseBL FillMarketOrder(IAccountServiceRpcClient accountService,
           OrderBL order, OrderBook book) {
 #if PERF_FINEST
           long start = Now;
@@ -239,7 +248,7 @@ namespace DemoExchange.Services {
           CheckArgument(!order.Action.Equals(book.Type), "Error: Wrong book");
 
           bool done = false;
-          List<OrderBL> filledOrders = new List<OrderBL>();
+          List<OrderBL> orders = new List<OrderBL>();
           List<Transaction> transactions = new List<Transaction>();
           while (!done) {
             if (book.IsEmpty)throw new SystemException("Order book is empty"); // TODO: Handle order book is empty
@@ -248,18 +257,49 @@ namespace DemoExchange.Services {
             decimal executionPrice = order.IsBuyOrder ? sellOrder.StrikePrice : buyOrder.StrikePrice;
             int fillQuantity = Math.Min(buyOrder.OpenQuantity, sellOrder.OpenQuantity);
             // QUESTION: Many issues here, partial fill, etc
-            if (!accountService.CanFillOrder(buyOrder.ToMessage())) {
-              throw new NotImplementedException(); // TODO
+            Task<CanFillOrderResponse> buyerResponse = accountService
+              .CanFillOrderAsync(new CanFillOrderRequest {
+                Order = buyOrder.ToMessage(),
+                  FillQuantity = fillQuantity
+              }).ResponseAsync;
+            Task<CanFillOrderResponse> sellerResponse = accountService
+              .CanFillOrderAsync(new CanFillOrderRequest {
+                Order = sellOrder.ToMessage(),
+                  FillQuantity = fillQuantity
+              }).ResponseAsync;
+            Task.WaitAll(buyerResponse, sellerResponse);
+            bool canExecute = true;
+            if (!buyerResponse.Result.Value) {
+              if (!order.IsBuyOrder) {
+                BuyBook.RemoveOrder(buyOrder);
+              }
+              buyOrder.Cancel();
+              orders.Add(buyOrder);
+              canExecute = false;
+              // TODO: Publish order has been cancelled
             }
-            if (!accountService.CanFillOrder(sellOrder.ToMessage())) {
-              throw new NotImplementedException(); // TODO
+            if (!sellerResponse.Result.Value) {
+              if (!order.IsSellOrder) {
+                SellBook.RemoveOrder(sellOrder);
+              }
+              sellOrder.Cancel();
+              orders.Add(sellOrder);
+              canExecute = false;
+              // TODO: Publish order has been cancelled
+            }
+            if (!order.IsOpen) {
+              return new OrderTransactionResponseBL(new OrderTransactionBL(orders, transactions));
+            }
+            if (!canExecute) {
+              continue;
             }
 
             buyOrder.OpenQuantity -= fillQuantity;
             sellOrder.OpenQuantity -= fillQuantity;
-            transactions.Add(new Transaction(buyOrder, sellOrder, buyOrder.Ticker,
-              fillQuantity, executionPrice));
-            filledOrders.Add(book.First);
+            Transaction transaction = new Transaction(buyOrder, sellOrder, buyOrder.Ticker,
+              fillQuantity, executionPrice);
+            transactions.Add(transaction);
+            orders.Add(book.First);
             if (book.First.IsFilled) {
               OrderBL filledOrder = book.First;
               book.RemoveOrder(filledOrder);
@@ -267,61 +307,85 @@ namespace DemoExchange.Services {
             }
             if (order.IsFilled) {
               order.Complete();
-              filledOrders.Add(order);
+              orders.Add(order);
               done = true;
             }
+            // TODO: Publish transaction
           }
 #if PERF_FINEST
-          logger.Here().Information(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+          Logger.Here().Information(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
 
-          return new OrderTransactionResponseBL(Constants.Response.CREATED,
-            new OrderTransactionBL(filledOrders, transactions));
+          return new OrderTransactionResponseBL(new OrderTransactionBL(orders, transactions));
         }
 
-        private OrderTransactionResponseBL TryFillOrderBook(IAccountService accountService) {
+        private OrderTransactionResponseBL TryFillOrderBook(IAccountServiceRpcClient accountService) {
 #if PERF_FINEST
           long start = Now;
 #endif
 
           OrderBL buyOrder = BuyBook.First;
           OrderBL sellOrder = SellBook.First;
-          List<OrderBL> filledOrders = new List<OrderBL>();
+          List<OrderBL> orders = new List<OrderBL>();
           List<Transaction> transactions = new List<Transaction>();
           // QUESTION: Execute the limit order at sell price benefits BUYER fat finger
           //           What to do if SELLER fat finger? Shouldn't that give the SELLER
           //           the higher BID price?
           decimal executionPrice = sellOrder.StrikePrice;
           int fillQuantity = Math.Min(buyOrder.OpenQuantity, sellOrder.OpenQuantity);
-          if (!accountService.CanFillOrder(buyOrder.ToMessage())) {
-            throw new NotImplementedException(); // TODO
+          Task<CanFillOrderResponse> buyerResponse = accountService
+            .CanFillOrderAsync(new CanFillOrderRequest {
+              Order = buyOrder.ToMessage(),
+                FillQuantity = fillQuantity
+            }).ResponseAsync;
+          Task<CanFillOrderResponse> sellerResponse = accountService
+            .CanFillOrderAsync(new CanFillOrderRequest {
+              Order = sellOrder.ToMessage(),
+                FillQuantity = fillQuantity
+            }).ResponseAsync;
+          Task.WaitAll(buyerResponse, sellerResponse);
+          bool canExecute = true;
+          if (!buyerResponse.Result.Value) {
+            BuyBook.RemoveOrder(buyOrder);
+            buyOrder.Cancel();
+            orders.Add(buyOrder);
+            canExecute = false;
+            // TODO: Publish order has been cancelled
           }
-          if (!accountService.CanFillOrder(sellOrder.ToMessage())) {
-            throw new NotImplementedException(); // TODO
+          if (!sellerResponse.Result.Value) {
+            SellBook.RemoveOrder(sellOrder);
+            sellOrder.Cancel();
+            orders.Add(sellOrder);
+            canExecute = false;
+            // TODO: Publish order has been cancelled
+          }
+          if (!canExecute) {
+            return new OrderTransactionResponseBL(new OrderTransactionBL(orders, transactions));
           }
 
           buyOrder.OpenQuantity -= fillQuantity;
           sellOrder.OpenQuantity -= fillQuantity;
-          transactions.Add(new Transaction(buyOrder, sellOrder, buyOrder.Ticker,
-            fillQuantity, executionPrice));
-          filledOrders.Add(SellBook.First);
+          Transaction transaction = new Transaction(buyOrder, sellOrder, buyOrder.Ticker,
+            fillQuantity, executionPrice);
+          transactions.Add(transaction);
+          orders.Add(SellBook.First);
           if (SellBook.First.IsFilled) {
             OrderBL filledOrder = SellBook.First;
             SellBook.RemoveOrder(filledOrder);
             filledOrder.Complete();
           }
-          filledOrders.Add(BuyBook.First);
+          orders.Add(BuyBook.First);
           if (BuyBook.First.IsFilled) {
             OrderBL filledOrder = BuyBook.First;
             BuyBook.RemoveOrder(filledOrder);
             filledOrder.Complete();
           }
+          // TODO: Publish transaction
 #if PERF_FINEST
-          logger.Here().Information(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
+          Logger.Here().Information(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
 
-          return new OrderTransactionResponseBL(Constants.Response.CREATED,
-            new OrderTransactionBL(filledOrders, transactions));
+          return new OrderTransactionResponseBL(new OrderTransactionBL(orders, transactions));
         }
 
         private OrderResponseBL InsertOrder(IOrderContext context, OrderBL order) {
@@ -329,7 +393,7 @@ namespace DemoExchange.Services {
           try {
             context.SaveChanges();
           } catch (Exception e) {
-            logger.Here().Warning("InsertOrder failed", e);
+            Logger.Here().Warning("InsertOrder failed", e);
             return new OrderResponseBL(Constants.Response.INTERNAL_SERVER_ERROR,
               order, new Error {
                 Description = e.Message
@@ -353,7 +417,7 @@ namespace DemoExchange.Services {
             context.SaveChanges();
           } catch (Exception e) {
             // QUESTION: What to do here in terms of transaction integrity?
-            logger.Here().Warning("SaveOrderTransaction failed", e);
+            Logger.Here().Warning("SaveOrderTransaction failed", e);
             return new OrderTransactionResponseBL(Constants.Response.INTERNAL_SERVER_ERROR,
               data, new Error {
                 Description = e.Message
@@ -364,8 +428,8 @@ namespace DemoExchange.Services {
         }
 
         public static String QuoteToString(Quote quote) {
-          return QuoteType.Bid + ": " + quote.Bid.ToString(Constants.FORMAT_PRICE) + " / " +
-            QuoteType.Ask + ": " + quote.Ask.ToString(Constants.FORMAT_PRICE) +
+          return QuoteType.QuoteBid + ": " + quote.Bid.ToString(Constants.FORMAT_PRICE) + " / " +
+            QuoteType.QuoteAsk + ": " + quote.Ask.ToString(Constants.FORMAT_PRICE) +
             ((quote.Last > 0 && quote.Volume > 0) ?
               " Last: " + quote.Last.ToString(Constants.FORMAT_PRICE) + " Volume: " + quote.Volume :
               "");
@@ -377,11 +441,11 @@ namespace DemoExchange.Services {
 
         public static String Level2ToString(Level2 level2) {
           StringBuilder sb = new StringBuilder();
-          sb.Append(QuoteType.Bid + ":\n");
+          sb.Append(QuoteType.QuoteBid + ":\n");
           foreach (Level2Quote quote in level2.Bids) {
             sb.Append("  " + Level2QuoteToString(quote) + "\n");
           }
-          sb.Append(QuoteType.Ask + ":\n");
+          sb.Append(QuoteType.QuoteAsk + ":\n");
           foreach (Level2Quote quote in level2.Asks) {
             sb.Append("  " + Level2QuoteToString(quote) + "\n");
           }
@@ -402,14 +466,14 @@ namespace DemoExchange.Services {
           transaction.Transactions.ForEach(transaction => sb.Append("     " + transaction.ToString() + "\n"));
           sb.Append("\n  SPREAD: " + QuoteToString(Quote));
           sb.Append("\n  LEVEL 2:\n" + Level2ToString(Level2));
-          logger.Here().Verbose(sb.ToString());
+          Logger.Here().Verbose(sb.ToString());
         }
 #endif
 
 #if (PERF || PERF_FINE || PERF_FINEST)
         public OrderManager(String ticker) {
-          BuyBook = new OrderBook(ticker, OrderAction.Buy, true);
-          SellBook = new OrderBook(ticker, OrderAction.Sell, true);
+          BuyBook = new OrderBook(ticker, OrderAction.OrderBuy, true);
+          SellBook = new OrderBook(ticker, OrderAction.OrderSell, true);
         }
 
         public void TestPerfAddOrder(List<IOrderModel> buyOrders, List<IOrderModel> sellOrders,

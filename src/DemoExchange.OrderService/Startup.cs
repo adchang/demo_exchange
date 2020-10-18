@@ -1,7 +1,10 @@
 using System;
+using System.Net.Http;
+using DemoExchange.Api;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Services;
+using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +34,11 @@ namespace DemoExchange.OrderService {
 #if DEBUG
       logger.Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
+      var httpHandler = new HttpClientHandler();
+      httpHandler.ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+      var channel = GrpcChannel.ForAddress("https://loki:8092",
+        new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddControllers();
       services.AddSwaggerGen(c => {
@@ -59,7 +67,7 @@ namespace DemoExchange.OrderService {
       services.AddSingleton<ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
-      services.AddSingleton<IAccountService, Dependencies.AccountService>();
+      services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));
 
       logger.Information("ConfigureServices done");
     }

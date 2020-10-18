@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using DemoExchange.Api;
-using DemoExchange.Api.Order;
 
 namespace DemoExchange.Interface {
   public interface IIsValid {
@@ -40,20 +40,38 @@ namespace DemoExchange.Interface {
   /// <summary>
   /// Model for an account.
   /// </summary>
-  public interface IAccountModel : IIsValid {
+  public interface IAccountModel {
     public String AccountId { get; }
+    public long CreatedTimestamp { get; }
+    public long LastUpdatedTimestamp { get; }
+    public AccountStatus Status { get; }
+    public String FirstName { get; }
+    public String MiddleName { get; }
+    public String LastName { get; }
+
+    public List<IAddressModel> Addresses { get; }
+
+    public Account ToMessage();
   }
 
-  public class AccountBase : IAccountModel {
+  public interface IAddressModel {
+    public String AddressId { get; }
     public String AccountId { get; }
+    public long CreatedTimestamp { get; }
+    public long LastUpdatedTimestamp { get; }
+    public AddressType Type { get; }
+    public String Line1 { get; }
+    public String Line2 { get; }
+    public String Subdistrict { get; }
+    public String District { get; }
+    public String City { get; }
+    public String Province { get; }
+    public String PostalCode { get; }
+    public String Country { get; }
 
-    public virtual bool IsValid {
-      get { return true; }
-    }
+    public IAccountModel Account { get; }
 
-    public AccountBase(String accountId) {
-      AccountId = accountId;
-    }
+    public Address ToMessage();
   }
 
   /// <summary>

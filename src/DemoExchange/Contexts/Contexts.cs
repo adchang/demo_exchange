@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
-using DemoExchange.Api.Order;
-using DemoExchange.Interface;
+using DemoExchange.Api;
 using DemoExchange.Models;
 using Microsoft.EntityFrameworkCore;
 using static DemoExchange.Models.Orders.Predicates;
@@ -33,11 +32,42 @@ namespace DemoExchange.Contexts {
     // Queries
     public IQueryable<OrderEntity> GetAllOpenOrdersByTickerAndAction(String ticker,
       OrderAction type) {
-      // TODO Test
+      // TODO: Test
       return Orders.Where(OpenByTickerAndAction(ticker, type)).AsQueryable();
     }
 
     public OrderContext(DbContextOptions<DemoExchangeDbContext> options):
+      base(options) { }
+  }
+
+  public interface IAccountContext : IDbContext {
+    public DbSet<AccountEntity> Accounts { get; }
+    public DbSet<AddressEntity> Addresses { get; }
+
+    public AccountEntity GetAccountById(String accountId);
+  }
+
+  public class AccountContextFactory : DemoExchangeDbContextFactory,
+    IDemoExchangeDbContextFactory<AccountContext> {
+
+      public AccountContextFactory(ConnectionStrings connectionStrings) : base(connectionStrings) { }
+
+      public override AccountContext Create() {
+        return new AccountContext(options);
+      }
+    }
+
+  public class AccountContext : DemoExchangeDbContext, IAccountContext {
+    public DbSet<AccountEntity> Accounts { get; private set; }
+    public DbSet<AddressEntity> Addresses { get; private set; }
+
+    // Queries
+    public AccountEntity GetAccountById(String accountId) {
+      // TODO: Test
+      return Accounts.Find(accountId);
+    }
+
+    public AccountContext(DbContextOptions<DemoExchangeDbContext> options):
       base(options) { }
   }
 }

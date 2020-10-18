@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using DemoExchange.Api.Order;
+using DemoExchange.Api;
 using DemoExchange.Interface;
 using static Utils.Preconditions;
 using static Utils.Time;
@@ -20,7 +20,9 @@ namespace DemoExchange.Models {
     public long CreatedTimestamp { get; set; }
 
     [Required]
-    public String AccountId { get; set; } // TODO: Change this to Guid
+    public Guid AccountId { get; set; }
+
+    public AccountEntity Account { get; set; }
 
     [Required]
     public OrderStatus Status { get; set; }
@@ -96,7 +98,7 @@ namespace DemoExchange.Models {
   public class OrderBL : OrderEntity, IOrderModel, IIsValid {
     public const int TIME_IN_FORCE_TO_BE_Cancelled_DAYS = 90;
 
-    public const String ERROR_STATUS_NOT_Open = "Error Cancel: Status is not Open OrderId: {0}";
+    public const String ERROR_STATUS_NOT_OPEN = "Error Cancel: Status is not Open OrderId: {0}";
 
     public new String OrderId {
       get { return base.OrderId.ToString(); }
@@ -108,35 +110,35 @@ namespace DemoExchange.Models {
       get { return FromTicks(base.CreatedTimestamp); }
     }
     public new String AccountId {
-      get { return base.AccountId; }
+      get { return base.AccountId.ToString(); }
     }
     public new OrderStatus Status {
       get { return base.Status; }
       private set { base.Status = value; }
     }
     public bool IsOpen {
-      get { return OrderStatus.Open.Equals(Status); }
+      get { return OrderStatus.OrderOpen.Equals(Status); }
     }
     public bool IsCompleted {
-      get { return OrderStatus.Completed.Equals(Status); }
+      get { return OrderStatus.OrderCompleted.Equals(Status); }
     }
     public bool IsUpdated {
-      get { return OrderStatus.Updated.Equals(Status); }
+      get { return OrderStatus.OrderUpdated.Equals(Status); }
     }
     public bool IsCancelled {
-      get { return OrderStatus.Cancelled.Equals(Status); }
+      get { return OrderStatus.OrderCancelled.Equals(Status); }
     }
     public bool IsDeleted {
-      get { return OrderStatus.Deleted.Equals(Status); }
+      get { return OrderStatus.OrderDeleted.Equals(Status); }
     }
     public new OrderAction Action {
       get { return base.Action; }
     }
     public bool IsBuyOrder {
-      get { return OrderAction.Buy.Equals(Action); }
+      get { return OrderAction.OrderBuy.Equals(Action); }
     }
     public bool IsSellOrder {
-      get { return OrderAction.Sell.Equals(Action); }
+      get { return OrderAction.OrderSell.Equals(Action); }
     }
     public new String Ticker {
       get { return base.Ticker; }
@@ -147,28 +149,28 @@ namespace DemoExchange.Models {
       }
     }
     public bool IsMarketOrder {
-      get { return OrderType.Market.Equals(Type); }
+      get { return OrderType.OrderMarket.Equals(Type); }
     }
     public bool IsLimitOrder {
-      get { return OrderType.Limit.Equals(Type); }
+      get { return OrderType.OrderLimit.Equals(Type); }
     }
     public bool IsStopMarketOrder {
-      get { return OrderType.StopMarket.Equals(Type); }
+      get { return OrderType.OrderStopMarket.Equals(Type); }
     }
     public bool IsStopLimitOrder {
-      get { return OrderType.StopLimit.Equals(Type); }
+      get { return OrderType.OrderStopLimit.Equals(Type); }
     }
     public bool IsTrailingStopMarketOrder {
-      get { return OrderType.TrailingStopMarket.Equals(Type); }
+      get { return OrderType.OrderTrailingStopMarket.Equals(Type); }
     }
     public bool IsTrailingStopLimitOrder {
-      get { return OrderType.TrailingStopLimit.Equals(Type); }
+      get { return OrderType.OrderTrailingStopLimit.Equals(Type); }
     }
     public bool IsFillOrKillOrder {
-      get { return OrderType.FillOrKill.Equals(Type); }
+      get { return OrderType.OrderFillOrKill.Equals(Type); }
     }
     public bool IsImmediateOrCancelOrder {
-      get { return OrderType.ImmediateOrCancel.Equals(Type); }
+      get { return OrderType.OrderImmediateOrCancel.Equals(Type); }
     }
     public new int Quantity {
       get { return base.Quantity; }
@@ -186,14 +188,14 @@ namespace DemoExchange.Models {
     }
     public bool IsDayOrder {
       get {
-        return OrderTimeInForce.Day.Equals(TimeInForce);
+        return OrderTimeInForce.OrderDay.Equals(TimeInForce);
       }
     }
     public bool IsGoodTillCanceledOrder {
-      get { return OrderTimeInForce.GoodTilCanceled.Equals(TimeInForce); }
+      get { return OrderTimeInForce.OrderGoodTilCanceled.Equals(TimeInForce); }
     }
     public bool IsMarketClose {
-      get { return OrderTimeInForce.MarketClose.Equals(TimeInForce); }
+      get { return OrderTimeInForce.OrderMarketClose.Equals(TimeInForce); }
     }
     public new long ToBeCanceledTimestamp {
       get { return base.ToBeCanceledTimestamp; }
@@ -222,12 +224,13 @@ namespace DemoExchange.Models {
     /// <br><c>StrikePrice</c>: Defaults to OrderPrice</br>
     /// <br><c>ToBeCanceledTimestamp</c>: Defaults to 0 for Market orders, end of day for Day orders, and <c>TIME_IN_FORCE_TO_BE_Cancelled_DAYS</c> for Good Til Canceled orders.</br>
     /// </summary>
+    // TODO: Should make this private; public only Entity and Request constructors
     public OrderBL(String accountId, OrderAction action, String ticker, OrderType type,
       int quantity, decimal orderPrice, OrderTimeInForce timeInForce) {
       CheckNotNullOrWhitespace(accountId, paramName : nameof(accountId));
       CheckNotNullOrWhitespace(ticker, paramName : nameof(ticker));
       CheckArgument(quantity > 0, message : IOrderModel.ERROR_QUANTITY_IS_0);
-      if (OrderType.Market.Equals(type)) {
+      if (OrderType.OrderMarket.Equals(type)) {
         if (orderPrice != 0) {
           throw new ArgumentException(IOrderModel.ERROR_ORDER_PRICE_MARKET_NOT_0);
         }
@@ -239,8 +242,8 @@ namespace DemoExchange.Models {
 
       base.OrderId = Guid.NewGuid();
       base.CreatedTimestamp = Now;
-      base.AccountId = accountId;
-      base.Status = OrderStatus.Open;
+      base.AccountId = Guid.Parse(accountId);
+      base.Status = OrderStatus.OrderOpen;
       base.Action = action;
       base.Ticker = ticker;
       base.Type = type;
@@ -249,18 +252,18 @@ namespace DemoExchange.Models {
       base.OrderPrice = orderPrice;
       base.StrikePrice = orderPrice;
       base.TimeInForce = timeInForce;
-      if (OrderType.Market.Equals(type)) {
+      if (OrderType.OrderMarket.Equals(type)) {
         base.ToBeCanceledTimestamp = 0;
       } else {
         long toBeCancel = 0;
         switch (TimeInForce) {
-          case OrderTimeInForce.Day:
+          case OrderTimeInForce.OrderDay:
             toBeCancel = MidnightIct;
             break;
-          case OrderTimeInForce.GoodTilCanceled:
+          case OrderTimeInForce.OrderGoodTilCanceled:
             toBeCancel = base.CreatedTimestamp + (TimeSpan.TicksPerDay * TIME_IN_FORCE_TO_BE_Cancelled_DAYS);
             break;
-          case OrderTimeInForce.MarketClose:
+          case OrderTimeInForce.OrderMarketClose:
             toBeCancel = MidnightSaturdayIct;
             break;
         }
@@ -295,16 +298,16 @@ namespace DemoExchange.Models {
     }
 
     public void Cancel() {
-      CheckArgument(IsOpen, String.Format(ERROR_STATUS_NOT_Open, OrderId));
+      CheckArgument(IsOpen, String.Format(ERROR_STATUS_NOT_OPEN, OrderId));
 
-      Status = OrderStatus.Cancelled;
+      Status = OrderStatus.OrderCancelled;
       CanceledTimestamp = Now;
     }
 
     public void Complete() {
-      CheckArgument(IsOpen, String.Format(ERROR_STATUS_NOT_Open, OrderId));
+      CheckArgument(IsOpen, String.Format(ERROR_STATUS_NOT_OPEN, OrderId));
 
-      Status = OrderStatus.Completed;
+      Status = OrderStatus.OrderCompleted;
     }
 
     public Order ToMessage() => new
@@ -353,7 +356,7 @@ namespace DemoExchange.Models {
 
       public static Func<OrderEntity, bool> OpenByTickerAndAction(String ticker,
         OrderAction action) {
-        return order => (order.Status == OrderStatus.Open) &&
+        return order => (order.Status == OrderStatus.OrderOpen) &&
           (order.Ticker.Equals(ticker)) &&
           (order.Action == action);
       }

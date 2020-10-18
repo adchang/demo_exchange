@@ -2,15 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DemoExchange.Api;
-using DemoExchange.Api.Order;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using Grpc.Core;
 using Serilog;
 
 namespace DemoExchange.OrderServiceGrpc {
-  public class OrderServiceGrpc : OrderService.OrderServiceBase {
-    private static Serilog.ILogger logger => Serilog.Log.ForContext<OrderServiceGrpc>();
+  public class OrderServiceGrpc : DemoExchange.Api.OrderService.OrderServiceBase {
+    private static Serilog.ILogger Logger => Serilog.Log.ForContext<OrderServiceGrpc>();
 
     private readonly List<String> tickers = new List<String> { "ERX", "SPY", "DIA", "QQQ", "UPRO", "SPXU", "OILU", "OILD" };
 
@@ -29,15 +28,15 @@ namespace DemoExchange.OrderServiceGrpc {
     }
 
     public override Task<OrderResponse> SubmitOrder(OrderRequest request, ServerCallContext context) {
-      logger.Here().Information("SubmitOrder BGN");
+      Logger.Here().Information("BGN");
       IResponse<IOrderModel, OrderResponse> response;
       try {
         response = service.SubmitOrder(new OrderBL(request));
       } catch (Exception e) {
-        logger.Here().Warning("Error submitting order E: " + e.Message);
+        Logger.Here().Warning("Error submitting order E: " + e.Message);
         throw new RpcException(new Status(StatusCode.Internal, e.Message));
       }
-      logger.Here().Information("SubmitOrder END");
+      Logger.Here().Information("END");
       return Task.FromResult(response.ToMessage());
     }
 
@@ -54,20 +53,20 @@ namespace DemoExchange.OrderServiceGrpc {
     }
 
     public override Task<Empty> InitializeService(Empty request, ServerCallContext context) {
-      logger.Here().Information("InitializeService BGN");
+      Logger.Here().Information("BGN");
       tickers.ForEach(ticker => {
-        logger.Here().Information("Adding ticker: " + ticker);
+        Logger.Here().Information("Adding ticker: " + ticker);
         try {
           AddTickerResponse response = service.AddTicker(ticker);
-          logger.Here().Information(String.Format("Added {0} BUY and {1} SELL open orders for {2}",
+          Logger.Here().Information(String.Format("Added {0} BUY and {1} SELL open orders for {2}",
             response.BuyOrderCount, response.SellOrderCount, ticker));
         } catch (Exception e) {
-          logger.Here().Warning("Error adding ticker " + ticker + " E: " + e.Message);
+          Logger.Here().Warning("Error adding ticker " + ticker + " E: " + e.Message);
           throw new RpcException(new Status(StatusCode.Internal, e.Message));
         }
       });
 
-      logger.Here().Information("InitializeService END");
+      Logger.Here().Information("END");
       return Task.FromResult(new Empty());
     }
 
@@ -88,14 +87,14 @@ namespace DemoExchange.OrderServiceGrpc {
     }
 
     public override Task<StringMessage> Echo(StringMessage request, ServerCallContext context) {
-      logger.Here().Information("Echo started");
+      Logger.Here().Information("Echo started");
 
       StringMessage response = new StringMessage {
         Value = "Hello " + request.Value
       };
 
-      logger.Here().Information("Echoing..." + response.Value);
-      logger.Here().Information("Echo done");
+      Logger.Here().Information("Echoing..." + response.Value);
+      Logger.Here().Information("Echo done");
 
       return Task.FromResult(response);
     }

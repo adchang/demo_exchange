@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DemoExchange.Api;
-using DemoExchange.Api.Order;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
@@ -55,7 +54,7 @@ namespace DemoExchange.Services {
     public OrderBook(IOrderContext context, String ticker, OrderAction type) {
       Ticker = ticker;
       Type = type;
-      comparer = OrderAction.Buy.Equals(type) ?
+      comparer = OrderAction.OrderBuy.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
       LoadOrders(context);
@@ -63,9 +62,9 @@ namespace DemoExchange.Services {
 
     public void AddOrder(OrderBL order) {
       CheckNotNull(order, paramName : nameof(order));
-      CheckArgument(!OrderType.Market.Equals(order.Type),
+      CheckArgument(!OrderType.OrderMarket.Equals(order.Type),
         String.Format(ERROR_MARKET_ORDER, order.OrderId));
-      CheckArgument(OrderStatus.Open.Equals(order.Status),
+      CheckArgument(OrderStatus.OrderOpen.Equals(order.Status),
         String.Format(ERROR_NOT_OPEN_ORDER, order.OrderId));
       CheckArgument(Ticker.Equals(order.Ticker),
         String.Format(ERROR_TICKER, Ticker, order.OrderId));
@@ -118,7 +117,7 @@ namespace DemoExchange.Services {
     public OrderBook(String ticker, OrderAction type) {
       Ticker = ticker;
       Type = type;
-      comparer = OrderAction.Buy.Equals(type) ?
+      comparer = OrderAction.OrderBuy.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
     }
@@ -140,7 +139,7 @@ namespace DemoExchange.Services {
     public OrderBook(String ticker, OrderAction type, bool perf) {
       Ticker = ticker;
       Type = type;
-      comparer = OrderAction.Buy.Equals(type) ?
+      comparer = OrderAction.OrderBuy.Equals(type) ?
         Orders.STRIKE_PRICE_DESCENDING_COMPARER :
         Orders.STRIKE_PRICE_ASCENDING_COMPARER;
     }

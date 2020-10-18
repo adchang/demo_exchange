@@ -82,7 +82,7 @@ namespace DemoExchange.Models {
 
     public Transaction(OrderBL buyOrder, OrderBL sellOrder, string ticker, int quantity,
       decimal price) {
-      // TODO Precondtions
+      // TODO: Precondtions
       base.TransactionId = Guid.NewGuid();
       base.CreatedTimestamp = Now;
       base.BuyOrder = buyOrder;
