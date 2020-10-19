@@ -33,9 +33,9 @@ namespace DemoExchange.ApiGateway {
       var httpHandler = new HttpClientHandler();
       httpHandler.ServerCertificateCustomValidationCallback =
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-      var accountChannel = GrpcChannel.ForAddress("https://172.17.0.1:8091",
+      var accountChannel = GrpcChannel.ForAddress("https://account",
         new GrpcChannelOptions { HttpHandler = httpHandler });
-      var orderChannel = GrpcChannel.ForAddress("https://172.17.0.1:8092",
+      var orderChannel = GrpcChannel.ForAddress("https://order",
         new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddGrpc();

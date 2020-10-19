@@ -39,7 +39,7 @@ namespace DemoExchange.OrderServiceGrpc {
       var httpHandler = new HttpClientHandler();
       httpHandler.ServerCertificateCustomValidationCallback =
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-      var channel = GrpcChannel.ForAddress("https://172.17.0.1:8091",
+      var channel = GrpcChannel.ForAddress("https://account",
         new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddGrpc();

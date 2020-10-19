@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+  gateway:
+    #build: src/DemoExchange.ApiGateway
+    image: demo_exchange.api_gateway:0.0.1a-dc
+    ports:
+      - "8090:443"
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 8090
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "PASSWORD"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/DemoExchange.pfx"
+    volumes:
+      - /opt/adchang/htdocs/demo_exchange/docker:/https
+      - /opt/adchang/_log/demo_exchange:/log
+    depends_on:
+      - account
+      - order
+
+  account:
+    #build: src/DemoExchange.AccountService
+    image: demo_exchange.account_service:0.0.1a-dc
+    #ports:
+    #  - "8091:443"
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "PASSWORD"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/DemoExchange.pfx"
+    volumes:
+      - /opt/adchang/htdocs/demo_exchange/docker:/https
+      - /opt/adchang/_log/demo_exchange:/log
+    depends_on:
+      - sql
+
+  order:
+    #build: src/DemoExchange.OrderServiceGrpc
+    image: demo_exchange.order_service_grpc:0.0.1a-dc
+    #ports:
+    #  - "8092:443"
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "PASSWORD"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/DemoExchange.pfx"
+    volumes:
+      - /opt/adchang/htdocs/demo_exchange/docker:/https
+      - /opt/adchang/_log/demo_exchange:/log
+    depends_on:
+      - sql
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "sqlserver-docker-PASSWORD"
+    volumes:
+      - /opt/adchang/db/sqlserver/mount:/var/opt/mssql
