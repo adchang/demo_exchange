@@ -64,7 +64,7 @@ namespace DemoExchange.AccountService {
       try {
         response = service.CanFillOrder(request.Order, request.FillQuantity);
       } catch (Exception e) {
-        Logger.Here().Warning("Error creating address E: " + e.Message);
+        Logger.Here().Warning("Error E: " + e.Message);
         throw new RpcException(new Status(StatusCode.Internal, e.Message));
       }
       Logger.Here().Information("END");

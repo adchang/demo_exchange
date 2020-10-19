@@ -90,8 +90,8 @@ namespace DemoExchange.Models {
     public bool IsPendingApproval {
       get { return AccountStatus.AccountPendingApproval.Equals(Status); }
     }
-    public bool IsOpen {
-      get { return AccountStatus.AccountOpen.Equals(Status); }
+    public bool IsActive {
+      get { return AccountStatus.AccountActive.Equals(Status); }
     }
     public bool IsSuspended {
       get { return AccountStatus.AccountSuspended.Equals(Status); }

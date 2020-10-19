@@ -9,7 +9,7 @@ demo-exchange-account-build() {
   docker rm -f demo_exchange.account_service-$ACCOUNT_SERVICE_VERSION;
   docker image rm demo_exchange.account_service:$ACCOUNT_SERVICE_VERSION;
   docker build -f src/DemoExchange.AccountService/Dockerfile --tag demo_exchange.account_service:$ACCOUNT_SERVICE_VERSION .
-  docker rmi $(docker images -f 'dangling=true' -q)
+  docker rmi -f $(docker images -f 'dangling=true' -q)
 }
 demo-exchange-account-run() {
   docker run --detach -p 8091:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8091 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.account_service-$ACCOUNT_SERVICE_VERSION demo_exchange.account_service:$ACCOUNT_SERVICE_VERSION
@@ -29,7 +29,7 @@ demo-exchange-order-build() {
   docker rm -f demo_exchange.order_service-$ORDER_SERVICE_VERSION;
   docker image rm demo_exchange.order_service:$ORDER_SERVICE_VERSION;
   docker build -f src/DemoExchange.OrderService/Dockerfile --tag demo_exchange.order_service:$ORDER_SERVICE_VERSION .
-  docker rmi $(docker images -f 'dangling=true' -q)
+  docker rmi -f $(docker images -f 'dangling=true' -q)
 }
 demo-exchange-order-run() {
   docker run -v /opt/adchang/_log/demo_exchange:/log --publish 8080:80 --detach --name demo_exchange.order_service-$ORDER_SERVICE_VERSION demo_exchange.order_service:$ORDER_SERVICE_VERSION
@@ -49,7 +49,7 @@ demo-exchange-orderGrpc-build() {
   docker rm -f demo_exchange.order_service_grpc-$ORDER_SERVICE_VERSION;
   docker image rm demo_exchange.order_service_grpc:$ORDER_SERVICE_VERSION;
   docker build -f src/DemoExchange.OrderServiceGrpc/Dockerfile --tag demo_exchange.order_service_grpc:$ORDER_SERVICE_VERSION .
-  docker rmi $(docker images -f 'dangling=true' -q)
+  docker rmi -f $(docker images -f 'dangling=true' -q)
 }
 demo-exchange-orderGrpc-run() {
   docker run --detach -p 8092:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8092 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.order_service_grpc-$ORDER_SERVICE_VERSION demo_exchange.order_service_grpc:$ORDER_SERVICE_VERSION

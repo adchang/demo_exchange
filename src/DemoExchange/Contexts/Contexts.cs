@@ -64,7 +64,7 @@ namespace DemoExchange.Contexts {
     // Queries
     public AccountEntity GetAccountById(String accountId) {
       // TODO: Test
-      return Accounts.Find(accountId);
+      return Accounts.Find(Guid.Parse(accountId));
     }
 
     public AccountContext(DbContextOptions<DemoExchangeDbContext> options):

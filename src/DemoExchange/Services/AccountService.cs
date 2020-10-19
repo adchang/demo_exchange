@@ -36,7 +36,7 @@ namespace DemoExchange.Services {
       try {
         context.SaveChanges();
       } catch (Exception e) {
-        Logger.Here().Warning("Failed", e);
+        Logger.Here().Warning("Failed: " + e.Message);
         return new AccountResponseBL(Constants.Response.INTERNAL_SERVER_ERROR,
           request, new Error {
             Description = e.Message
@@ -59,7 +59,7 @@ namespace DemoExchange.Services {
       using AccountContext context = accountContextFactory.Create();
 
       AccountBL account = new AccountBL(context.GetAccountById(order.AccountId));
-      if (!account.IsOpen) {
+      if (!account.IsActive) {
         Logger.Here().Information("Account is not Open");
         return false;
       }

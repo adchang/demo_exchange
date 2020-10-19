@@ -9,8 +9,8 @@ WORKDIR /src
 ADD src/Utils Utils
 ADD src/protos protos
 ADD src/DemoExchange.Interface DemoExchange.Interface
-ADD src/DemoExchange.Interface.ClientAccount DemoExchange.Interface.ClientAccount
 ADD src/DemoExchange DemoExchange
+ADD src/DemoExchange.Interface.ClientAccount DemoExchange.Interface.ClientAccount
 WORKDIR /src/DemoExchange.OrderServiceGrpc
 COPY src/DemoExchange.OrderServiceGrpc/DemoExchange.OrderServiceGrpc.csproj .
 RUN dotnet restore -r linux-x64
