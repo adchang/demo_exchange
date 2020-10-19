@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DemoExchange.Api;
@@ -16,15 +17,20 @@ namespace GrpcTester {
       var httpHandler = new HttpClientHandler();
       httpHandler.ServerCertificateCustomValidationCallback =
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-      var channel = GrpcChannel.ForAddress("https://loki:8092",
+      var accountChannel = GrpcChannel.ForAddress("https://loki:8091",
         new GrpcChannelOptions { HttpHandler = httpHandler });
-      IOrderServiceRpcClient client = new OrderServiceRpcClient(channel);
+      IAccountServiceRpcClient accountClient = new AccountServiceRpcClient(accountChannel);
+      var orderChannel = GrpcChannel.ForAddress("https://loki:8092",
+        new GrpcChannelOptions { HttpHandler = httpHandler });
+      IOrderServiceRpcClient orderClient = new OrderServiceRpcClient(orderChannel);
 
       /*var reply = await client.EchoAsync(
         new StringMessage { Value = "ER-X" });
       Console.WriteLine("Greeting: " + reply.Value);*/
 
-      await DoSomething(client);
+      //await DoSomething(orderClient);
+      //CreateAccounts(accountClient);
+      AccountTester(accountClient);
 
       Console.WriteLine("Press any key to exit...");
       Console.ReadKey();
@@ -69,6 +75,56 @@ namespace GrpcTester {
         }
         Display("Order submitted: " + response.ToString());
       });
+    }
+
+    private static void CreateAccounts(IAccountServiceRpcClient client) {
+      int numThreads = 10;
+      int numAccounts = 877;
+      ParallelOptions opt = new ParallelOptions() {
+        MaxDegreeOfParallelism = numThreads
+      };
+      Parallel.For(0, numAccounts, opt, i => {
+        var req = new AccountRequest {
+        FirstName = "Anthony " + i,
+        LastName = "Chang"
+        };
+        Task<AccountResponse> resp = null;
+        try {
+          resp = client.CreateAccountAsync(req).ResponseAsync;
+          resp.Wait();
+          Account account = resp.Result.Data;
+          Display(account.ToString());
+        } catch (Exception e) {
+          Display("An error occurred: " + e.Message);
+        }
+      });
+    }
+
+    private static void AccountTester(IAccountServiceRpcClient client) {
+      var req = new CanFillOrderRequest {
+        Order = new Order {
+        AccountId = "6056cfb6-a4ee-4a98-b71e-c082a732c473"
+        },
+        FillQuantity = 100
+      };
+      Task<CanFillOrderResponse> resp = null;
+      try {
+        resp = client.CanFillOrderAsync(req).ResponseAsync;
+        resp.Wait();
+        bool canFill = resp.Result.Value;
+        Display("canFill: " + canFill);
+      } catch (Exception e) {
+        Display("An error occurred: " + e.Message);
+      }
+      Task<AccountList> listResp = null;
+      try {
+        listResp = client.ListAsync(new Empty()).ResponseAsync;
+        listResp.Wait();
+        ICollection<Account> data = listResp.Result.Accounts;
+        data.ToList().ForEach(account => Display(account.ToString()));
+      } catch (Exception e) {
+        Display("An error occurred: " + e.Message);
+      }
     }
 
     private static void Display(String message) {

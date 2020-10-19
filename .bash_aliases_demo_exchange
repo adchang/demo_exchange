@@ -1,5 +1,26 @@
+export API_GATEWAY_VERSION='0.0.1a'
 export ACCOUNT_SERVICE_VERSION='0.0.1a'
 export ORDER_SERVICE_VERSION='0.0.1a'
+
+demo-exchange-apiGateway-up() {
+  demo-exchange-apiGateway-build;
+  demo-exchange-apiGateway-run;
+}
+demo-exchange-apiGateway-build() {
+  docker rm -f demo_exchange.api_gateway-$API_GATEWAY_VERSION;
+  docker image rm demo_exchange.api_gateway:$API_GATEWAY_VERSION;
+  docker build -f src/DemoExchange.ApiGateway/Dockerfile --tag demo_exchange.api_gateway:$API_GATEWAY_VERSION .
+  docker rmi -f $(docker images -f 'dangling=true' -q)
+}
+demo-exchange-apiGateway-run() {
+  docker run --detach -p 8090:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8090 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.api_gateway-$API_GATEWAY_VERSION demo_exchange.api_gateway:$API_GATEWAY_VERSION
+}
+demo-exchange-apiGateway-start() {
+  docker-start demo_exchange.api_gateway-$API_GATEWAY_VERSION
+}
+demo-exchange-apiGateway-stop() {
+  docker-stop demo_exchange.api_gateway-$API_GATEWAY_VERSION
+}
 
 demo-exchange-account-up() {
   demo-exchange-account-build;

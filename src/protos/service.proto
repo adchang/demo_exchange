@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+import "messages.proto";
+
+package erx.api;
+option csharp_namespace = "DemoExchange.Api";
+
+service ErxService {
+  // AccountService
+  rpc ListAccounts(Empty) returns (AccountList);
+
+  rpc CreateAccount(AccountRequest) returns (AccountResponse);
+  rpc CreateAddress(AddressRequest) returns (AddressResponse);
+
+  // OrderService
+  rpc IsMarketOpen(Empty) returns (BoolMessage);
+
+  rpc GetOrder(StringMessage) returns (Order);
+  rpc SubmitOrder(OrderRequest) returns (OrderResponse);
+  rpc CancelOrder(StringMessage) returns (OrderResponse);
+
+  rpc GetLevel2(StringMessage) returns (Level2);
+  rpc GetQuote(StringMessage) returns (Quote);
+
+  // Order Admin services
+  rpc InitializeService(Empty) returns (Empty);
+  rpc AddTicker(StringMessage) returns (AddTickerResponse);
+  rpc OpenMarket(Empty) returns (Empty);
+  rpc CloseMarket(Empty) returns (Empty);
+}
