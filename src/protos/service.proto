@@ -21,10 +21,4 @@ service ErxService {
 
   rpc GetLevel2(StringMessage) returns (Level2);
   rpc GetQuote(StringMessage) returns (Quote);
-
-  // Order Admin services
-  rpc InitializeService(Empty) returns (Empty);
-  rpc AddTicker(StringMessage) returns (AddTickerResponse);
-  rpc OpenMarket(Empty) returns (Empty);
-  rpc CloseMarket(Empty) returns (Empty);
 }

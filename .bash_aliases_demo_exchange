@@ -1,6 +1,6 @@
-export API_GATEWAY_VERSION='0.0.2a-dc'
-export ACCOUNT_SERVICE_VERSION='0.0.2a-dc'
-export ORDER_SERVICE_VERSION='0.0.2a-dc'
+export API_GATEWAY_VERSION='0.0.2-dc'
+export ACCOUNT_SERVICE_VERSION='0.0.2-dc'
+export ORDER_SERVICE_VERSION='0.0.2-dc'
 
 demo-exchange-apiGateway-up() {
   demo-exchange-apiGateway-build;

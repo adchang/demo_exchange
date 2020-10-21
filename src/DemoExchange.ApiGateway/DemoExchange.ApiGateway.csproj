@@ -16,12 +16,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../protos/service.proto" Link="service.proto" GrpcServices="Server" />
+    <Protobuf Include="../protos/service_http.proto" Link="service_http.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.AspNetCore" Version="2.27.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.29.0" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.29.0" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.HttpApi" Version="0.1.0-alpha.20305.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.1.0-alpha.20305.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-rc.2.20475.5" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />

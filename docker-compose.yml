@@ -3,7 +3,7 @@ version: "3"
 services:
   gateway:
     #build: src/DemoExchange.ApiGateway
-    image: demo_exchange.api_gateway:0.0.1a-dc
+    image: demo_exchange.api_gateway:0.0.2-dc
     ports:
       - "8090:443"
     environment:
@@ -21,8 +21,6 @@ services:
   account:
     #build: src/DemoExchange.AccountService
     image: demo_exchange.account_service:0.0.1a-dc
-    #ports:
-    #  - "8091:443"
     environment:
       ASPNETCORE_URLS: "https://+;http://+"
       ASPNETCORE_HTTPS_PORT: 443
@@ -37,8 +35,6 @@ services:
   order:
     #build: src/DemoExchange.OrderServiceGrpc
     image: demo_exchange.order_service_grpc:0.0.1a-dc
-    #ports:
-    #  - "8092:443"
     environment:
       ASPNETCORE_URLS: "https://+;http://+"
       ASPNETCORE_HTTPS_PORT: 443

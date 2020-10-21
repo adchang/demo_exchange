@@ -38,7 +38,7 @@ namespace DemoExchangeSimulator {
 
     public void Execute(string[] args) {
       try {
-        GetAccounts();
+        // GetAccounts();
         //        ExecuteSimulation(args);
         ExecuteSimulationGrpc();
       } catch (Exception e) {
@@ -55,6 +55,7 @@ namespace DemoExchangeSimulator {
         listResp.Wait();
         ICollection<Account> data = listResp.Result.Accounts;
         data.ToList().ForEach(account => accountIds.Add(account.AccountId));
+        logger.Information(data.ToString());
       } catch (Exception e) {
         Console.WriteLine("An error occurred: " + e.Message);
       }
@@ -70,19 +71,9 @@ namespace DemoExchangeSimulator {
       String msg = "";
       // int minOrders = 1000;
       int numTrades = 10;
-      bool limitOrders = true;
-      int numThreads = 11;
+      bool limitOrders = false;
+      int numThreads = 10;
 
-      try {
-        // Task<Empty> resp = orderClient.InitializeServiceAsync(new Empty()).ResponseAsync;
-        Task<Empty> resp = apiClient.InitializeServiceAsync(new Empty()).ResponseAsync;
-        resp.Wait();
-      } catch (Exception e) {
-        msg = "Oops..." + e.Message;
-        Console.WriteLine(msg);
-        logger.Information(msg);
-        return;
-      }
       msg = "\n\n********** BEGIN TRADING **********\n";
       Console.WriteLine(msg);
       logger.Information(msg);
@@ -333,4 +324,3 @@ namespace DemoExchangeSimulator {
     }
   }
 }
-

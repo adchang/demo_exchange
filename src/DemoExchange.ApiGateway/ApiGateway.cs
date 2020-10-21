@@ -21,7 +21,7 @@ namespace DemoExchange.ApiGateway {
 
     public override async Task<AccountList> ListAccounts(Empty request, ServerCallContext context) {
       Logger.Here().Information("BGN");
-      // TODO authentication
+      // TODO: authentication
       try {
         var response = accountService.ListAsync(request);
 

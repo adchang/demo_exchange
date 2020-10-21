@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "annotations.proto";
+import "messages.proto";
+
+package erx.api;
+option csharp_namespace = "DemoExchange.Api";
+
+// https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#google.api.HttpRule
+
+service ErxService {
+  // AccountService
+  rpc ListAccounts(Empty) returns (AccountList) {
+    option (google.api.http) = {
+      get: "/v1/accounts"
+    };
+  }
+
+  rpc CreateAccount(AccountRequest) returns (AccountResponse) {
+    option (google.api.http) = {
+      post: "/v1/accounts"
+      body: "*"
+    };
+  }
+  rpc CreateAddress(AddressRequest) returns (AddressResponse);
+
+  // OrderService
+  rpc IsMarketOpen(Empty) returns (BoolMessage);
+
+  rpc GetOrder(StringMessage) returns (Order);
+  rpc SubmitOrder(OrderRequest) returns (OrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders"
+      body: "*"
+    };
+  }
+  rpc CancelOrder(StringMessage) returns (OrderResponse);
+
+  rpc GetLevel2(StringMessage) returns (Level2) {
+    option (google.api.http) = {
+      get: "/v1/level2/{value}"
+    };
+  }
+  rpc GetQuote(StringMessage) returns (Quote) {
+    option (google.api.http) = {
+      get: "/v1/quotes/{value}"
+    };
+  }
+
+    // Order Admin services
+  rpc InitializeService(Empty) returns (Empty) {
+    option (google.api.http) = {
+      get: "/v1/initializeOrderService"
+    };
+  }
+}
