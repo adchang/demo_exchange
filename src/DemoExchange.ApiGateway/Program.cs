@@ -17,10 +17,10 @@ namespace DemoExchange.ApiGateway {
           .UseKestrel(options => {
             options.AllowSynchronousIO = true;
             // Uncomment for non-docker run to use the localhost.pfx, which will override launchsettings.json in developlment
-            //   options.Listen(IPAddress.Loopback, 8080);
-            //   options.Listen(IPAddress.Loopback, 8090, listenOptions => {
-            //     listenOptions.UseHttps("localhost.pfx", "");
-            //   });
+            // options.Listen(IPAddress.Loopback, 8080);
+            // options.Listen(IPAddress.Loopback, 8090, listenOptions => {
+            //   listenOptions.UseHttps("localhost.pfx", "");
+            // });
           })
           .UseSerilog()
           .UseStartup<Startup>();

@@ -9,6 +9,7 @@ using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using static DemoExchange.Interface.Config;
 
 namespace DemoExchangeSimulator {
   class Program {
@@ -27,9 +28,10 @@ namespace DemoExchangeSimulator {
         .CreateLogger();
       ConnectionStrings connectionStrings = new ConnectionStrings();
       config.GetSection("ConnectionStrings").Bind(connectionStrings);
-      var httpHandler = new HttpClientHandler();
-      httpHandler.ServerCertificateCustomValidationCallback =
-        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+      var httpHandler = new HttpClientHandler {
+        ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+      };
       var accountChannel = GrpcChannel.ForAddress("https://loki:8091",
         new GrpcChannelOptions { HttpHandler = httpHandler });
       var orderChannel = GrpcChannel.ForAddress("https://loki:8092",

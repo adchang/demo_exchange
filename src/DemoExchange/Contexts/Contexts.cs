@@ -4,6 +4,7 @@ using DemoExchange.Api;
 using DemoExchange.Models;
 using Microsoft.EntityFrameworkCore;
 using static DemoExchange.Models.Orders.Predicates;
+using static DemoExchange.Interface.Config;
 
 namespace DemoExchange.Contexts {
   public interface IOrderContext : IDbContext {

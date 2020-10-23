@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DemoExchange.Api;
 using DemoExchange.Interface;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using Serilog;
 
 namespace DemoExchange.ApiGateway {
@@ -19,6 +20,7 @@ namespace DemoExchange.ApiGateway {
       this.orderService = orderService;
     }
 
+    [Authorize]
     public override async Task<AccountList> ListAccounts(Empty request, ServerCallContext context) {
       Logger.Here().Information("BGN");
       // TODO: authentication

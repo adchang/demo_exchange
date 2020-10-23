@@ -29,14 +29,15 @@ namespace DemoExchange.OrderService {
         .CreateLogger();
       logger = Log.Logger;
       logger.Information("Logger created");
-      ConnectionStrings connectionStrings = new ConnectionStrings();
+      Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
       Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
 #if DEBUG
       logger.Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
-      var httpHandler = new HttpClientHandler();
-      httpHandler.ServerCertificateCustomValidationCallback =
-        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+      var httpHandler = new HttpClientHandler {
+        ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+      };
       var channel = GrpcChannel.ForAddress("https://172.17.0.1:8091",
         new GrpcChannelOptions { HttpHandler = httpHandler });
 
@@ -64,7 +65,7 @@ namespace DemoExchange.OrderService {
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         c.IncludeXmlComments(xmlPath);*/
       });
-      services.AddSingleton<ConnectionStrings>(connectionStrings);
+      services.AddSingleton<Config.ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));

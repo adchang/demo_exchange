@@ -31,18 +31,18 @@ namespace DemoExchange.AccountService {
         .ReadFrom.Configuration(Configuration)
         .CreateLogger();
       Logger.Here().Information("Logger created");
-      ConnectionStrings connectionStrings = new ConnectionStrings();
-      Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
+      Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
+      Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG
       Logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
 
       services.AddGrpc();
-      services.AddSingleton<ConnectionStrings>(connectionStrings);
+      services.AddSingleton<Config.ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<AccountContext>, AccountContextFactory>();
       services.AddSingleton<IAccountService, DemoExchange.Services.AccountService>();
 
-      Logger.Here().Information("ConfigureServices done");
+      Logger.Here().Information("END");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {

@@ -22,6 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Grpc.Tools" Version="2.29.0" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.29.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.0-rc.2.20475.17" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.HttpApi" Version="0.1.0-alpha.20305.2" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.1.0-alpha.20305.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-rc.2.20475.5" />

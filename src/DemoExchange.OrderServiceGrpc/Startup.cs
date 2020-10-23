@@ -31,24 +31,32 @@ namespace DemoExchange.OrderServiceGrpc {
         .ReadFrom.Configuration(Configuration)
         .CreateLogger();
       Logger.Here().Information("Logger created");
-      ConnectionStrings connectionStrings = new ConnectionStrings();
-      Configuration.GetSection("ConnectionStrings").Bind(connectionStrings);
+      Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
+      Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG
       Logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
 #endif
-      var httpHandler = new HttpClientHandler();
-      httpHandler.ServerCertificateCustomValidationCallback =
-        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-      var channel = GrpcChannel.ForAddress("https://account",
+
+      Config.ErxServices erx = new Config.ErxServices();
+      Configuration.GetSection(Config.ErxServices.SECTION).Bind(erx);
+#if DEBUG
+      Logger.Here().Debug("AccountUrlBase: " + erx.AccountUrlBase);
+#endif
+
+      var httpHandler = new HttpClientHandler() {
+        ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+      };
+      var channel = GrpcChannel.ForAddress(erx.AccountUrlBase,
         new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddGrpc();
-      services.AddSingleton<ConnectionStrings>(connectionStrings);
+      services.AddSingleton<Config.ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));
 
-      Logger.Here().Information("ConfigureServices done");
+      Logger.Here().Information("END");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {

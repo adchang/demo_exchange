@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -32,16 +33,18 @@ namespace DemoExchange.ApiGateway {
         .CreateLogger();
       Logger.Here().Information("Logger created");
 
-      ErxServicesConfig erx = new ErxServicesConfig();
-      Configuration.GetSection("ErxServices").Bind(erx);
+      Config.ErxServices erx = new Config.ErxServices();
+      Configuration.GetSection(Config.ErxServices.SECTION).Bind(erx);
 #if DEBUG
+      Logger.Here().Debug("IdentityUrlBase: " + erx.IdentityUrlBase);
       Logger.Here().Debug("AccountUrlBase: " + erx.AccountUrlBase);
       Logger.Here().Debug("OrderUrlBase: " + erx.OrderUrlBase);
 #endif
 
-      var httpHandler = new HttpClientHandler();
-      httpHandler.ServerCertificateCustomValidationCallback =
-        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+      var httpHandler = new HttpClientHandler {
+        ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+      };
       var accountChannel = GrpcChannel.ForAddress(erx.AccountUrlBase,
         new GrpcChannelOptions { HttpHandler = httpHandler });
       var orderChannel = GrpcChannel.ForAddress(erx.OrderUrlBase,
@@ -49,6 +52,21 @@ namespace DemoExchange.ApiGateway {
 
       services.AddGrpc();
       services.AddGrpcHttpApi();
+
+      services.AddAuthentication(Constants.Identity.BEARER)
+        .AddJwtBearer(Constants.Identity.BEARER, options => {
+          options.Authority = erx.IdentityUrlBase;
+
+          options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateAudience = false
+          };
+        });
+      services.AddAuthorization(options => {
+        options.AddPolicy(Constants.Identity.POLICY_SCOPE_NAME, policy => {
+          policy.RequireAuthenticatedUser();
+          policy.RequireClaim(Constants.Identity.CLAIM_NAME, Constants.Identity.API_SCOPE);
+        });
+      });
 
       services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(accountChannel));
       services.AddSingleton<IOrderServiceRpcClient>(new OrderServiceRpcClient(orderChannel));
@@ -79,7 +97,7 @@ namespace DemoExchange.ApiGateway {
       });
       services.AddGrpcSwagger();
 
-      Logger.Here().Information("ConfigureServices done");
+      Logger.Here().Information("END");
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
@@ -89,6 +107,9 @@ namespace DemoExchange.ApiGateway {
 
       app.UseRouting();
 
+      app.UseAuthentication();
+      app.UseAuthorization();
+
       app.UseEndpoints(endpoints => {
         endpoints.MapGrpcService<ApiGateway>();
       });
@@ -96,10 +117,5 @@ namespace DemoExchange.ApiGateway {
       app.UseSwagger();
       app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ER-X v1"));
     }
-  }
-
-  public class ErxServicesConfig {
-    public String AccountUrlBase { get; set; }
-    public String OrderUrlBase { get; set; }
   }
 }

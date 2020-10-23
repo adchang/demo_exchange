@@ -1,6 +1,27 @@
+export IDENTITY_VERSION='0.0.2-dc'
 export API_GATEWAY_VERSION='0.0.2-dc'
 export ACCOUNT_SERVICE_VERSION='0.0.2-dc'
 export ORDER_SERVICE_VERSION='0.0.2-dc'
+
+demo-exchange-identity-up() {
+  demo-exchange-identity-build;
+  demo-exchange-identity-run;
+}
+demo-exchange-identity-build() {
+  docker rm -f demo_exchange.identity-$IDENTITY_VERSION;
+  docker image rm demo_exchange.identity:$IDENTITY_VERSION;
+  docker build -f src/DemoExchange.Identity/Dockerfile --tag demo_exchange.identity:$IDENTITY_VERSION .
+  docker rmi -f $(docker images -f 'dangling=true' -q)
+}
+demo-exchange-identity-run() {
+  docker run --detach -p 8099:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8090 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.identity-$IDENTITY_VERSION demo_exchange.identity:$IDENTITY_VERSION
+}
+demo-exchange-identity-start() {
+  docker-start demo_exchange.identity-$IDENTITY_VERSION
+}
+demo-exchange-identity-stop() {
+  docker-stop demo_exchange.identity-$IDENTITY_VERSION
+}
 
 demo-exchange-apiGateway-up() {
   demo-exchange-apiGateway-build;

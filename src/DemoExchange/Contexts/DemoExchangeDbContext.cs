@@ -3,6 +3,7 @@ using DemoExchange.Api;
 using DemoExchange.Interface;
 using DemoExchange.Models;
 using Microsoft.EntityFrameworkCore;
+using static DemoExchange.Interface.Config;
 
 namespace DemoExchange.Contexts {
   public interface IDbContext : IDisposable {
@@ -12,10 +13,6 @@ namespace DemoExchange.Contexts {
 
   public interface IDemoExchangeDbContextFactory<T> where T : DemoExchangeDbContext {
     public T Create();
-  }
-
-  public class ConnectionStrings {
-    public String DemoExchangeDb { get; set; }
   }
 
   public class DemoExchangeDbContextFactory : IDemoExchangeDbContextFactory<DemoExchangeDbContext> {
