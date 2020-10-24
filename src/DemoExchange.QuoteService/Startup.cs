@@ -4,9 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DemoExchange.Api;
-using DemoExchange.Contexts;
 using DemoExchange.Interface;
-using DemoExchange.Services;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -15,8 +13,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using StackExchange.Redis;
 
-namespace DemoExchange.OrderService {
+namespace DemoExchange.QuoteService {
   public class Startup {
     private static Serilog.ILogger Logger => Serilog.Log.ForContext<Startup>();
 
@@ -35,27 +34,27 @@ namespace DemoExchange.OrderService {
       Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
       Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG
-      Logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
+      Logger.Here().Debug("ConnectionString: " + connectionStrings.Redis);
 #endif
+      ConnectionMultiplexer muxer = ConnectionMultiplexer.Connect(connectionStrings.Redis);
+      IDatabase redis = muxer.GetDatabase();
 
       Config.ErxServices erx = new Config.ErxServices();
       Configuration.GetSection(Config.ErxServices.SECTION).Bind(erx);
 #if DEBUG
-      Logger.Here().Debug("AccountUrlBase: " + erx.AccountUrlBase);
+      Logger.Here().Debug("OrderUrlBase: " + erx.OrderUrlBase);
 #endif
 
       var httpHandler = new HttpClientHandler() {
         ServerCertificateCustomValidationCallback =
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
       };
-      var channel = GrpcChannel.ForAddress(erx.AccountUrlBase,
+      var channel = GrpcChannel.ForAddress(erx.OrderUrlBase,
         new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddGrpc();
-      services.AddSingleton<Config.ConnectionStrings>(connectionStrings);
-      services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
-      services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
-      services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));
+      services.AddSingleton<IDatabase>(redis);
+      services.AddSingleton<IOrderServiceRpcClient>(new OrderServiceRpcClient(channel));
 
       Logger.Here().Information("END");
     }
@@ -68,7 +67,7 @@ namespace DemoExchange.OrderService {
       app.UseRouting();
 
       app.UseEndpoints(endpoints => {
-        endpoints.MapGrpcService<OrderServiceGrpc>();
+        endpoints.MapGrpcService<QuoteServiceGrpc>();
       });
     }
   }

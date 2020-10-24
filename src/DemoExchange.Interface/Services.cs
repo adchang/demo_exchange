@@ -42,6 +42,14 @@ namespace DemoExchange.Interface {
       }
     }
 
+    public class Redis {
+      public const String QUOTE = "QUOTE_";
+
+      private Redis() {
+        // Prevent instantiation
+      }
+    }
+
     private Constants() {
       // Prevent instantiation
     }
@@ -54,12 +62,14 @@ namespace DemoExchange.Interface {
       public String IdentityUrlBase { get; set; }
       public String AccountUrlBase { get; set; }
       public String OrderUrlBase { get; set; }
+      public String QuoteUrlBase { get; set; }
     }
 
     public class ConnectionStrings {
       public const String SECTION = "ConnectionStrings";
 
       public String DemoExchangeDb { get; set; }
+      public String Redis { get; set; }
     }
 
     private Config() {
@@ -150,5 +160,11 @@ namespace DemoExchange.Interface {
     public void OpenMarket();
 
     public void CloseMarket();
+  }
+
+  public interface IQuoteServiceRpcClient {
+    public AsyncUnaryCall<Level2> GetLevel2Async(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+
+    public AsyncUnaryCall<Quote> GetQuoteAsync(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
   }
 }

@@ -13,14 +13,16 @@ namespace DemoExchange.ApiGateway {
 
     private readonly IAccountServiceRpcClient accountService;
     private readonly IOrderServiceRpcClient orderService;
+    private readonly IQuoteServiceRpcClient quoteService;
 
     public ApiGateway(IAccountServiceRpcClient accountService,
-      IOrderServiceRpcClient orderService) {
+      IOrderServiceRpcClient orderService, IQuoteServiceRpcClient quoteService) {
       this.accountService = accountService;
       this.orderService = orderService;
+      this.quoteService = quoteService;
     }
 
-    [Authorize]
+    //[Authorize]
     public override async Task<AccountList> ListAccounts(Empty request, ServerCallContext context) {
       Logger.Here().Information("BGN");
       // TODO: authentication
@@ -64,7 +66,7 @@ namespace DemoExchange.ApiGateway {
     public override async Task<Level2> GetLevel2(StringMessage request, ServerCallContext context) {
       Logger.Here().Information("BGN");
       try {
-        var response = orderService.GetLevel2Async(request);
+        var response = quoteService.GetLevel2Async(request);
 
         Logger.Here().Information("END");
         return await response;
@@ -77,7 +79,7 @@ namespace DemoExchange.ApiGateway {
     public override async Task<Quote> GetQuote(StringMessage request, ServerCallContext context) {
       Logger.Here().Information("BGN");
       try {
-        var response = orderService.GetQuoteAsync(request);
+        var response = quoteService.GetQuoteAsync(request);
 
         Logger.Here().Information("END");
         return await response;

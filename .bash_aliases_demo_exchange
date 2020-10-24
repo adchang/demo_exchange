@@ -1,7 +1,8 @@
-export IDENTITY_VERSION='0.0.2-dc'
-export API_GATEWAY_VERSION='0.0.2-dc'
-export ACCOUNT_SERVICE_VERSION='0.0.2-dc'
-export ORDER_SERVICE_VERSION='0.0.2-dc'
+export IDENTITY_VERSION='0.0.2'
+export API_GATEWAY_VERSION='0.0.2'
+export ACCOUNT_SERVICE_VERSION='0.0.2'
+export ORDER_SERVICE_VERSION='0.0.2'
+export QUOTE_SERVICE_VERSION='0.0.1'
 
 demo-exchange-identity-up() {
   demo-exchange-identity-build;
@@ -14,7 +15,7 @@ demo-exchange-identity-build() {
   docker rmi -f $(docker images -f 'dangling=true' -q)
 }
 demo-exchange-identity-run() {
-  docker run --detach -p 8099:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8090 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.identity-$IDENTITY_VERSION demo_exchange.identity:$IDENTITY_VERSION
+  docker run --detach -p 8099:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8099 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.identity-$IDENTITY_VERSION demo_exchange.identity:$IDENTITY_VERSION
 }
 demo-exchange-identity-start() {
   docker-start demo_exchange.identity-$IDENTITY_VERSION
@@ -101,4 +102,28 @@ demo-exchange-orderGrpc-start() {
 }
 demo-exchange-orderGrpc-stop() {
   docker-stop demo_exchange.order_service_grpc-$ORDER_SERVICE_VERSION
+}
+
+demo-exchange-quote-up() {
+  demo-exchange-quote-build;
+  demo-exchange-quote-run;
+}
+demo-exchange-quote-build() {
+  docker rm -f demo_exchange.quote_service-$QUOTE_SERVICE_VERSION;
+  docker image rm demo_exchange.quote_service:$QUOTE_SERVICE_VERSION;
+  docker build -f src/DemoExchange.QuoteService/Dockerfile --tag demo_exchange.quote_service:$QUOTE_SERVICE_VERSION .
+  docker rmi -f $(docker images -f 'dangling=true' -q)
+}
+demo-exchange-quote-run() {
+  docker run --detach -p 8093:443 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORT=8093 -e ASPNETCORE_Kestrel__Certificates__Default__Password="PASSWORD" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/DemoExchange.pfx -v /opt/adchang/htdocs/demo_exchange/docker:/https/ -v /opt/adchang/_log/demo_exchange:/log --name demo_exchange.quote_service-$QUOTE_SERVICE_VERSION demo_exchange.quote_service:$QUOTE_SERVICE_VERSION
+}
+demo-exchange-quote-start() {
+  docker-start demo_exchange.quote_service-$QUOTE_SERVICE_VERSION
+}
+demo-exchange-quote-stop() {
+  docker-stop demo_exchange.quote_service-$QUOTE_SERVICE_VERSION
+}
+
+demo-exchange-redis-run() {
+  docker run --detach -p 6379:6379 -v /opt/adchang/db/redis/mount:/data --name redis redis:latest redis-server --appendonly yes --requirepass PASSWORD 
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <PackageId>DemoExchange.ApiGateway</PackageId>
-    <Version>0.0.2</Version>
+    <PackageId>DemoExchange.QuoteService</PackageId>
+    <Version>0.0.1</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>
@@ -11,21 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DemoExchange.Interface.ClientAccount/DemoExchange.Interface.ClientAccount.csproj" />
+    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
     <ProjectReference Include="../DemoExchange.Interface.ClientOrder/DemoExchange.Interface.ClientOrder.csproj" />
-    <ProjectReference Include="../DemoExchange.Interface.ClientQuote/DemoExchange.Interface.ClientQuote.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../protos/service_http.proto" Link="service_http.proto" GrpcServices="Server" />
+    <Protobuf Include="../protos/service_quote.proto" Link="service_quote.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Tools" Version="2.29.0" />
-    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.29.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.0-rc.2.20475.17" />
-    <PackageReference Include="Microsoft.AspNetCore.Grpc.HttpApi" Version="0.1.0-alpha.20305.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.1.0-alpha.20305.2" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.27.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-rc.2.20475.5" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
@@ -35,6 +30,7 @@
     <PackageReference Include="Serilog.Exceptions" Version="5.6.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0-dev-00887" />
+    <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
   </ItemGroup>
 
 </Project>

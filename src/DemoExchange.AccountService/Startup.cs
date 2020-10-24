@@ -31,6 +31,7 @@ namespace DemoExchange.AccountService {
         .ReadFrom.Configuration(Configuration)
         .CreateLogger();
       Logger.Here().Information("Logger created");
+
       Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
       Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG

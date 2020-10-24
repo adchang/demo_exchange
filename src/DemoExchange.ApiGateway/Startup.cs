@@ -39,6 +39,7 @@ namespace DemoExchange.ApiGateway {
       Logger.Here().Debug("IdentityUrlBase: " + erx.IdentityUrlBase);
       Logger.Here().Debug("AccountUrlBase: " + erx.AccountUrlBase);
       Logger.Here().Debug("OrderUrlBase: " + erx.OrderUrlBase);
+      Logger.Here().Debug("QuoteUrlBase: " + erx.QuoteUrlBase);
 #endif
 
       var httpHandler = new HttpClientHandler {
@@ -48,6 +49,8 @@ namespace DemoExchange.ApiGateway {
       var accountChannel = GrpcChannel.ForAddress(erx.AccountUrlBase,
         new GrpcChannelOptions { HttpHandler = httpHandler });
       var orderChannel = GrpcChannel.ForAddress(erx.OrderUrlBase,
+        new GrpcChannelOptions { HttpHandler = httpHandler });
+      var quoteChannel = GrpcChannel.ForAddress(erx.QuoteUrlBase,
         new GrpcChannelOptions { HttpHandler = httpHandler });
 
       services.AddGrpc();
@@ -70,6 +73,7 @@ namespace DemoExchange.ApiGateway {
 
       services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(accountChannel));
       services.AddSingleton<IOrderServiceRpcClient>(new OrderServiceRpcClient(orderChannel));
+      services.AddSingleton<IQuoteServiceRpcClient>(new QuoteServiceRpcClient(quoteChannel));
 
       services.AddSwaggerGen(c => {
         c.SwaggerDoc("v1", new OpenApiInfo {

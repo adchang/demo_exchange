@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-namespace DemoExchange.OrderService {
+namespace DemoExchange.QuoteService {
   public class Program {
     public static void Main(string[] args) {
       CreateHostBuilder(args).Build().Run();
@@ -15,12 +15,12 @@ namespace DemoExchange.OrderService {
       .ConfigureWebHostDefaults(webBuilder => {
         webBuilder
           // Uncomment useKestrel for non-docker run to use the localhost.pfx, which will override launchsettings.json in developlment
-          // .UseKestrel(options => {
-          //   options.Listen(IPAddress.Loopback, 8082);
-          //   options.Listen(IPAddress.Loopback, 8092, listenOptions => {
-          //     listenOptions.UseHttps("localhost.pfx", "");
-          //   });
-          // })
+          //  .UseKestrel(options => {
+          //    options.Listen(IPAddress.Loopback, 8083);
+          //    options.Listen(IPAddress.Loopback, 8093, listenOptions => {
+          //      listenOptions.UseHttps("localhost.pfx", "");
+          //    });
+          //  })
           .UseSerilog()
           .UseStartup<Startup>();
       });

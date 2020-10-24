@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "messages.proto";
+
+package erx.api;
+option csharp_namespace = "DemoExchange.Api";
+
+service QuoteService {
+  rpc GetLevel2(StringMessage) returns (Level2);
+  rpc GetQuote(StringMessage) returns (Quote);
+}

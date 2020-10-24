@@ -7,7 +7,7 @@ using DemoExchange.Models;
 using Grpc.Core;
 using Serilog;
 
-namespace DemoExchange.OrderServiceGrpc {
+namespace DemoExchange.OrderService {
   public class OrderServiceGrpc : DemoExchange.Api.OrderService.OrderServiceBase {
     private static Serilog.ILogger Logger => Serilog.Log.ForContext<OrderServiceGrpc>();
 
