@@ -85,18 +85,5 @@ namespace DemoExchange.OrderServiceGrpc {
 
       return Task.FromResult(new Empty());
     }
-
-    public override Task<StringMessage> Echo(StringMessage request, ServerCallContext context) {
-      Logger.Here().Information("Echo started");
-
-      StringMessage response = new StringMessage {
-        Value = "Hello " + request.Value
-      };
-
-      Logger.Here().Information("Echoing..." + response.Value);
-      Logger.Here().Information("Echo done");
-
-      return Task.FromResult(response);
-    }
   }
 }

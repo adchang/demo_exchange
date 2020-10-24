@@ -20,7 +20,4 @@ service OrderService {
   rpc AddTicker(StringMessage) returns (AddTickerResponse);
   rpc OpenMarket(Empty) returns (Empty);
   rpc CloseMarket(Empty) returns (Empty);
-
-  // TODO: Remove
-  rpc Echo(StringMessage) returns (StringMessage);
 }
