@@ -245,7 +245,7 @@ namespace DemoExchange.Services {
       OrderBook book = new OrderBook(context.Object, "ERX", OrderAction.OrderBuy);;
       Assert.Equal(3, book.TestOrders[0].StrikePrice);
       Assert.Equal(2, book.TestOrders[1].StrikePrice);
-      Assert.Equal(1, book.TestOrders[2].StrikePrice);
+      Assert.Equal(0, book.TestOrders[2].StrikePrice);
     }
   }
 }
