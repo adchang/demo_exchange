@@ -1,4 +1,4 @@
-# Demo Exchange
+# Demo Exchange [![Build Status](https://travis-ci.org/adchang/demo_exchange.svg?branch=master)](https://travis-ci.org/adchang/demo_exchange)
 
 POC for an exchange written in C# and backed by SQLServer
 
