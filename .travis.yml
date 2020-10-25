@@ -1,7 +1,13 @@
 language: csharp
 solution: DemoExchange.sln
 mono: none
-dotnet: 5.0
+dist: focal
+addons:
+    snaps:
+      - name: dotnet-sdk
+        confinement: classic
+        channel: 5.0/beta
+#dotnet: 5.0
 #install:
 #  - nuget restore src/DemoExchangeTest/DemoExchangeTest.csproj
 script:
