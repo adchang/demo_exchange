@@ -35,7 +35,7 @@ namespace DemoExchange.AccountService {
       Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
       Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG
-      Logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
+      Logger.Here().Debug("DemoExchangeDb: " + connectionStrings.DemoExchangeDb);
 #endif
 
       services.AddGrpc();

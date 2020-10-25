@@ -7,8 +7,10 @@ using DemoExchange.Api;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
 using DemoExchange.Models;
+using Google.Protobuf;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using StackExchange.Redis;
 using static Utils.Preconditions;
 using static Utils.Time;
 
@@ -35,13 +37,15 @@ namespace DemoExchange.Services {
         private readonly IDictionary<String, OrderManager> managers =
           new Dictionary<String, OrderManager>();
         private readonly IDemoExchangeDbContextFactory<OrderContext> orderContextFactory;
+        private readonly ISubscriber subscriber;
         private readonly IAccountServiceRpcClient accountService;
 
         public bool IsMarketOpen { get; private set; }
 
         public OrderService(IDemoExchangeDbContextFactory<OrderContext> orderContextFactory,
-          IAccountServiceRpcClient accountService) {
+          ISubscriber subscriber, IAccountServiceRpcClient accountService) {
           this.orderContextFactory = orderContextFactory;
+          this.subscriber = subscriber;
           this.accountService = accountService;
         }
 
@@ -69,7 +73,8 @@ namespace DemoExchange.Services {
           OrderManager manager = managers[request.Ticker];
           lock(manager) {
             using OrderContext context = orderContextFactory.Create();
-            IResponse<IOrderModel, OrderResponse> response = manager.SubmitOrder(context, accountService, (OrderBL)request);
+            IResponse<IOrderModel, OrderResponse> response = manager.SubmitOrder(context,
+              subscriber, accountService, (OrderBL)request);
 
             return response;
           }
@@ -177,12 +182,11 @@ namespace DemoExchange.Services {
         }
 
         // QUESTION: Consider making async: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap
-        public OrderResponseBL SubmitOrder(IOrderContext context,
-          IAccountServiceRpcClient accountService, OrderBL order) {
+        public OrderResponseBL SubmitOrder(IOrderContext context, ISubscriber subscriber, IAccountServiceRpcClient accountService, OrderBL order) {
 #if (PERF || PERF_FINE || PERF_FINEST)
           long start = Now;
 #endif
-          OrderResponseBL insertResponse = InsertOrder(context, order);
+          OrderResponseBL insertResponse = InsertOrder(context, subscriber, order);
           if (insertResponse.HasErrors) {
             return insertResponse;
           }
@@ -198,7 +202,7 @@ namespace DemoExchange.Services {
             if (fillResponse.HasErrors) {
               return insertResponse;
             }
-            fillResponse = SaveOrderTransaction(context, fillResponse.Data);
+            fillResponse = SaveOrderTransaction(context, subscriber, fillResponse.Data);
             if (fillResponse.HasErrors) {
               return insertResponse;
             }
@@ -223,7 +227,7 @@ namespace DemoExchange.Services {
               if (fillResponse.HasErrors) {
                 return insertResponse;
               }
-              fillResponse = SaveOrderTransaction(context, fillResponse.Data);
+              fillResponse = SaveOrderTransaction(context, subscriber, fillResponse.Data);
               if (fillResponse.HasErrors) {
                 return insertResponse;
               }
@@ -310,7 +314,6 @@ namespace DemoExchange.Services {
               orders.Add(order);
               done = true;
             }
-            // TODO: Publish transaction
           }
 #if PERF_FINEST
           Logger.Here().Information(String.Format("Market order executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
@@ -380,7 +383,6 @@ namespace DemoExchange.Services {
             BuyBook.RemoveOrder(filledOrder);
             filledOrder.Complete();
           }
-          // TODO: Publish transaction
 #if PERF_FINEST
           Logger.Here().Information(String.Format("TryFillOrderBook executed in {0} milliseconds", ((Now - start) / TimeSpan.TicksPerMillisecond)));
 #endif
@@ -388,7 +390,8 @@ namespace DemoExchange.Services {
           return new OrderTransactionResponseBL(new OrderTransactionBL(orders, transactions));
         }
 
-        private OrderResponseBL InsertOrder(IOrderContext context, OrderBL order) {
+        private OrderResponseBL InsertOrder(IOrderContext context, ISubscriber subscriber,
+          OrderBL order) {
           context.Orders.Add((OrderEntity)order);
           try {
             context.SaveChanges();
@@ -404,7 +407,7 @@ namespace DemoExchange.Services {
         }
 
         private OrderTransactionResponseBL SaveOrderTransaction(IOrderContext context,
-          OrderTransactionBL data) {
+          ISubscriber subscriber, OrderTransactionBL data) {
           data.Orders.ForEach(order => {
             context.Orders.Add((OrderEntity)order);
             context.Entry(order).State = EntityState.Modified;
@@ -423,6 +426,20 @@ namespace DemoExchange.Services {
                 Description = e.Message
               });
           }
+
+          data.Transactions.ForEach(transaction => {
+            TransactionProcessed message = new TransactionProcessed {
+            TransactionId = transaction.TransactionId,
+            CreatedTimestamp = transaction.CreatedTimestamp,
+            Ticker = transaction.Ticker,
+            Last = Convert.ToDouble(transaction.Price),
+            Volume = transaction.Quantity,
+            Level2 = Level2
+            };
+            Logger.Here().Debug("Publishing to " + Constants.PubSub.TOPIC_TRANSACTION_PROCESSED);
+            subscriber.Publish(Constants.PubSub.TOPIC_TRANSACTION_PROCESSED,
+              message.ToByteArray());
+          });
 
           return new OrderTransactionResponseBL(data);
         }

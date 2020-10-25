@@ -53,6 +53,14 @@ namespace DemoExchange.Interface {
       }
     }
 
+    public class PubSub {
+      public const String TOPIC_TRANSACTION_PROCESSED = "TransactionProcessed";
+
+      private PubSub() {
+        // Prevent instantiation
+      }
+    }
+
     private Constants() {
       // Prevent instantiation
     }

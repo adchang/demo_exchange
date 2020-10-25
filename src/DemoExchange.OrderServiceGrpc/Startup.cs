@@ -1,20 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using DemoExchange.Api;
+﻿using System.Net.Http;
 using DemoExchange.Contexts;
 using DemoExchange.Interface;
-using DemoExchange.Services;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using StackExchange.Redis;
 
 namespace DemoExchange.OrderService {
   public class Startup {
@@ -35,8 +29,11 @@ namespace DemoExchange.OrderService {
       Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
       Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG
-      Logger.Here().Debug("ConnectionString: " + connectionStrings.DemoExchangeDb);
+      Logger.Here().Debug("DemoExchangeDb: " + connectionStrings.DemoExchangeDb);
+      Logger.Here().Debug("Redis: " + connectionStrings.Redis);
 #endif
+      ConnectionMultiplexer muxer = ConnectionMultiplexer.Connect(connectionStrings.Redis);
+      ISubscriber subscriber = muxer.GetSubscriber();
 
       Config.ErxServices erx = new Config.ErxServices();
       Configuration.GetSection(Config.ErxServices.SECTION).Bind(erx);
@@ -54,6 +51,7 @@ namespace DemoExchange.OrderService {
       services.AddGrpc();
       services.AddSingleton<Config.ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
+      services.AddSingleton<ISubscriber>(subscriber);
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));
 

@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using DemoExchange.Api;
+﻿using System.Net.Http;
 using DemoExchange.Interface;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,10 +28,15 @@ namespace DemoExchange.QuoteService {
       Config.ConnectionStrings connectionStrings = new Config.ConnectionStrings();
       Configuration.GetSection(Config.ConnectionStrings.SECTION).Bind(connectionStrings);
 #if DEBUG
-      Logger.Here().Debug("ConnectionString: " + connectionStrings.Redis);
+      Logger.Here().Debug("Redis: " + connectionStrings.Redis);
 #endif
       ConnectionMultiplexer muxer = ConnectionMultiplexer.Connect(connectionStrings.Redis);
       IDatabase redis = muxer.GetDatabase();
+      ISubscriber subscriber = muxer.GetSubscriber();
+
+      Logger.Here().Information("Subscribing to " + Constants.PubSub.TOPIC_TRANSACTION_PROCESSED);
+      subscriber.Subscribe(Constants.PubSub.TOPIC_TRANSACTION_PROCESSED,
+        Handlers.TransactionProcessHandler(Logger, redis));
 
       Config.ErxServices erx = new Config.ErxServices();
       Configuration.GetSection(Config.ErxServices.SECTION).Bind(erx);
@@ -59,7 +58,7 @@ namespace DemoExchange.QuoteService {
       Logger.Here().Information("END");
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+    public static void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
       if (env.IsDevelopment()) {
         app.UseDeveloperExceptionPage();
       }
@@ -70,5 +69,6 @@ namespace DemoExchange.QuoteService {
         endpoints.MapGrpcService<QuoteServiceGrpc>();
       });
     }
+
   }
 }

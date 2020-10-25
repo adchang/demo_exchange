@@ -60,7 +60,7 @@ namespace DemoExchange.Services {
 
       AccountBL account = new AccountBL(context.GetAccountById(order.AccountId));
       if (!account.IsActive) {
-        Logger.Here().Information("Account is not Open");
+        Logger.Here().Information("Account is not Active");
         return false;
       }
       Logger.Here().Information("END");
