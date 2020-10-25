@@ -1,0 +1,11 @@
+language: csharp
+solution: DemoExchange.sln
+mono: none
+dotnet: 5.0
+#install:
+#  - nuget restore src/DemoExchangeTest/DemoExchangeTest.csproj
+script:
+  - dotnet build src/UtilsTest/UtilsTest.csproj
+  - dotnet test src/UtilsTest/UtilsTest.csproj
+  - dotnet build src/DemoExchangeTest/DemoExchangeTest.csproj
+  - dotnet test src/DemoExchangeTest/DemoExchangeTest.csproj
