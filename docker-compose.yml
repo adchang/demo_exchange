@@ -19,6 +19,7 @@ services:
     #build: src/DemoExchange.ApiGateway
     image: demo_exchange.api_gateway:0.0.2
     ports:
+      - "8080:80"
       - "8090:443"
     environment:
       ASPNETCORE_URLS: "https://+;http://+"
