@@ -37,6 +37,33 @@ namespace DemoExchange.QuoteService {
       }
     }
 
+    public override async Task GetLevel2Streams(StringMessage request,
+      IServerStreamWriter<Level2> responseStream, ServerCallContext context) {
+      Logger.Here().Information("BGN");
+      try {
+        Random rnd = new Random();
+        int basePrice = rnd.Next(1, 11);
+        for (int i = 0; i < 50; i++) {
+          Level2 lvl2 = new Level2();
+          lvl2.Bids.Add(new Level2Quote{
+            Price = basePrice - rnd.NextDouble(),
+            Quantity = rnd.Next(100, 300)
+          });
+          lvl2.Asks.Add(new Level2Quote{
+            Price = basePrice + rnd.NextDouble(),
+            Quantity = rnd.Next(100, 300)
+          });
+          Logger.Here().Information("Waiting 2 seconds");
+          await Task.Delay(2 * 1000);
+          Logger.Here().Information(lvl2.ToString());
+          await responseStream.WriteAsync(lvl2);
+        }
+      } catch (Exception e) {
+        Logger.Here().Warning(e.Message);
+        throw new RpcException(new Status(StatusCode.Internal, e.Message));
+      }
+    }
+
     public override Task<Quote> GetQuote(StringMessage request, ServerCallContext context) {
       Logger.Here().Information("BGN");
       try {

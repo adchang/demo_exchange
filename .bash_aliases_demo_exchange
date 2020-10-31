@@ -127,3 +127,8 @@ demo-exchange-quote-stop() {
 demo-exchange-redis-run() {
   docker run --detach -p 6379:6379 -v /opt/adc/db/redis/mount:/data --name redis redis:latest redis-server --appendonly yes --requirepass PASSWORD 
 }
+# Hela is a VM that uses bridge network. Docker uses bridge network as default network type. Typically, that would bind to the host and localhost would work,
+# but since Hela itself uses bridge, the docker container bridges to the main network and gets a dhcp
+demo-exchange-redis-runHela() {
+  docker run --detach --network host -v /opt/adc/db/redis/mount:/data --name redis redis:latest redis-server --appendonly yes --requirepass PASSWORD 
+}
