@@ -7,27 +7,6 @@ void main() {
   runApp(MyApp());
 }
 
-alertDialog(BuildContext context, String message) {
-  Widget ok = FlatButton(
-    child: Text("OK"),
-    onPressed: () {
-      Navigator.of(context).pop();
-    },
-  );
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Pushed"),
-        content: Text(message),
-        actions: [
-          ok,
-        ],
-      );
-    },
-  );
-}
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -42,9 +21,9 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
   final String title;
+
+  MyHomePage({Key key, this.title}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -55,15 +34,41 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    _level2 = Level2()
+      ..asks.add(Level2Quote()
+        ..price = 0
+        ..quantity = 0)
+      ..bids.add(Level2Quote()
+        ..price = 0
+        ..quantity = 0);
     super.initState();
   }
 
-  Future<void> _getLevel2(BuildContext context) async {
-    ErxService.getLevel2("SPY").then((Level2 val) {
+  Future<void> _getLevel2Streams() async {
+    ErxService.getLevel2Streams("SPY").listen((Level2 response) {
       setState(() {
-        _level2 = val;
+        _level2 = response;
       });
     });
+  }
+
+  Widget _buildLevel2(BuildContext context, String type) {
+    List<Level2Quote> quotes = (type == "Bids") ? _level2.bids : _level2.asks;
+    return Expanded(
+      flex: 5,
+      child: Column(children: <Widget>[
+        Text(type),
+        Expanded(
+            child: ListView.builder(
+          itemCount: quotes.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text('${quotes[index].quantity} @ ${quotes[index].price}'),
+            );
+          },
+        )),
+      ]),
+    );
   }
 
   @override
@@ -73,17 +78,17 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              _level2.toString(),
-            ),
-          ],
+        child: Container(
+          child: Row(
+            children: <Widget>[
+              _buildLevel2(context, "Bids"),
+              _buildLevel2(context, "Asks"),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async => _getLevel2(context),
+        onPressed: () async => _getLevel2Streams(),
         tooltip: 'Get Level 2',
         child: Icon(Icons.request_quote_rounded),
       ),

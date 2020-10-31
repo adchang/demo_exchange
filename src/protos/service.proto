@@ -20,5 +20,6 @@ service ErxService {
   rpc CancelOrder(StringMessage) returns (OrderResponse);
 
   rpc GetLevel2(StringMessage) returns (Level2);
+  rpc GetLevel2Streams(StringMessage) returns (stream Level2);
   rpc GetQuote(StringMessage) returns (Quote);
 }

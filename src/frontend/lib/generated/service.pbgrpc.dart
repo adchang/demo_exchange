@@ -52,6 +52,11 @@ class ErxServiceClient extends $grpc.Client {
       '/erx.api.ErxService/GetLevel2',
       ($0.StringMessage value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.Level2.fromBuffer(value));
+  static final _$getLevel2Streams =
+      $grpc.ClientMethod<$0.StringMessage, $0.Level2>(
+          '/erx.api.ErxService/GetLevel2Streams',
+          ($0.StringMessage value) => value.writeToBuffer(),
+          ($core.List<$core.int> value) => $0.Level2.fromBuffer(value));
   static final _$getQuote = $grpc.ClientMethod<$0.StringMessage, $0.Quote>(
       '/erx.api.ErxService/GetQuote',
       ($0.StringMessage value) => value.writeToBuffer(),
@@ -124,6 +129,14 @@ class ErxServiceClient extends $grpc.Client {
     return $grpc.ResponseFuture(call);
   }
 
+  $grpc.ResponseStream<$0.Level2> getLevel2Streams($0.StringMessage request,
+      {$grpc.CallOptions options}) {
+    final call = $createCall(
+        _$getLevel2Streams, $async.Stream.fromIterable([request]),
+        options: options);
+    return $grpc.ResponseStream(call);
+  }
+
   $grpc.ResponseFuture<$0.Quote> getQuote($0.StringMessage request,
       {$grpc.CallOptions options}) {
     final call = $createCall(_$getQuote, $async.Stream.fromIterable([request]),
@@ -192,6 +205,13 @@ abstract class ErxServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.StringMessage.fromBuffer(value),
         ($0.Level2 value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.StringMessage, $0.Level2>(
+        'GetLevel2Streams',
+        getLevel2Streams_Pre,
+        false,
+        true,
+        ($core.List<$core.int> value) => $0.StringMessage.fromBuffer(value),
+        ($0.Level2 value) => value.writeToBuffer()));
     $addMethod($grpc.ServiceMethod<$0.StringMessage, $0.Quote>(
         'GetQuote',
         getQuote_Pre,
@@ -241,6 +261,11 @@ abstract class ErxServiceBase extends $grpc.Service {
     return getLevel2(call, await request);
   }
 
+  $async.Stream<$0.Level2> getLevel2Streams_Pre(
+      $grpc.ServiceCall call, $async.Future<$0.StringMessage> request) async* {
+    yield* getLevel2Streams(call, await request);
+  }
+
   $async.Future<$0.Quote> getQuote_Pre(
       $grpc.ServiceCall call, $async.Future<$0.StringMessage> request) async {
     return getQuote(call, await request);
@@ -261,6 +286,8 @@ abstract class ErxServiceBase extends $grpc.Service {
   $async.Future<$0.OrderResponse> cancelOrder(
       $grpc.ServiceCall call, $0.StringMessage request);
   $async.Future<$0.Level2> getLevel2(
+      $grpc.ServiceCall call, $0.StringMessage request);
+  $async.Stream<$0.Level2> getLevel2Streams(
       $grpc.ServiceCall call, $0.StringMessage request);
   $async.Future<$0.Quote> getQuote(
       $grpc.ServiceCall call, $0.StringMessage request);

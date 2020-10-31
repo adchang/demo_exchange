@@ -8,7 +8,7 @@ class GrpcClientSingleton {
   factory GrpcClientSingleton() => _singleton;
 
   GrpcClientSingleton._internal() {
-    client = ClientChannel("192.168.8.225",
+    client = ClientChannel("hela.codex.in.th",
         port: 8080,
         options: ChannelOptions(
           //TODO: Change to secure with server certificates
