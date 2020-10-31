@@ -76,6 +76,20 @@ namespace DemoExchange.ApiGateway {
       }
     }
 
+    public override async Task GetLevel2Streams(StringMessage request, 
+      IServerStreamWriter<Level2> responseStream, ServerCallContext context){
+      Logger.Here().Information("BGN");
+      try {
+        var response = quoteService.GetLevel2Streams(request).ResponseStream;
+        while (await response.MoveNext()) {
+                await responseStream.WriteAsync(response.Current);
+        }
+      } catch (Exception e) {
+        Logger.Here().Warning(e.Message);
+        throw new RpcException(new Status(StatusCode.Internal, e.Message));
+      }
+    }
+
     public override async Task<Quote> GetQuote(StringMessage request, ServerCallContext context) {
       Logger.Here().Information("BGN");
       try {

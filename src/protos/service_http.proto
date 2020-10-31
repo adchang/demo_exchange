@@ -41,6 +41,7 @@ service ErxService {
       get: "/v1/level2/{value}"
     };
   }
+  rpc GetLevel2Streams(StringMessage) returns (stream Level2);
   rpc GetQuote(StringMessage) returns (Quote) {
     option (google.api.http) = {
       get: "/v1/quotes/{value}"

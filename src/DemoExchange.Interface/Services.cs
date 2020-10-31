@@ -174,8 +174,16 @@ namespace DemoExchange.Interface {
   }
 
   public interface IQuoteServiceRpcClient {
-    public AsyncUnaryCall<Level2> GetLevel2Async(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+    public AsyncUnaryCall<Level2> GetLevel2Async(StringMessage request, 
+      Metadata headers = null, DateTime? deadline = null, 
+      CancellationToken cancellationToken = default);
 
-    public AsyncUnaryCall<Quote> GetQuoteAsync(StringMessage request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default);
+    public AsyncServerStreamingCall<Level2> GetLevel2Streams(StringMessage request,
+      Metadata headers = null, DateTime? deadline = null, 
+      CancellationToken cancellationToken = default);
+
+    public AsyncUnaryCall<Quote> GetQuoteAsync(StringMessage request, 
+      Metadata headers = null, DateTime? deadline = null, 
+      CancellationToken cancellationToken = default);
   }
 }
