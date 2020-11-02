@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'graph.dart';
 import 'generated/messages.pb.dart';
 import 'services/erx_service.dart';
 
@@ -30,10 +31,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  StockTimeframePerformance _stockData;
   Level2 _level2;
 
   @override
   void initState() {
+    _stockData = StockTimeframePerformance(List<PriceData>()
+      ..add(PriceData(1, 5, 5.5, 5.8, 4.8, 10))
+      ..add(PriceData(2, 5.5, 5.6, 5.6, 4.9, 11))
+      ..add(PriceData(3, 5.6, 5.3, 5.6, 4.9, 8))
+      ..add(PriceData(3, 5.3, 5.5, 5.8, 4.4, 8))
+      ..add(PriceData(3, 5.5, 5.2, 5.5, 5.1, 4))
+      ..add(PriceData(3, 5.2, 5.3, 5.6, 4.9, 8)));
     _level2 = Level2()
       ..asks.add(Level2Quote()
         ..price = 0
@@ -77,15 +86,35 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Container(
-          child: Row(
-            children: <Widget>[
-              _buildLevel2(context, "Bids"),
-              _buildLevel2(context, "Asks"),
-            ],
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          SizedBox(
+            height: 160,
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: StockCandlestickPainter(_stockData),
+            ),
           ),
-        ),
+          SizedBox(height: 5),
+          SizedBox(
+            height: 30,
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: StockVolumePainter(_stockData),
+            ),
+          ),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 260,
+            child: Row(
+              children: <Widget>[
+                _buildLevel2(context, "Bids"),
+                _buildLevel2(context, "Asks"),
+              ],
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async => _getLevel2Streams(),
