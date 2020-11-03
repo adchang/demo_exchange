@@ -18,7 +18,7 @@ namespace Utils {
     [Trait("Category", "Unit")]
     public void TimeTests() {
       long now = Time.Now;
-      /*long stopwatch = Time.StopwatchNow;
+      long stopwatch = Time.StopwatchNow;
       Assert.NotEqual(now, stopwatch);
       DateTime nowDt = Time.FromTicks(now);
       Assert.Equal(DateTimeKind.Utc, nowDt.Kind);
@@ -29,7 +29,7 @@ namespace Utils {
       Assert.Equal(Time.FromTicks(Time.MidnightUtc).AddHours(-1 * Time.OFFSET_ICT),
         Time.FromTicks(Time.MidnightIct));
       Assert.Equal(Time.FromTicks(Time.MidnightSaturdayUtc).AddHours(-1 * Time.OFFSET_ICT),
-        Time.FromTicks(Time.MidnightSaturdayIct));*/
+        Time.FromTicks(Time.MidnightSaturdayIct));
       long top10Second = 
         Time.ToTop10Second(new DateTime(2020, 10, 28, 8, 18, 9, DateTimeKind.Utc).Ticks);
       Assert.Equal(0, Time.FromTicks(top10Second).Second);
