@@ -76,6 +76,18 @@ const QuoteType$json = const {
   ],
 };
 
+const PriceType$json = const {
+  '1': 'PriceType',
+  '2': const [
+    const {'1': 'PRICE_TYPE_YEAR', '2': 0},
+    const {'1': 'PRICE_TYPE_MONTH', '2': 1},
+    const {'1': 'PRICE_TYPE_WEEK', '2': 2},
+    const {'1': 'PRICE_TYPE_DAY', '2': 3},
+    const {'1': 'PRICE_TYPE_MINUTE', '2': 4},
+    const {'1': 'PRICE_TYPE_10_SECONDS', '2': 5},
+  ],
+};
+
 const Empty$json = const {
   '1': 'Empty',
 };
@@ -298,6 +310,15 @@ const OrderRequest$json = const {
   ],
 };
 
+const OrderResponse$json = const {
+  '1': 'OrderResponse',
+  '2': const [
+    const {'1': 'code', '3': 1, '4': 1, '5': 5, '10': 'code'},
+    const {'1': 'data', '3': 2, '4': 1, '5': 11, '6': '.erx.api.Order', '10': 'data'},
+    const {'1': 'errors', '3': 3, '4': 3, '5': 11, '6': '.erx.api.Error', '10': 'errors'},
+  ],
+};
+
 const Quote$json = const {
   '1': 'Quote',
   '2': const [
@@ -305,6 +326,30 @@ const Quote$json = const {
     const {'1': 'ask', '3': 2, '4': 1, '5': 1, '10': 'ask'},
     const {'1': 'last', '3': 3, '4': 1, '5': 1, '10': 'last'},
     const {'1': 'volume', '3': 4, '4': 1, '5': 5, '10': 'volume'},
+  ],
+};
+
+const HistoricalPriceRequest$json = const {
+  '1': 'HistoricalPriceRequest',
+  '2': const [
+    const {'1': 'ticker', '3': 1, '4': 1, '5': 9, '10': 'ticker'},
+    const {'1': 'type', '3': 2, '4': 1, '5': 14, '6': '.erx.api.PriceType', '10': 'type'},
+    const {'1': 'start_time', '3': 3, '4': 1, '5': 3, '10': 'startTime'},
+    const {'1': 'end_time', '3': 4, '4': 1, '5': 3, '10': 'endTime'},
+  ],
+};
+
+const HistoricalPrice$json = const {
+  '1': 'HistoricalPrice',
+  '2': const [
+    const {'1': 'ticker', '3': 1, '4': 1, '5': 9, '10': 'ticker'},
+    const {'1': 'timestamp', '3': 2, '4': 1, '5': 3, '10': 'timestamp'},
+    const {'1': 'type', '3': 3, '4': 1, '5': 14, '6': '.erx.api.PriceType', '10': 'type'},
+    const {'1': 'open', '3': 4, '4': 1, '5': 1, '10': 'open'},
+    const {'1': 'close', '3': 5, '4': 1, '5': 1, '10': 'close'},
+    const {'1': 'high', '3': 6, '4': 1, '5': 1, '10': 'high'},
+    const {'1': 'low', '3': 7, '4': 1, '5': 1, '10': 'low'},
+    const {'1': 'volume', '3': 8, '4': 1, '5': 5, '10': 'volume'},
   ],
 };
 
@@ -321,15 +366,6 @@ const Level2$json = const {
   '2': const [
     const {'1': 'bids', '3': 1, '4': 3, '5': 11, '6': '.erx.api.Level2Quote', '10': 'bids'},
     const {'1': 'asks', '3': 2, '4': 3, '5': 11, '6': '.erx.api.Level2Quote', '10': 'asks'},
-  ],
-};
-
-const OrderResponse$json = const {
-  '1': 'OrderResponse',
-  '2': const [
-    const {'1': 'code', '3': 1, '4': 1, '5': 5, '10': 'code'},
-    const {'1': 'data', '3': 2, '4': 1, '5': 11, '6': '.erx.api.Order', '10': 'data'},
-    const {'1': 'errors', '3': 3, '4': 3, '5': 11, '6': '.erx.api.Error', '10': 'errors'},
   ],
 };
 

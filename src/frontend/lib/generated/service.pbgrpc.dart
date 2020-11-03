@@ -61,6 +61,12 @@ class ErxServiceClient extends $grpc.Client {
       '/erx.api.ErxService/GetQuote',
       ($0.StringMessage value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.Quote.fromBuffer(value));
+  static final _$getHistoricalPriceStreams =
+      $grpc.ClientMethod<$0.HistoricalPriceRequest, $0.HistoricalPrice>(
+          '/erx.api.ErxService/GetHistoricalPriceStreams',
+          ($0.HistoricalPriceRequest value) => value.writeToBuffer(),
+          ($core.List<$core.int> value) =>
+              $0.HistoricalPrice.fromBuffer(value));
 
   ErxServiceClient($grpc.ClientChannel channel, {$grpc.CallOptions options})
       : super(channel, options: options);
@@ -143,6 +149,15 @@ class ErxServiceClient extends $grpc.Client {
         options: options);
     return $grpc.ResponseFuture(call);
   }
+
+  $grpc.ResponseStream<$0.HistoricalPrice> getHistoricalPriceStreams(
+      $0.HistoricalPriceRequest request,
+      {$grpc.CallOptions options}) {
+    final call = $createCall(
+        _$getHistoricalPriceStreams, $async.Stream.fromIterable([request]),
+        options: options);
+    return $grpc.ResponseStream(call);
+  }
 }
 
 abstract class ErxServiceBase extends $grpc.Service {
@@ -219,6 +234,15 @@ abstract class ErxServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.StringMessage.fromBuffer(value),
         ($0.Quote value) => value.writeToBuffer()));
+    $addMethod(
+        $grpc.ServiceMethod<$0.HistoricalPriceRequest, $0.HistoricalPrice>(
+            'GetHistoricalPriceStreams',
+            getHistoricalPriceStreams_Pre,
+            false,
+            true,
+            ($core.List<$core.int> value) =>
+                $0.HistoricalPriceRequest.fromBuffer(value),
+            ($0.HistoricalPrice value) => value.writeToBuffer()));
   }
 
   $async.Future<$0.AccountList> listAccounts_Pre(
@@ -271,6 +295,12 @@ abstract class ErxServiceBase extends $grpc.Service {
     return getQuote(call, await request);
   }
 
+  $async.Stream<$0.HistoricalPrice> getHistoricalPriceStreams_Pre(
+      $grpc.ServiceCall call,
+      $async.Future<$0.HistoricalPriceRequest> request) async* {
+    yield* getHistoricalPriceStreams(call, await request);
+  }
+
   $async.Future<$0.AccountList> listAccounts(
       $grpc.ServiceCall call, $0.Empty request);
   $async.Future<$0.AccountResponse> createAccount(
@@ -291,4 +321,6 @@ abstract class ErxServiceBase extends $grpc.Service {
       $grpc.ServiceCall call, $0.StringMessage request);
   $async.Future<$0.Quote> getQuote(
       $grpc.ServiceCall call, $0.StringMessage request);
+  $async.Stream<$0.HistoricalPrice> getHistoricalPriceStreams(
+      $grpc.ServiceCall call, $0.HistoricalPriceRequest request);
 }

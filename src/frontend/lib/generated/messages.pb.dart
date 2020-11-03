@@ -1382,6 +1382,53 @@ class OrderRequest extends $pb.GeneratedMessage {
   void clearTimeInForce() => clearField(7);
 }
 
+class OrderResponse extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('OrderResponse', package: const $pb.PackageName('erx.api'), createEmptyInstance: create)
+    ..a<$core.int>(1, 'code', $pb.PbFieldType.O3)
+    ..aOM<Order>(2, 'data', subBuilder: Order.create)
+    ..pc<Error>(3, 'errors', $pb.PbFieldType.PM, subBuilder: Error.create)
+    ..hasRequiredFields = false
+  ;
+
+  OrderResponse._() : super();
+  factory OrderResponse() => create();
+  factory OrderResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory OrderResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  OrderResponse clone() => OrderResponse()..mergeFromMessage(this);
+  OrderResponse copyWith(void Function(OrderResponse) updates) => super.copyWith((message) => updates(message as OrderResponse));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static OrderResponse create() => OrderResponse._();
+  OrderResponse createEmptyInstance() => create();
+  static $pb.PbList<OrderResponse> createRepeated() => $pb.PbList<OrderResponse>();
+  @$core.pragma('dart2js:noInline')
+  static OrderResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<OrderResponse>(create);
+  static OrderResponse _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get code => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set code($core.int v) { $_setSignedInt32(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCode() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCode() => clearField(1);
+
+  @$pb.TagNumber(2)
+  Order get data => $_getN(1);
+  @$pb.TagNumber(2)
+  set data(Order v) { setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasData() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearData() => clearField(2);
+  @$pb.TagNumber(2)
+  Order ensureData() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $core.List<Error> get errors => $_getList(2);
+}
+
 class Quote extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('Quote', package: const $pb.PackageName('erx.api'), createEmptyInstance: create)
     ..a<$core.double>(1, 'bid', $pb.PbFieldType.OD)
@@ -1441,6 +1488,168 @@ class Quote extends $pb.GeneratedMessage {
   $core.bool hasVolume() => $_has(3);
   @$pb.TagNumber(4)
   void clearVolume() => clearField(4);
+}
+
+class HistoricalPriceRequest extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('HistoricalPriceRequest', package: const $pb.PackageName('erx.api'), createEmptyInstance: create)
+    ..aOS(1, 'ticker')
+    ..e<PriceType>(2, 'type', $pb.PbFieldType.OE, defaultOrMaker: PriceType.PRICE_TYPE_YEAR, valueOf: PriceType.valueOf, enumValues: PriceType.values)
+    ..aInt64(3, 'startTime')
+    ..aInt64(4, 'endTime')
+    ..hasRequiredFields = false
+  ;
+
+  HistoricalPriceRequest._() : super();
+  factory HistoricalPriceRequest() => create();
+  factory HistoricalPriceRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory HistoricalPriceRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  HistoricalPriceRequest clone() => HistoricalPriceRequest()..mergeFromMessage(this);
+  HistoricalPriceRequest copyWith(void Function(HistoricalPriceRequest) updates) => super.copyWith((message) => updates(message as HistoricalPriceRequest));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static HistoricalPriceRequest create() => HistoricalPriceRequest._();
+  HistoricalPriceRequest createEmptyInstance() => create();
+  static $pb.PbList<HistoricalPriceRequest> createRepeated() => $pb.PbList<HistoricalPriceRequest>();
+  @$core.pragma('dart2js:noInline')
+  static HistoricalPriceRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<HistoricalPriceRequest>(create);
+  static HistoricalPriceRequest _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get ticker => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set ticker($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasTicker() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTicker() => clearField(1);
+
+  @$pb.TagNumber(2)
+  PriceType get type => $_getN(1);
+  @$pb.TagNumber(2)
+  set type(PriceType v) { setField(2, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasType() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearType() => clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get startTime => $_getI64(2);
+  @$pb.TagNumber(3)
+  set startTime($fixnum.Int64 v) { $_setInt64(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasStartTime() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearStartTime() => clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get endTime => $_getI64(3);
+  @$pb.TagNumber(4)
+  set endTime($fixnum.Int64 v) { $_setInt64(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasEndTime() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearEndTime() => clearField(4);
+}
+
+class HistoricalPrice extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('HistoricalPrice', package: const $pb.PackageName('erx.api'), createEmptyInstance: create)
+    ..aOS(1, 'ticker')
+    ..aInt64(2, 'timestamp')
+    ..e<PriceType>(3, 'type', $pb.PbFieldType.OE, defaultOrMaker: PriceType.PRICE_TYPE_YEAR, valueOf: PriceType.valueOf, enumValues: PriceType.values)
+    ..a<$core.double>(4, 'open', $pb.PbFieldType.OD)
+    ..a<$core.double>(5, 'close', $pb.PbFieldType.OD)
+    ..a<$core.double>(6, 'high', $pb.PbFieldType.OD)
+    ..a<$core.double>(7, 'low', $pb.PbFieldType.OD)
+    ..a<$core.int>(8, 'volume', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false
+  ;
+
+  HistoricalPrice._() : super();
+  factory HistoricalPrice() => create();
+  factory HistoricalPrice.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory HistoricalPrice.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  HistoricalPrice clone() => HistoricalPrice()..mergeFromMessage(this);
+  HistoricalPrice copyWith(void Function(HistoricalPrice) updates) => super.copyWith((message) => updates(message as HistoricalPrice));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static HistoricalPrice create() => HistoricalPrice._();
+  HistoricalPrice createEmptyInstance() => create();
+  static $pb.PbList<HistoricalPrice> createRepeated() => $pb.PbList<HistoricalPrice>();
+  @$core.pragma('dart2js:noInline')
+  static HistoricalPrice getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<HistoricalPrice>(create);
+  static HistoricalPrice _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get ticker => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set ticker($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasTicker() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearTicker() => clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get timestamp => $_getI64(1);
+  @$pb.TagNumber(2)
+  set timestamp($fixnum.Int64 v) { $_setInt64(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasTimestamp() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTimestamp() => clearField(2);
+
+  @$pb.TagNumber(3)
+  PriceType get type => $_getN(2);
+  @$pb.TagNumber(3)
+  set type(PriceType v) { setField(3, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasType() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearType() => clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get open => $_getN(3);
+  @$pb.TagNumber(4)
+  set open($core.double v) { $_setDouble(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasOpen() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearOpen() => clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.double get close => $_getN(4);
+  @$pb.TagNumber(5)
+  set close($core.double v) { $_setDouble(4, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasClose() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearClose() => clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.double get high => $_getN(5);
+  @$pb.TagNumber(6)
+  set high($core.double v) { $_setDouble(5, v); }
+  @$pb.TagNumber(6)
+  $core.bool hasHigh() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearHigh() => clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.double get low => $_getN(6);
+  @$pb.TagNumber(7)
+  set low($core.double v) { $_setDouble(6, v); }
+  @$pb.TagNumber(7)
+  $core.bool hasLow() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearLow() => clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.int get volume => $_getIZ(7);
+  @$pb.TagNumber(8)
+  set volume($core.int v) { $_setSignedInt32(7, v); }
+  @$pb.TagNumber(8)
+  $core.bool hasVolume() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearVolume() => clearField(8);
 }
 
 class Level2Quote extends $pb.GeneratedMessage {
@@ -1511,53 +1720,6 @@ class Level2 extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(2)
   $core.List<Level2Quote> get asks => $_getList(1);
-}
-
-class OrderResponse extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo('OrderResponse', package: const $pb.PackageName('erx.api'), createEmptyInstance: create)
-    ..a<$core.int>(1, 'code', $pb.PbFieldType.O3)
-    ..aOM<Order>(2, 'data', subBuilder: Order.create)
-    ..pc<Error>(3, 'errors', $pb.PbFieldType.PM, subBuilder: Error.create)
-    ..hasRequiredFields = false
-  ;
-
-  OrderResponse._() : super();
-  factory OrderResponse() => create();
-  factory OrderResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory OrderResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  OrderResponse clone() => OrderResponse()..mergeFromMessage(this);
-  OrderResponse copyWith(void Function(OrderResponse) updates) => super.copyWith((message) => updates(message as OrderResponse));
-  $pb.BuilderInfo get info_ => _i;
-  @$core.pragma('dart2js:noInline')
-  static OrderResponse create() => OrderResponse._();
-  OrderResponse createEmptyInstance() => create();
-  static $pb.PbList<OrderResponse> createRepeated() => $pb.PbList<OrderResponse>();
-  @$core.pragma('dart2js:noInline')
-  static OrderResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<OrderResponse>(create);
-  static OrderResponse _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $core.int get code => $_getIZ(0);
-  @$pb.TagNumber(1)
-  set code($core.int v) { $_setSignedInt32(0, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasCode() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearCode() => clearField(1);
-
-  @$pb.TagNumber(2)
-  Order get data => $_getN(1);
-  @$pb.TagNumber(2)
-  set data(Order v) { setField(2, v); }
-  @$pb.TagNumber(2)
-  $core.bool hasData() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearData() => clearField(2);
-  @$pb.TagNumber(2)
-  Order ensureData() => $_ensure(1);
-
-  @$pb.TagNumber(3)
-  $core.List<Error> get errors => $_getList(2);
 }
 
 class AddTickerResponse extends $pb.GeneratedMessage {

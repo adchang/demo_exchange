@@ -144,3 +144,26 @@ class QuoteType extends $pb.ProtobufEnum {
   const QuoteType._($core.int v, $core.String n) : super(v, n);
 }
 
+class PriceType extends $pb.ProtobufEnum {
+  static const PriceType PRICE_TYPE_YEAR = PriceType._(0, 'PRICE_TYPE_YEAR');
+  static const PriceType PRICE_TYPE_MONTH = PriceType._(1, 'PRICE_TYPE_MONTH');
+  static const PriceType PRICE_TYPE_WEEK = PriceType._(2, 'PRICE_TYPE_WEEK');
+  static const PriceType PRICE_TYPE_DAY = PriceType._(3, 'PRICE_TYPE_DAY');
+  static const PriceType PRICE_TYPE_MINUTE = PriceType._(4, 'PRICE_TYPE_MINUTE');
+  static const PriceType PRICE_TYPE_10_SECONDS = PriceType._(5, 'PRICE_TYPE_10_SECONDS');
+
+  static const $core.List<PriceType> values = <PriceType> [
+    PRICE_TYPE_YEAR,
+    PRICE_TYPE_MONTH,
+    PRICE_TYPE_WEEK,
+    PRICE_TYPE_DAY,
+    PRICE_TYPE_MINUTE,
+    PRICE_TYPE_10_SECONDS,
+  ];
+
+  static final $core.Map<$core.int, PriceType> _byValue = $pb.ProtobufEnum.initByValue(values);
+  static PriceType valueOf($core.int value) => _byValue[value];
+
+  const PriceType._($core.int v, $core.String n) : super(v, n);
+}
+
