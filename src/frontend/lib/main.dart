@@ -31,30 +31,38 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  StockTimeframePerformance _stockData;
+  ChartData _chartData;
   Level2 _level2;
 
   @override
   void initState() {
-    _stockData = StockTimeframePerformance(List<PriceData>()
-      ..add(PriceData(1, 5, 5.5, 5.8, 4.8, 10))
-      ..add(PriceData(2, 5.5, 5.6, 5.6, 4.9, 11))
-      ..add(PriceData(3, 5.6, 5.3, 5.6, 4.9, 8))
-      ..add(PriceData(3, 5.3, 5.5, 5.8, 4.4, 8))
-      ..add(PriceData(3, 5.5, 5.2, 5.5, 5.1, 4))
-      ..add(PriceData(3, 5.2, 5.3, 5.6, 4.9, 8)));
-    _level2 = Level2()
-      ..asks.add(Level2Quote()
-        ..price = 0
-        ..quantity = 0)
-      ..bids.add(Level2Quote()
-        ..price = 0
-        ..quantity = 0);
     super.initState();
   }
 
-  Future<void> _getLevel2Streams() async {
-    ErxService.getLevel2Streams("SPY").listen((Level2 response) {
+  Future<void> _getStreams() async {
+    ErxService.getHistoricalPriceStreams("ERX")
+        .listen((HistoricalPrice response) {
+      List<PriceData> data =
+          (_chartData == null) ? [] : List.from(_chartData.prices);
+      PriceData current = PriceData(response.timestamp, response.open,
+          response.close, response.high, response.low, response.volume);
+      if (data.isEmpty) {
+        data.add(current);
+      } else {
+        if (data[data.length - 1].time == current.time) {
+          data[data.length - 1] = current;
+        } else {
+          data.add(current);
+          if (data.length == 51) {
+            data.removeAt(0);
+          }
+        }
+      }
+      setState(() {
+        _chartData = ChartData(data);
+      });
+    });
+    ErxService.getLevel2Streams("ERX").listen((Level2 response) {
       setState(() {
         _level2 = response;
       });
@@ -62,6 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildLevel2(BuildContext context, String type) {
+    if (_level2 == null || _level2.bids.isEmpty) {
+      return Text("");
+    }
     List<Level2Quote> quotes = (type == "Bids") ? _level2.bids : _level2.asks;
     return Expanded(
       flex: 5,
@@ -93,7 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 160,
             child: CustomPaint(
               size: Size.infinite,
-              painter: StockCandlestickPainter(_stockData),
+              painter: CandlestickPainter(_chartData),
             ),
           ),
           SizedBox(height: 5),
@@ -101,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 30,
             child: CustomPaint(
               size: Size.infinite,
-              painter: StockVolumePainter(_stockData),
+              painter: VolumePainter(_chartData),
             ),
           ),
           SizedBox(height: 10),
@@ -117,8 +128,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async => _getLevel2Streams(),
-        tooltip: 'Get Level 2',
+        onPressed: () async => _getStreams(),
+        tooltip: 'Get Live Data',
         child: Icon(Icons.request_quote_rounded),
       ),
     );

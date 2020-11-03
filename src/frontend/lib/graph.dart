@@ -1,21 +1,22 @@
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 
-class StockCandlestickPainter extends CustomPainter {
-  final StockTimeframePerformance stockData;
+class CandlestickPainter extends CustomPainter {
+  final ChartData chartData;
   final Paint _wickPaint;
   final Paint _gainPaint;
   final Paint _lossPaint;
   final double _wickWidth = 1.0;
   final double _candleWidth = 5.0;
 
-  StockCandlestickPainter(this.stockData)
+  CandlestickPainter(this.chartData)
       : _wickPaint = Paint()..color = Colors.black,
         _gainPaint = Paint()..color = Colors.green,
         _lossPaint = Paint()..color = Colors.red;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (stockData == null) {
+    if (chartData == null) {
       return;
     }
 
@@ -40,14 +41,14 @@ class StockCandlestickPainter extends CustomPainter {
 
   List<Candlestick> _generateCandlesticks(Size availableSpace) {
     final pixelsPerTimeWindow =
-        availableSpace.width / (stockData.priceData.length + 1);
-    final windowHigh = stockData.maxWindowPrice();
-    final windowLow = stockData.minWindowPrice();
+        availableSpace.width / (chartData.prices.length + 1);
+    final windowHigh = chartData.maxPrice();
+    final windowLow = chartData.minPrice();
     final pixelsPerUnit = availableSpace.height / (windowHigh - windowLow);
 
     List<Candlestick> candlesticks = [];
-    for (int i = 0; i < stockData.priceData.length; i++) {
-      final price = stockData.priceData[i];
+    for (int i = 0; i < chartData.prices.length; i++) {
+      final price = chartData.prices[i];
       candlesticks.add(Candlestick(
         wickHighY: (price.high - windowLow) * pixelsPerUnit,
         wickLowY: (price.low - windowLow) * pixelsPerUnit,
@@ -89,23 +90,23 @@ class Candlestick {
       @required this.paint});
 }
 
-class StockVolumePainter extends CustomPainter {
-  final StockTimeframePerformance stockData;
+class VolumePainter extends CustomPainter {
+  final ChartData chartData;
   final Paint _gainPaint;
   final Paint _lossPaint;
 
-  StockVolumePainter(this.stockData)
+  VolumePainter(this.chartData)
       : _gainPaint = Paint()..color = Colors.green.withOpacity(0.5),
         _lossPaint = Paint()..color = Colors.red.withOpacity(0.5);
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (stockData == null) {
+    if (chartData == null) {
       return;
     }
 
-    List<Bar> bars = _generateBars(size);
-    for (Bar bar in bars) {
+    List<VolumeBar> bars = _generateBars(size);
+    for (VolumeBar bar in bars) {
       canvas.drawRect(
           Rect.fromLTWH(
               bar.centerX - (bar.width / 2),
@@ -116,15 +117,15 @@ class StockVolumePainter extends CustomPainter {
     }
   }
 
-  List<Bar> _generateBars(Size availableSpace) {
+  List<VolumeBar> _generateBars(Size availableSpace) {
     final pixelsPerTimeWindow =
-        availableSpace.width / (stockData.priceData.length + 1);
-    final pixelsPerUnit = availableSpace.height / stockData.maxWindowVolume();
+        availableSpace.width / (chartData.prices.length + 1);
+    final pixelsPerUnit = availableSpace.height / chartData.maxVolume();
 
-    List<Bar> bars = [];
-    for (int i = 0; i < stockData.priceData.length; i++) {
-      final price = stockData.priceData[i];
-      bars.add(Bar(
+    List<VolumeBar> bars = [];
+    for (int i = 0; i < chartData.prices.length; i++) {
+      final price = chartData.prices[i];
+      bars.add(VolumeBar(
         width: 3.0,
         height: price.volume * pixelsPerUnit,
         centerX: (i + 1) * pixelsPerTimeWindow,
@@ -141,27 +142,27 @@ class StockVolumePainter extends CustomPainter {
   }
 }
 
-class Bar {
+class VolumeBar {
   final double width;
   final double height;
   final double centerX;
   final Paint paint;
 
-  Bar(
+  VolumeBar(
       {@required this.width,
       @required this.height,
       @required this.centerX,
       @required this.paint});
 }
 
-class StockTimeframePerformance {
-  final List<PriceData> priceData;
+class ChartData {
+  final List<PriceData> prices;
 
-  StockTimeframePerformance(this.priceData);
+  ChartData(this.prices);
 
-  int maxWindowVolume() {
+  int maxVolume() {
     int maxVolume = 0;
-    for (PriceData price in priceData) {
+    for (PriceData price in prices) {
       if (price.volume > maxVolume) {
         maxVolume = price.volume;
       }
@@ -169,9 +170,9 @@ class StockTimeframePerformance {
     return maxVolume;
   }
 
-  double maxWindowPrice() {
+  double maxPrice() {
     double maxPrice = 0;
-    for (PriceData price in priceData) {
+    for (PriceData price in prices) {
       if (price.high > maxPrice) {
         maxPrice = price.high;
       }
@@ -179,9 +180,9 @@ class StockTimeframePerformance {
     return maxPrice;
   }
 
-  double minWindowPrice() {
+  double minPrice() {
     double minPrice = double.maxFinite;
-    for (PriceData price in priceData) {
+    for (PriceData price in prices) {
       if (price.low < minPrice) {
         minPrice = price.low;
       }
@@ -191,7 +192,7 @@ class StockTimeframePerformance {
 }
 
 class PriceData {
-  final int time;
+  final Int64 time;
   final double open;
   final double close;
   final double high;

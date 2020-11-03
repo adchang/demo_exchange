@@ -15,6 +15,17 @@ class ErxService {
       yield level2;
     }
   }
+
+  static Stream<HistoricalPrice> getHistoricalPriceStreams(
+      String ticker) async* {
+    var client = ErxServiceClient(GrpcClientSingleton().client);
+    await for (HistoricalPrice price
+        in client.getHistoricalPriceStreams(HistoricalPriceRequest()
+          ..ticker = ticker
+          ..type = PriceType.PRICE_TYPE_10_SECONDS)) {
+      yield price;
+    }
+  }
 }
 
 /*
