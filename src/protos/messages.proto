@@ -214,6 +214,12 @@ message OrderRequest {
   OrderTimeInForce time_in_force = 7;
 }
 
+message OrderResponse {
+  int32 code = 1;
+  Order data = 2;
+  repeated Error errors = 3;
+}
+
 message Quote {
   double bid = 1;
   double ask = 2;
@@ -226,6 +232,33 @@ enum QuoteType {
   QUOTE_ASK = 1;
 }
 
+message HistoricalPriceRequest {
+  string ticker = 1;
+  PriceType type = 2;
+  int64 start_time = 3;
+  int64 end_time = 4;
+}
+
+message HistoricalPrice {
+  string ticker = 1;
+  int64 timestamp = 2;
+  PriceType type = 3;
+  double open = 4;
+  double close = 5;
+  double high = 6;
+  double low = 7;
+  int32 volume = 8;
+}
+
+enum PriceType {
+  PRICE_TYPE_YEAR = 0;
+  PRICE_TYPE_MONTH = 1;
+  PRICE_TYPE_WEEK = 2;
+  PRICE_TYPE_DAY = 3;
+  PRICE_TYPE_MINUTE = 4;
+  PRICE_TYPE_10_SECONDS = 5;
+}
+
 message Level2Quote {
   double price = 1;
   int32 quantity = 2;
@@ -234,12 +267,6 @@ message Level2Quote {
 message Level2 {
   repeated Level2Quote bids = 1;
   repeated Level2Quote asks = 2;
-}
-
-message OrderResponse {
-  int32 code = 1;
-  Order data = 2;
-  repeated Error errors = 3;
 }
 
 message AddTickerResponse {

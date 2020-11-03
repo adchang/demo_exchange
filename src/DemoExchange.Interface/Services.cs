@@ -185,5 +185,10 @@ namespace DemoExchange.Interface {
     public AsyncUnaryCall<Quote> GetQuoteAsync(StringMessage request, 
       Metadata headers = null, DateTime? deadline = null, 
       CancellationToken cancellationToken = default);
+
+    public AsyncServerStreamingCall<HistoricalPrice> GetHistoricalPriceStreams(
+      HistoricalPriceRequest request,
+      Metadata headers = null, DateTime? deadline = null, 
+      CancellationToken cancellationToken = default);
   }
 }
