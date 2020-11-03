@@ -82,7 +82,7 @@ namespace DemoExchange.ApiGateway {
       try {
         var response = quoteService.GetLevel2Streams(request).ResponseStream;
         while (await response.MoveNext()) {
-                await responseStream.WriteAsync(response.Current);
+          await responseStream.WriteAsync(response.Current);
         }
       } catch (Exception e) {
         Logger.Here().Warning(e.Message);
@@ -97,6 +97,20 @@ namespace DemoExchange.ApiGateway {
 
         Logger.Here().Information("END");
         return await response;
+      } catch (Exception e) {
+        Logger.Here().Warning(e.Message);
+        throw new RpcException(new Status(StatusCode.Internal, e.Message));
+      }
+    }
+
+    public override async Task GetHistoricalPriceStreams(HistoricalPriceRequest request,
+      IServerStreamWriter<HistoricalPrice> responseStream, ServerCallContext context) {
+      Logger.Here().Information("BGN");
+      try {
+        var response = quoteService.GetHistoricalPriceStreams(request).ResponseStream;
+        while (await response.MoveNext()) {
+          await responseStream.WriteAsync(response.Current);
+        }
       } catch (Exception e) {
         Logger.Here().Warning(e.Message);
         throw new RpcException(new Status(StatusCode.Internal, e.Message));

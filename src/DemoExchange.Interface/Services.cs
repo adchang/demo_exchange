@@ -44,9 +44,12 @@ namespace DemoExchange.Interface {
 
     public class Redis {
       public const String TIMESTAMP = "TIMESTAMP_";
+
       public const String QUOTE = "QUOTE_";
       public const String QUOTE_TIMESTAMP = QUOTE + TIMESTAMP;
       public const String QUOTE_LEVEL2 = QUOTE + "LEVEL2_";
+
+      public const String HISTORIC_PRICE = "HISTORIC_PRICE_";
 
       private Redis() {
         // Prevent instantiation

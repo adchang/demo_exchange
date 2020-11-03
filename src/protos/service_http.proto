@@ -47,8 +47,9 @@ service ErxService {
       get: "/v1/quotes/{value}"
     };
   }
+  rpc GetHistoricalPriceStreams(HistoricalPriceRequest) returns (stream HistoricalPrice);
 
-    // Order Admin services
+  // Order Admin services
   rpc InitializeService(Empty) returns (Empty) {
     option (google.api.http) = {
       get: "/v1/initializeOrderService"

@@ -40,23 +40,15 @@ namespace DemoExchange.QuoteService {
     public override async Task GetLevel2Streams(StringMessage request,
       IServerStreamWriter<Level2> responseStream, ServerCallContext context) {
       Logger.Here().Information("BGN");
+
       try {
-        Random rnd = new Random();
-        int basePrice = rnd.Next(1, 11);
-        for (int i = 0; i < 50; i++) {
-          Level2 lvl2 = new Level2();
-          lvl2.Bids.Add(new Level2Quote{
-            Price = basePrice - rnd.NextDouble(),
-            Quantity = rnd.Next(100, 300)
-          });
-          lvl2.Asks.Add(new Level2Quote{
-            Price = basePrice + rnd.NextDouble(),
-            Quantity = rnd.Next(100, 300)
-          });
-          Logger.Here().Information("Waiting 2 seconds");
-          await Task.Delay(2 * 1000);
-          Logger.Here().Information(lvl2.ToString());
-          await responseStream.WriteAsync(lvl2);
+        while (!context.CancellationToken.IsCancellationRequested) {
+          CacheData data = Cache.Get(redis, request.Value);
+          if (data == null) {
+            data = GetAndSetLevel2(request);
+          }
+          await responseStream.WriteAsync(data.Level2);
+          //await Task.Delay(1 * 1000); // HACK: This should be an observable and not sleeping
         }
       } catch (Exception e) {
         Logger.Here().Warning(e.Message);
@@ -74,6 +66,27 @@ namespace DemoExchange.QuoteService {
 
         Logger.Here().Information("END");
         return Task.FromResult(data.Quote);
+      } catch (Exception e) {
+        Logger.Here().Warning(e.Message);
+        throw new RpcException(new Status(StatusCode.Internal, e.Message));
+      }
+    }
+
+    public override async Task GetHistoricalPriceStreams(HistoricalPriceRequest request,
+      IServerStreamWriter<HistoricalPrice> responseStream, ServerCallContext context) {
+      Logger.Here().Information("BGN");
+      try {
+        while (!context.CancellationToken.IsCancellationRequested) {
+          String key = Constants.Redis.HISTORIC_PRICE + PriceType.TenSeconds + 
+            "_" + request.Ticker;
+          var secondPrice = redis.StringGet(key);
+          if (secondPrice.HasValue) {
+            byte[] bytes = (RedisValue)secondPrice;
+            HistoricalPrice current = HistoricalPrice.Parser.ParseFrom(bytes);
+            await responseStream.WriteAsync(current);
+          }
+          //await Task.Delay(1 * 1000); // HACK: This should be an observable and not sleeping
+        }
       } catch (Exception e) {
         Logger.Here().Warning(e.Message);
         throw new RpcException(new Status(StatusCode.Internal, e.Message));
@@ -172,6 +185,7 @@ namespace DemoExchange.QuoteService {
         }
 
         redis.StringSet(transaction.TransactionId, "1", TimeSpan.FromMinutes(EXPIRATION_MINUTES));
+        logger.Here().Information("Updating Quote");
         CacheData data = Cache.Get(redis, transaction.Ticker);
         Quote quote = new Quote();
         bool isNewer = (data == null || transaction.CreatedTimestamp > data.Timestamp);
@@ -183,6 +197,44 @@ namespace DemoExchange.QuoteService {
         Cache.Set(redis, transaction.Ticker,
           new CacheData(isNewer ? transaction.CreatedTimestamp : data.Timestamp,
             quote, isNewer ? transaction.Level2 : data.Level2));
+
+        logger.Here().Information("Updating HistoricPrice 10 seconds");
+        String key = Constants.Redis.HISTORIC_PRICE + PriceType.TenSeconds + 
+          "_" + transaction.Ticker;
+        RedisValue secondPrice = redis.StringGet(key);
+        if (secondPrice.HasValue) {
+          byte[] secondPriceBytes = (RedisValue)secondPrice;
+          HistoricalPrice current = HistoricalPrice.Parser.ParseFrom(secondPriceBytes);
+          if ((current.Timestamp + (10 * TimeSpan.TicksPerSecond)) > transaction.CreatedTimestamp) {
+            current.Close = transaction.Last;
+            if (transaction.Last > current.High) {
+              current.High = transaction.Last;
+            }
+            if (transaction.Last < current.Low) {
+              current.Low = transaction.Last;
+            }
+            current.Volume += transaction.Volume;
+            redis.StringSet(key, current.ToByteArray());
+          } else {
+            redis.StringSet(key, new HistoricalPrice() {
+              Timestamp = ToTop10Second(transaction.CreatedTimestamp),
+              Open = transaction.Last,
+              Close = transaction.Last,
+              High = transaction.Last,
+              Low = transaction.Last,
+              Volume = transaction.Volume
+            }.ToByteArray());          }
+        } else {
+          redis.StringSet(key, new HistoricalPrice() {
+            Timestamp = ToTop10Second(transaction.CreatedTimestamp),
+            Open = transaction.Last,
+            Close = transaction.Last,
+            High = transaction.Last,
+            Low = transaction.Last,
+            Volume = transaction.Volume
+          }.ToByteArray());
+        }
+
         logger.Here().Information("END");
       };
     }

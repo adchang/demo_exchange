@@ -50,6 +50,12 @@ namespace Utils {
       return new DateTime(ticks, DateTimeKind.Utc);
     }
 
+    public static long ToTop10Second(long ticks) {
+      DateTime current = FromTicks(ticks);
+      int top = (int) (current.Second / 10) * 10;
+      return new DateTime(current.Year, current.Month, current.Day, current.Hour, current.Minute, top, DateTimeKind.Utc).Ticks;
+    }
+
     private Time() {
       // Prevent instantiation
     }

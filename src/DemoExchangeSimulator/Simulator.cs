@@ -1,3 +1,4 @@
+using System.Threading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace DemoExchangeSimulator {
       var httpHandler = new HttpClientHandler();
       httpHandler.ServerCertificateCustomValidationCallback =
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-      var channel = GrpcChannel.ForAddress("https://loki:8090",
+      var channel = GrpcChannel.ForAddress("https://hela:8090",
         new GrpcChannelOptions { HttpHandler = httpHandler });
       this.apiClient = new ErxService.ErxServiceClient(channel);
     }
@@ -56,7 +57,11 @@ namespace DemoExchangeSimulator {
         listResp = apiClient.ListAccountsAsync(new Empty()).ResponseAsync;
         listResp.Wait();
         ICollection<Account> data = listResp.Result.Accounts;
-        data.ToList().ForEach(account => accountIds.Add(account.AccountId));
+        data.ToList().ForEach(account => {
+            if (AccountStatus.AccountActive.Equals(account.Status)) {
+              accountIds.Add(account.AccountId);
+            }
+          });
         //logger.Information(data.ToString());
       } catch (Exception e) {
         Console.WriteLine("An error occurred: " + e.Message);
@@ -73,7 +78,7 @@ namespace DemoExchangeSimulator {
       String msg = "";
       // int minOrders = 1000;
       int numTrades = 1000;
-      bool limitOrders = false;
+      bool limitOrders = true;
       int numThreads = 10;
 
       msg = "\n\n********** BEGIN TRADING **********\n";
@@ -86,8 +91,7 @@ namespace DemoExchangeSimulator {
       Parallel.For(0, numTrades, opt, i => {
         int orderType = (rnd.Next(1, limitOrders ? 5 : 3));
         String ticker = tickers[rnd.Next(1, tickers.Count + 1) - 1];
-        // ticker = "QQQ";
-        // Task<Quote> quoteResp = orderClient.GetQuoteAsync(new StringMessage { Value = ticker }).ResponseAsync;
+        ticker = "ERX";
         Task<Quote> quoteResp = apiClient.GetQuoteAsync(new StringMessage { Value = ticker }).ResponseAsync;
         Quote quote = quoteResp.Result;
         int sign = rnd.Next(1, 3) == 1 ? 1 : -1;
@@ -147,6 +151,7 @@ namespace DemoExchangeSimulator {
         msg = String.Format("Executed order in {0} milliseconds\n", Stop(orderStart));
         Console.WriteLine(msg);
         logger.Information(msg);
+        Thread.Sleep(rnd.Next(1, 5) * 1000);
       });
       msg = String.Format("Executed {1} trades with {2} threads in {0} milliseconds",
         Stop(tradeStart), numTrades, numThreads);

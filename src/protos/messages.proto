@@ -59,6 +59,9 @@ message Account {
   repeated Address addresses = 8;
 }
 
+// https://developers.google.com/protocol-buffers/docs/reference/csharp-generated#enum
+// TODO: Update enums to be ACCOUNT_STATUS_PENDING_VERIFICATION so that the generated
+// C# code becomes AccountStatus.PendingVerification
 enum AccountStatus {
   ACCOUNT_PENDING_VERIFICATION = 0;
   ACCOUNT_PENDING_APPROVAL = 1;
@@ -256,7 +259,7 @@ enum PriceType {
   PRICE_TYPE_WEEK = 2;
   PRICE_TYPE_DAY = 3;
   PRICE_TYPE_MINUTE = 4;
-  PRICE_TYPE_10_SECONDS = 5;
+  PRICE_TYPE_TEN_SECONDS = 5;
 }
 
 message Level2Quote {
