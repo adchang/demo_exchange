@@ -37,14 +37,17 @@ namespace DemoExchange.Services {
         private readonly IDictionary<String, OrderManager> managers =
           new Dictionary<String, OrderManager>();
         private readonly IDemoExchangeDbContextFactory<OrderContext> orderContextFactory;
+        private readonly IDatabase redis;
         private readonly ISubscriber subscriber;
         private readonly IAccountServiceRpcClient accountService;
 
         public bool IsMarketOpen { get; private set; }
 
         public OrderService(IDemoExchangeDbContextFactory<OrderContext> orderContextFactory,
-          ISubscriber subscriber, IAccountServiceRpcClient accountService) {
+          IDatabase redis, ISubscriber subscriber, 
+          IAccountServiceRpcClient accountService) {
           this.orderContextFactory = orderContextFactory;
+          this.redis = redis;
           this.subscriber = subscriber;
           this.accountService = accountService;
         }
@@ -182,11 +185,13 @@ namespace DemoExchange.Services {
         }
 
         // QUESTION: Consider making async: https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns/task-based-asynchronous-pattern-tap
-        public OrderResponseBL SubmitOrder(IOrderContext context, ISubscriber subscriber, IAccountServiceRpcClient accountService, OrderBL order) {
+        public OrderResponseBL SubmitOrder(IOrderContext context, 
+          IDatabase redis, ISubscriber subscriber, 
+          IAccountServiceRpcClient accountService, OrderBL order) {
 #if (PERF || PERF_FINE || PERF_FINEST)
           long start = Now;
 #endif
-          OrderResponseBL insertResponse = InsertOrder(context, subscriber, order);
+          OrderResponseBL insertResponse = InsertOrder(context, redis, subscriber, order);
           if (insertResponse.HasErrors) {
             return insertResponse;
           }
@@ -202,7 +207,7 @@ namespace DemoExchange.Services {
             if (fillResponse.HasErrors) {
               return insertResponse;
             }
-            fillResponse = SaveOrderTransaction(context, subscriber, fillResponse.Data);
+            fillResponse = SaveOrderTransaction(context, redis, subscriber, fillResponse.Data);
             if (fillResponse.HasErrors) {
               return insertResponse;
             }
@@ -227,7 +232,7 @@ namespace DemoExchange.Services {
               if (fillResponse.HasErrors) {
                 return insertResponse;
               }
-              fillResponse = SaveOrderTransaction(context, subscriber, fillResponse.Data);
+              fillResponse = SaveOrderTransaction(context, redis, subscriber, fillResponse.Data);
               if (fillResponse.HasErrors) {
                 return insertResponse;
               }
@@ -390,8 +395,8 @@ namespace DemoExchange.Services {
           return new OrderTransactionResponseBL(new OrderTransactionBL(orders, transactions));
         }
 
-        private OrderResponseBL InsertOrder(IOrderContext context, ISubscriber subscriber,
-          OrderBL order) {
+        private OrderResponseBL InsertOrder(IOrderContext context, 
+          IDatabase redis, ISubscriber subscriber, OrderBL order) {
           context.Orders.Add((OrderEntity)order);
           try {
             context.SaveChanges();
@@ -407,7 +412,7 @@ namespace DemoExchange.Services {
         }
 
         private OrderTransactionResponseBL SaveOrderTransaction(IOrderContext context,
-          ISubscriber subscriber, OrderTransactionBL data) {
+          IDatabase redis, ISubscriber subscriber, OrderTransactionBL data) {
           data.Orders.ForEach(order => {
             context.Orders.Add((OrderEntity)order);
             context.Entry(order).State = EntityState.Modified;
@@ -437,8 +442,10 @@ namespace DemoExchange.Services {
             Level2 = Level2
             };
             Logger.Here().Debug("Publishing to " + Constants.PubSub.TOPIC_TRANSACTION_PROCESSED);
-            subscriber.Publish(Constants.PubSub.TOPIC_TRANSACTION_PROCESSED,
+            redis.StreamAdd(Redis.QUOTE_STREAM, Redis.PubSub.TOPIC_TRANSACTION_PROCESSED, 
               message.ToByteArray());
+            // subscriber.Publish(Constants.PubSub.TOPIC_TRANSACTION_PROCESSED,
+            //   message.ToByteArray());
           });
 
           return new OrderTransactionResponseBL(data);

@@ -43,8 +43,13 @@ namespace DemoExchange.Interface {
     }
 
     public class Redis {
+      public const String CONSUMER_GROUP = "CONSUMER_GROUP";
+      public const String STREAM = "STREAM";
       public const String TIMESTAMP = "TIMESTAMP_";
+
       public const String QUOTE = "QUOTE_";
+      public const String QUOTE_CONSUMER_GROUP = QUOTE + CONSUMER_GROUP;
+      public const String QUOTE_STREAM = QUOTE + STREAM;
       public const String QUOTE_TIMESTAMP = QUOTE + TIMESTAMP;
       public const String QUOTE_LEVEL2 = QUOTE + "LEVEL2_";
 

@@ -33,6 +33,7 @@ namespace DemoExchange.OrderService {
       Logger.Here().Debug("Redis: " + connectionStrings.Redis);
 #endif
       ConnectionMultiplexer muxer = ConnectionMultiplexer.Connect(connectionStrings.Redis);
+      IDatabase redis = muxer.GetDatabse();
       ISubscriber subscriber = muxer.GetSubscriber();
 
       Config.ErxServices erx = new Config.ErxServices();
@@ -51,6 +52,7 @@ namespace DemoExchange.OrderService {
       services.AddGrpc();
       services.AddSingleton<Config.ConnectionStrings>(connectionStrings);
       services.AddSingleton<IDemoExchangeDbContextFactory<OrderContext>, OrderContextFactory>();
+      services.AddSingleton<IDatabase>(redis);
       services.AddSingleton<ISubscriber>(subscriber);
       services.AddSingleton<IOrderService, DemoExchange.Services.OrderService>();
       services.AddSingleton<IAccountServiceRpcClient>(new AccountServiceRpcClient(channel));
