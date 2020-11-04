@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageId>Utils</PackageId>
-    <Version>0.0.2-SNAPSHOT</Version>
+    <PackageId>CodeX.Utils</PackageId>
+    <Version>0.0.3</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>

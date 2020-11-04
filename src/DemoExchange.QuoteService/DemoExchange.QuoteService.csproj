@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <PackageId>DemoExchange.QuoteService</PackageId>
-    <Version>0.0.1</Version>
+    <Version>0.0.3</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>
@@ -11,16 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Utils/Utils.csproj" />
-    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
-    <ProjectReference Include="../DemoExchange.Interface.ClientOrder/DemoExchange.Interface.ClientOrder.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="../protos/service_quote.proto" Link="service_quote.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CodeX.Utils" Version="0.0.3" />
+    <PackageReference Include="DemoExchange.Interface" Version="0.0.3" />
+    <PackageReference Include="DemoExchange.Interface.ClientOrder" Version="0.0.3" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.27.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-rc.2.20475.5" />
     <PackageReference Include="Serilog" Version="2.10.0" />

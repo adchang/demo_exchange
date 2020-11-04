@@ -3,7 +3,7 @@ version: "3"
 services:
   identity:
     #build: src/DemoExchange.Identity
-    image: demo_exchange.identity:0.0.2
+    image: sprezzarete/demo_exchange.identity:0.0.3
     ports:
       - "8099:443"
     environment:
@@ -17,7 +17,7 @@ services:
 
   gateway:
     #build: src/DemoExchange.ApiGateway
-    image: demo_exchange.api_gateway:0.0.2
+    image: sprezzarete/demo_exchange.api_gateway:0.0.3
     ports:
       - "8080:80"
       - "8090:443"
@@ -37,7 +37,7 @@ services:
 
   account:
     #build: src/DemoExchange.AccountService
-    image: demo_exchange.account_service:0.0.2
+    image: sprezzarete/demo_exchange.account_service:0.0.3
     environment:
       ASPNETCORE_URLS: "https://+;http://+"
       ASPNETCORE_HTTPS_PORT: 443
@@ -51,7 +51,7 @@ services:
 
   order:
     #build: src/DemoExchange.OrderServiceGrpc
-    image: demo_exchange.order_service_grpc:0.0.2
+    image: sprezzarete/demo_exchange.order_service_grpc:0.0.3
     environment:
       ASPNETCORE_URLS: "https://+;http://+"
       ASPNETCORE_HTTPS_PORT: 443
@@ -65,7 +65,7 @@ services:
 
   quote:
     #build: src/DemoExchange.QuoteService
-    image: demo_exchange.quote_service:0.0.1
+    image: sprezzarete/demo_exchange.quote_service:0.0.3
     environment:
       ASPNETCORE_URLS: "https://+;http://+"
       ASPNETCORE_HTTPS_PORT: 443

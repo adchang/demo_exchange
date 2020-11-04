@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <PackageId>DemoExchange</PackageId>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>
@@ -11,10 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="DemoExchange.Interface" Version="0.0.3" />
     <PackageReference Include="IdentityServer4" Version="4.0.0" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />

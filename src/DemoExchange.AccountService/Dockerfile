@@ -3,13 +3,9 @@ WORKDIR /app
 EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
-WORKDIR /src
-# Normally, these would be nuget dependencies, but for sake of simplicity, just referencing as project
-# Order base on least likely to change to take advantage of Docker cache
-ADD src/Utils Utils
-ADD src/protos protos
-ADD src/DemoExchange.Interface DemoExchange.Interface
-ADD src/DemoExchange DemoExchange
+ADD nuget.config .
+ADD nuget nuget
+ADD src/protos src/protos
 WORKDIR /src/DemoExchange.AccountService
 COPY src/DemoExchange.AccountService/DemoExchange.AccountService.csproj .
 RUN dotnet restore -r linux-x64

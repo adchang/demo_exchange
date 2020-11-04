@@ -6,8 +6,8 @@
 - Learn dotnet and other packages. Small business domain to focus on flushing out coding conventions and implementing new aspects of a robust and secure application environment. Follow along with [commit history like a tutorial](https://docs.google.com/document/d/1cFWrQyfAGYdtYoevVmW26hGT1Nw2f16iywPYAVQoVTM/edit#heading=h.xu2up6xyb01e).
 
 **Out of scope**
-- Frontend, but favor [Flutter](https://flutter.dev/) for multi-platform UI
-- Async processing, event propagation
+- <del>Frontend, but favor [Flutter](https://flutter.dev/) for multi-platform UI</del>
+- <del>Async processing, event propagation</del>
 - Monitoring
 - Big data and ML
 
@@ -93,3 +93,20 @@ Where X is the domain,
 
   Methods should start with TestPerf
 
+## Building
+### DLL release
+1. Remove -SNAPSHOT in csproj, commit & push
+2. dotnet-pack: Creates a nupkg in staging directory (/opt/adc/nuget_stg -> /home/adchang/janus/nuget_stg)
+3. In Windows, nuget add C:\adc\vm\hela\nuget_stg\PACKAGE -source c:\adc\vm\hela\nuget
+4. Increment version num and add -SNAPSHOT in csproj, commit & push
+
+NOTE: /home/adchang/janus is a shared folder with windows host
+
+### Docker build
+1. Copy nuget directory to project root (Docker cannot follow symlinks)
+2. Remove -SNAPSHOT in csproj & .bash_aliases_demo_exchange, commit & push
+3. XXX-build
+4. docker-tag XXX:VERSION
+5. docker-push XXX:VERSION
+6. Update docker-compose to use the new version
+7. Increment version num and add -SNAPSHOT in csproj & .bash_aliases_demo_exchange, commit & push

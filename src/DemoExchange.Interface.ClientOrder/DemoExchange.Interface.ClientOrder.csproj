@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageId>Interface.ClientOrder</PackageId>
-    <Version>0.0.2</Version>
+    <PackageId>DemoExchange.Interface.ClientOrder</PackageId>
+    <Version>0.0.3</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>
@@ -11,14 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DemoExchange.Interface/DemoExchange.Interface.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="../protos/service_order.proto" Link="service_order.proto" GrpcServices="Client" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DemoExchange.Interface" Version="0.0.3" />
     <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
     <PackageReference Include="Grpc.Tools" Version="2.32.0">

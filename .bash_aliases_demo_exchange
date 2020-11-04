@@ -1,8 +1,8 @@
-export IDENTITY_VERSION='0.0.2'
-export API_GATEWAY_VERSION='0.0.2'
-export ACCOUNT_SERVICE_VERSION='0.0.2'
-export ORDER_SERVICE_VERSION='0.0.2'
-export QUOTE_SERVICE_VERSION='0.0.1'
+export IDENTITY_VERSION='0.0.3'
+export API_GATEWAY_VERSION='0.0.3'
+export ACCOUNT_SERVICE_VERSION='0.0.3'
+export ORDER_SERVICE_VERSION='0.0.3'
+export QUOTE_SERVICE_VERSION='0.0.3'
 
 demo-exchange-identity-up() {
   demo-exchange-identity-build;
@@ -131,4 +131,14 @@ demo-exchange-redis-run() {
 # but since Hela itself uses bridge, the docker container bridges to the main network and gets a dhcp
 demo-exchange-redis-runHela() {
   docker run --detach --network host -v /opt/adc/db/redis/mount:/data --name redis redis:latest redis-server --appendonly yes --requirepass PASSWORD 
+}
+
+demo-exchange-frontend-build() {
+  flutter clean
+  flutter build apk --split-per-abi --flavor production
+}
+
+demo-exchange-frontend-build-versioned() {
+  flutter clean
+  flutter build apk --split-per-abi --flavor versioned
 }

@@ -3,15 +3,11 @@ WORKDIR /app
 EXPOSE 80 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
-WORKDIR /src
-# Normally, these would be nuget dependencies, but for sake of simplicity, just referencing as project
-# Order base on least likely to change to take advantage of Docker cache
-ADD src/protos protos
-ADD src/DemoExchange.Interface DemoExchange.Interface
-ADD src/DemoExchange.Interface.ClientAccount DemoExchange.Interface.ClientAccount
-ADD src/DemoExchange.Interface.ClientOrder DemoExchange.Interface.ClientOrder
-ADD src/DemoExchange.Interface.ClientQuote DemoExchange.Interface.ClientQuote
+ADD nuget.config .
+ADD nuget nuget
+ADD src/protos src/protos
 WORKDIR /src/DemoExchange.ApiGateway
+COPY src/DemoExchange.ApiGateway/nuget.config .
 COPY src/DemoExchange.ApiGateway/DemoExchange.ApiGateway.csproj .
 RUN dotnet restore -r linux-x64
 COPY src/DemoExchange.ApiGateway .
@@ -22,4 +18,3 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app .
 ENTRYPOINT ["./DemoExchange.ApiGateway"]
-

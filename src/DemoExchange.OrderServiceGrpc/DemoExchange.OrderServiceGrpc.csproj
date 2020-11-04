@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <PackageId>DemoExchange.OrderService</PackageId>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>
@@ -11,17 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../DemoExchange/DemoExchange.csproj">
-      <Properties>DefineConstants=PERF;DIAGNOSTICS</Properties>
-    </ProjectReference>
-    <ProjectReference Include="../DemoExchange.Interface.ClientAccount/DemoExchange.Interface.ClientAccount.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="../protos/service_order.proto" Link="service_order.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DemoExchange" Version="0.0.3" />
+    <PackageReference Include="DemoExchange.Interface.ClientAccount" Version="0.0.3" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.27.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0-rc.2.20475.5" />
     <PackageReference Include="Serilog" Version="2.10.0" />
