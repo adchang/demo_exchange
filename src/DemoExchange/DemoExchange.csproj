@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>DemoExchange</PackageId>
-    <Version>0.0.3</Version>
+    <Version>0.0.4-SNAPSHOT</Version>
     <Authors>Anthony Chang</Authors>
     <Company>CodeX</Company>
   </PropertyGroup>
