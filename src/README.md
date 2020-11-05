@@ -23,6 +23,8 @@ It is important to differentiate Account and Account Portfolio. Account manages 
 
 Eventually though, transaction volume will necessitate horizontal scaling and partitioning. The order service is designed to be partitionable by ticker; an order service can be configured to process specific ticker(s). Some aspects of account portfolio should be split out from order service. However, the two domains should remain on the same database server to ensure we still have transactional integrity. Portfolio balance is not something we want to rely on eventual consistency; we need to know portfolio holdings at point of order fulfillment.
 
+20201105 Update: Quote service was built as a separate microservice in this POC as well to experiment with Redis Pub/Sub in a separate container. Quote service, supporting realtime charting, is definitely another candidate to separate out as transaction volume grows.
+
 ### Tiers
 
 - API Facade/Gateway: L7 proxy for service aggregation, user authentication, basic validation, rate limiting, and statistics. Supports both OpenAPI (HTTP1.1) and gRPC (HTTP2)
